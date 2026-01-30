@@ -1,0 +1,29 @@
+<nav>
+  <ul class="flex m-1.5">
+      <li class="m-1.5 inset-shadow-sm bg-gray-100 rounded-2xl">
+          <button mat-fab routerLink="/">
+              <mat-icon>calendar_month</mat-icon>
+          </button>
+      </li>
+
+      @if (authService.getToken()) {
+        <li class="m-1.5 inset-shadow-sm bg-gray-100 rounded-2xl">
+            <button mat-fab routerLink="/profil">
+                <mat-icon>person</mat-icon>
+            </button>
+        </li>
+        <li class="m-1.5 inset-shadow-sm bg-gray-100 rounded-2xl">
+            <button mat-fab (click)="logout()">
+                <mat-icon>logout</mat-icon>
+            </button>
+        </li>
+      } @else {
+        <li class="m-1.5 inset-shadow-sm bg-gray-100 rounded-2xl">
+            <button mat-fab routerLink="/login">
+                <mat-icon>login</mat-icon>
+            </button>
+        </li>
+      }
+  </ul>
+</nav>
+<router-outlet />

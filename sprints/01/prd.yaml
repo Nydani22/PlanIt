@@ -1,0 +1,40 @@
+meta:
+  version: "0.1"
+  last_updated: "2025-10-17"
+problem:
+  statement: "Mindenki számára nehézséget okoz, az időpont egyeztetése mással vagy akár több személlyel egyszerre, úgy hogy mindenkinek megfeleljen, ami akár sok időt vehet igénybe."
+target_audience:
+  personas:
+    - name: "Bence"
+      segment: "Tanárszakos hallgató és magántanár, aki gyakran egyeztet időpontokat a diákjaival."
+      needs:
+        - "Gyors egyeztetés"
+        - "Átlátható órarend"
+value_proposition:
+  concise: "Azok számára, akik időpont egyeztetéssel küzdenek, a mi termékünk egy gyors és egyszerrű megoldás, aminek a lényege, hogy dinamikussan történjen meg az időpont keresés a program által. A When2meet, Doodle, Calendly-vel ellentétben, a miénk egy teljesen ingyenesen, csoportos időpont egyeztetésre alkalmas és naptár integrációt alkalmazó weboldal."
+scope:
+  in:
+    - "Anonim felhasználó létrehozhat egy eseményt (cím megadásával)."
+    - "A felhasználó egy naptárnézetben kijelölhet több lehetséges idősávot."
+    - "A rendszer generál egy egyedi, megosztható linket az eseményhez."
+  out:
+    - "Felhasználói regisztráció és bejelentkezés (MVP utáni fázis)"
+    - "Létező események módosítása"
+    - "Naptárintegrációk (pl. Google Calendar)"
+    - "Fizetős funkciók"
+    - "Mobilalkalmazás, natív verzió"
+risks:
+  - "Integrációk használata és beépítése, illetve nem megfelelő működése PL.: Google Calendar"
+  - "Böngészőkompatibilitási problémák és nehezen átlátható felület"
+first_tech_decision_ref: "sprints/01/architecture/adr/0001-first-tech-choice.md"
+research_summary:
+  insights:
+    - "Sokan nem használnak dedikált időpontfoglaló eszközt, mert azok túlságosan bonyolultak vagy fizetősek, inkább beleírják a naptárba vagy egy noteszbe."
+    - "A legtöbben manuálisan, chat-üzenetekben vagy papíron egyeztetik az időpontokat, ami növeli a hibalehetőséget és átláthatatlanságot."
+    - "A felhasználók számára fontos, hogy az alkalmazás egyszerű és intuitív legyen, ne igényeljen hosszú betanulást vagy regisztrációs folyamatot."
+    - "A résztvevők értékelnék, ha az alkalmazás figyelembe venné az ünnepnapokat, utazási időt vagy más elfoglaltságokat az időpontok javaslatakor."
+  pain_points:
+    - "Hosszú idő az időpontok egyeztetése, még több, hogyha csoporttal kell egyeztetni."
+    - "Nehéz minden időpontot fejben tartani, hogy az új időpontokkal ne legyen ütközés."
+    - "Gyakori, hogy valaki elfelejti beírni a megbeszélt időpontot, ami zavarokat és újraegyeztetést okoz."
+    - "Az időpontok gyakran változnak, ezért nehéz naprakészen tartani a naptárat vagy a jegyzeteket."

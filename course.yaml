@@ -1,0 +1,9 @@
+student:
+  name: "Nyitrai Dániel"
+  neptun: "D6NNMX"
+  id: "Nydani22"
+project:
+  title: "Időpont kereső webalkalmazás"
+  product_ml_features: false
+ai:
+  log_min_entries_per_sprint: 3

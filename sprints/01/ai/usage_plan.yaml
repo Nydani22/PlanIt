@@ -1,0 +1,14 @@
+goals:
+  - "Versenytárs-összehasonlítás és hiányosságuk elemzése."
+  - "Anonimizált interjú jegyzet készítése a hangfelvételek alapján."
+  - "Adatbázisok összehasonlítása, hogy melyiket lenne érdemes használni."
+operational_cadence:
+  check_in: "Heti két alkalommal értékelem az MI-eszközök által adott javaslatokat."
+  review_partner: "A konzulenssel sprintenként egyszer átbeszélem az MI által generált artefaktumokat."
+guardrails:
+  - "Személyes azonosító adatot nem továbbítok külső MI eszköz felé."
+  - "Minden generált tartalmat manuálisan ellenőrzök a felhasználás előtt."
+  - "Érzékeny interjúrészleteket anonimizálok, mielőtt MI-vel elemeztetem."
+tools:
+  - name: "ChatGPT"
+    use_cases: ["versenytárs elemzés", "hangfelvétel elemzés", "adatbázis kiválasztás"]

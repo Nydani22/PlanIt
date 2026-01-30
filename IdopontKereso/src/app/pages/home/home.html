@@ -1,0 +1,75 @@
+<div class="min-h-screen bg-gray-50 p-4 md:p-8">
+  <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+    
+    <div class="flex-1 bg-white rounded-xl shadow-lg overflow-hidden min-h-125">
+        <app-calendar-view class="w-full h-full"></app-calendar-view>
+    </div>
+
+    <div class="w-full lg:w-96 flex flex-col gap-6">
+      
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-lg font-bold mb-4 text-gray-700">Új Esemény</h3>
+        
+        <form [formGroup]="eventForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-3">
+            
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Esemény neve</mat-label>
+                <input matInput formControlName="eventName" placeholder="Pl. Megbeszélés">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Leírás</mat-label>
+                <textarea matInput formControlName="description" rows="3"></textarea>
+            </mat-form-field>
+
+            <div class="flex gap-2">
+                <mat-form-field appearance="outline" class="flex-1">
+                    <mat-label>Kezdés</mat-label>
+                    <input matInput [matDatepicker]="picker1" formControlName="startDate">
+                    <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+                    <mat-datepicker #picker1></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-24">
+                    <mat-label>Idő</mat-label>
+                    <input matInput type="time" formControlName="startTime">
+                </mat-form-field>
+            </div>
+
+            <div class="flex gap-2">
+                <mat-form-field appearance="outline" class="flex-1">
+                    <mat-label>Befejezés</mat-label>
+                    <input matInput [matDatepicker]="picker2" formControlName="endDate">
+                    <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+                    <mat-datepicker #picker2></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-24">
+                    <mat-label>Idő</mat-label>
+                    <input matInput type="time" formControlName="endTime">
+                </mat-form-field>
+            </div>
+
+            <button
+                type="submit"
+                class="w-full mt-2 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="eventForm.invalid">
+                Mentés
+            </button>
+
+            @if (successMessage()) {
+                <p class="text-green-600 text-center font-bold mt-2 text-sm animate-pulse">
+                    {{ successMessage() }}
+                </p>
+            }
+        </form>
+      </div>
+
+      <div class="bg-amber-300 rounded-xl p-6 shadow-lg min-h-37.5 flex items-center justify-center text-2xl font-bold text-amber-800">
+        03
+      </div>
+
+    </div>
+
+  </div>
+</div>

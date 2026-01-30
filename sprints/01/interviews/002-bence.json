@@ -1,0 +1,26 @@
+{
+  "id": "INT-002",
+  "date": "2025-10-27",
+  "method": "online",
+  "participant": {
+    "pseudonym": "Bence",
+    "segment": "Egyetemi hallgató / magántanár"
+  },
+  "consent": true,
+  "insights": [
+    "Az időpontok fejben tartása komoly kihívás, ezért papíralapú naplót használ, viszont ez nem mindig van nála, így könnyen duplikál programokat.",
+    "A közös egyeztetés több emberrel rendkívül időigényes, gyakran fél órát is igénybe vesz, amíg mindenki számára megfelelő időpontot találnak.",
+    "A résztvevő értékeli az átlátható, egyszerű kezelőfelületet, de ugyanakkor igényli a részletesebb, személyre szabható beállításokat is (pl. visszatérő időpontok, kapcsolódó személyek, témák)."
+  ],
+  "pain_points": [
+    "Gyakran előfordul, hogy másik programra szervez rá, mert nincs nála a jegyzetfüzete és fejben nem tudja tartani az időpontokat.",
+    "Az utolsó pillanatban történő lemondások (pl. diákok miatt) frusztrálóak és időveszteséget okoznak.",
+    "A digitális időpontkezelő alkalmazások gyakran túl bonyolultak vagy rosszul strukturáltak, emiatt használhatatlannak érzi őket."
+  ],
+  "quotes": [
+    "\"Rászerveztem egy programra egy másikat, mert totál elfelejtettem, hogy én akkor már megbeszéltem valakivel.\"",
+    "\"Három emberrel találkozzak, az egy hónapos egyeztetés után szokott sikerülni.\"",
+    "\"Volt, hogy már indultam volna itthonról, és ő akkor szólt, hogy nem jó.\"",
+    "\"Az lenne a jó, ha lenne egy alapminimalista dolog, amire ránézek, és látom, hogy aznap mit csinálok, de ha szeretném, részletesebben is meg tudnám nézni.\""
+  ]
+}

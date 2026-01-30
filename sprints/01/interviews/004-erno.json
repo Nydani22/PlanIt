@@ -1,0 +1,31 @@
+{
+  "id": "INT-004",
+  "date": "2025-10-27",
+  "method": "online",
+  "participant": {
+    "pseudonym": "Ernő",
+    "segment": "Háztartásbeli, aktív szervező típus"
+  },
+  "consent": true,
+  "insights": [
+    "A mindennapi rutinok — például háztartási feladatok vagy fix időpontok — könnyen kezelhetők, de az új vagy ritka események könnyen feledésbe merülhetnek.",
+    "Digitális naptárt és jegyzeteket használ, hogy ne felejtsen el semmit, illetve hogy a családtagok is lássák, mikor elfoglalt.",
+    "Az időpontok szervezését tudatosan, prioritások alapján végzi: ami fontos, azt előre veszi, a kevésbé fontos tevékenységeket inkább elhalasztja.",
+    "Több emberrel való egyeztetésnél rugalmasan igazodik a dolgozó vagy tanuló barátokhoz, mivel ő mobilisabb.",
+    "Fontos számára, hogy a digitális naptár színkódolt, átlátható, és közösen is használható legyen, de a magánélet védelme korlátokat szab a teljes megosztásnak."
+  ],
+  "pain_points": [
+    "Az újdonságokat könnyen el lehet felejteni, ha nincsenek azonnal feljegyezve.",
+    "A barátok különböző élethelyzetei (munka, iskola, váltott műszak, anyagi helyzet) miatt nehéz közös időpontot találni.",
+    "A közös események szervezése (pl. legény- vagy lánybúcsú) gyakran hónapokat vesz igénybe, és pénzügyi tényezők is befolyásolják.",
+    "A megosztott digitális naptárak korlátozottak, mivel a magánéleti eseményeket (pl. orvosi vizsgálatok) nem mindig szeretné mindenki megosztani.",
+    "A túlzsúfolt napirend miatt kevés idő marad pihenésre — a nap végére halasztja a szünetet."
+  ],
+  "quotes": [
+    "\"Akinek nincsen esze, legyen notesze.\"",
+    "\"Én mindig bezsúfolom, és én úgy vagyok, hogy valahogy majd a nap végén lesz a szünet.\"",
+    "\"Nyilván a barátok dolgoznak, tanulnak, nekik igazodni kell az ő ritmusukhoz. Én szoktam hozzájuk igazodni.\"",
+    "\"Azért szoktam beírni naptárba, hogy akkor a többiek is lássák, hogy hol vagyok, és miért ne zavarjanak.\"",
+    "\"Ha minden barátnőm ezt a programot használná, könnyebb lenne összeegyeztetni az időpontokat, de mindenkinek van magánélete is.\""
+  ]
+}

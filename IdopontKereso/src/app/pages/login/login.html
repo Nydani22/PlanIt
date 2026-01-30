@@ -1,0 +1,71 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Bejelentkezés</h2>
+            <p class="text-gray-500 text-sm mt-1">Kérlek, add meg az adataidat a folytatáshoz</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="login()" class="flex flex-col gap-4">      
+            
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Email cím</mat-label>
+                <input 
+                    matInput 
+                    formControlName="email" 
+                    (blur)="updateErrorMessage()"
+                    required 
+                    placeholder="pelda@email.hu"
+                />
+                <mat-icon matSuffix class="text-gray-400">email</mat-icon>
+                @if (email?.invalid && (email?.dirty || email?.touched)) {
+                    <mat-error>{{ errorMessage() }}</mat-error>
+                }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Jelszó</mat-label>
+                <input 
+                    matInput 
+                    [type]="hide() ? 'password' : 'text'" 
+                    formControlName="password" 
+                    required
+                />
+                <button
+                    mat-icon-button
+                    matSuffix
+                    (click)="clickEvent($event)"
+                    [attr.aria-label]="'Jelszó elrejtése'"
+                    [attr.aria-pressed]="hide()"
+                    type="button">
+                    <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                @if (password?.hasError('required')) {
+                    <mat-error>Jelszó megadása kötelező</mat-error>
+                }
+            </mat-form-field>
+
+            @if (errorMessage() && !email?.invalid) {
+                <div class="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-center text-sm font-medium">
+                    {{ errorMessage() }}
+                </div>
+            }
+
+            <button
+                class="w-full mt-2 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                type="submit" 
+                [disabled]="loginForm.invalid">
+                Bejelentkezés
+            </button>
+
+            <div class="mt-4 text-center text-sm text-gray-600">
+                <p>Nincs még fiókod? 
+                    <a routerLink="/register" class="text-amber-600 font-bold hover:underline hover:text-amber-700 cursor-pointer ml-1">
+                        Regisztrálj itt!
+                    </a>
+                </p>
+            </div>
+
+        </form>
+    </div>
+</div>

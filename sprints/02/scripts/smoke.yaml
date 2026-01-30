@@ -1,0 +1,6 @@
+base_url: http://localhost:5173
+steps:
+  - method: GET
+    path: "/"
+    expect_status: 200
+

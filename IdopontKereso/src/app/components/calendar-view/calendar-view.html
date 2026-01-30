@@ -1,0 +1,55 @@
+<div>
+    <div class="flex justify-between">
+        <div class="header">
+            <button class="bg-amber-300! shadow-2xl rounded-2xl! m-2" matButton mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate">Előző</button>
+            <button class="bg-amber-300! shadow-2xl rounded-2xl! m-2" matButton mwlCalendarToday [(viewDate)]="viewDate">Ma</button>
+            <button class="bg-amber-300! shadow-2xl rounded-2xl! m-2" matButton mwlCalendarNextView [view]="view" [(viewDate)]="viewDate">Következő</button>
+        </div>
+        <div class="content-center text-2xl font-bold">{{ viewDate | date:'yyyy MMM' }}</div>
+        <div>
+            <div>
+                <button
+                    class="bg-amber-300! shadow-2xl rounded-2xl! m-2" matButton
+                    (click)="setView(CalendarView.Month)"
+                    [class.active]="view === CalendarView.Month"
+                >
+                    Hónap
+                </button>
+                <button
+                    class="bg-amber-300! shadow-2xl rounded-2xl! m-2" matButton
+                    (click)="setView(CalendarView.Week)"
+                    [class.active]="view === CalendarView.Week"
+                >
+                    Hét
+                </button>
+                <button
+                    class="bg-amber-300! shadow-2xl rounded-2xl! m-2" matButton
+                    (click)="setView(CalendarView.Day)"
+                    [class.active]="view === CalendarView.Day"
+                >
+                    Nap
+                </button>
+            </div>
+        </div>
+    </div>
+    @switch (view) { @case (CalendarView.Month) {
+        <mwl-calendar-month-view
+            [viewDate]="viewDate"
+            [events]="events"
+            [refresh]="refresh"
+        />
+        } @case (CalendarView.Week) {
+        <mwl-calendar-week-view
+            [viewDate]="viewDate"
+            [events]="events"
+            [refresh]="refresh"
+        />
+        } @case (CalendarView.Day) {
+        <mwl-calendar-day-view
+            [viewDate]="viewDate"
+            [events]="events"
+            [refresh]="refresh"
+            (eventTimesChanged)="eventTimesChanged($event)"
+        />
+    } }
+</div>

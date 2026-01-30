@@ -1,0 +1,100 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Regisztráció</h2>
+            <p class="text-gray-500 text-sm mt-1">Hozz létre egy új fiókot pár lépésben</p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-3">
+            
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Felhasználónév</mat-label>
+                <input
+                    matInput
+                    formControlName="userName"
+                    type="text"
+                    required
+                    placeholder="jkovacs"
+                />
+                <mat-icon matSuffix class="text-gray-400">person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Teljes név</mat-label>
+                <input
+                    matInput
+                    formControlName="fullName"
+                    type="text"
+                    required
+                    placeholder="Kovács János"
+                />
+                <mat-icon matSuffix class="text-gray-400">badge</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Email cím</mat-label>
+                <input
+                    matInput
+                    placeholder="pat@example.com"
+                    formControlName="email"
+                    type="email"
+                    required
+                />
+                <mat-icon matSuffix class="text-gray-400">email</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Jelszó</mat-label>
+                <input matInput [type]="hide() ? 'password' : 'text'" formControlName="password" required/>
+                <button
+                    mat-icon-button
+                    matSuffix
+                    (click)="clickEvent($event)"
+                    [attr.aria-pressed]="hide()"
+                    type="button">
+                    <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Jelszó megerősítés</mat-label>
+                <input matInput [type]="hide2() ? 'password' : 'text'" formControlName="password2" required/>
+                <button
+                    mat-icon-button
+                    matSuffix
+                    (click)="clickEvent2($event)"
+                    [attr.aria-pressed]="hide2()"
+                    type="button">
+                    <mat-icon>{{hide2() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                
+                @if (registerForm.hasError('passwordMismatch') && registerForm.get('password2')?.touched) {
+                    <mat-error>A két jelszó nem egyezik!</mat-error>
+                }
+            </mat-form-field>
+
+            @if (errorMessage()) {
+                <div class="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-center text-sm font-medium">
+                    {{ errorMessage() }}
+                </div>
+            }
+
+            <button 
+                type="submit" 
+                class="w-full mt-2 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                [disabled]="registerForm.invalid">
+                Regisztráció
+            </button>
+
+            <div class="mt-4 text-center text-sm text-gray-600">
+                <p>Van már fiókod? 
+                    <a routerLink="/login" class="text-amber-600 font-bold hover:underline hover:text-amber-700 cursor-pointer ml-1">
+                        Lépj be itt
+                    </a>
+                </p>        
+            </div>
+            
+        </form>
+    </div>
+</div>

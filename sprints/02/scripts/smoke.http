@@ -1,0 +1,6 @@
+GET http://localhost:5173/
+Accept: text/html
+
+###
+# Várt: 200
+

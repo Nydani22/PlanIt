@@ -1,0 +1,28 @@
+{
+  "id": "INT-003",
+  "date": "2025-10-27",
+  "method": "online",
+  "participant": {
+    "pseudonym": "Dorka",
+    "segment": "Egyetemista / tanár / elfoglalt fiatal felnőtt"
+  },
+  "consent": true,
+  "insights": [
+    "Az időpontokat csak akkor tudja fejben tartani, ha azonnal rögzíti — különben teljesen elfelejti, ezért több ébresztőt is beállít emlékeztetőként.",
+    "A több emberrel való egyeztetés (különböző órarendek, munkaidők miatt) rendkívül időigényes és kaotikus, sokszor heteket vagy hónapokat vesz igénybe.",
+    "Egy hatékony időpontkezelő eszköztől gyors rögzítést, hangos emlékeztetést és jól látható, színkódolt szervezést vár el."
+  ],
+  "pain_points": [
+    "Ha nem azonnal jegyzi fel az egyeztetett időpontot, szinte biztosan elfelejti — ez rendszeres probléma.",
+    "Papíralapú naptárban vagy füzetben való jegyzetelés nála nem működik, mert később nem találja meg, hová írta.",
+    "Az egyeztetések gyakran meghiúsulnak vagy eltolódnak, és új időpontot találni hosszú, frusztráló folyamat.",
+    "A digitális emlékeztetők túl halkak vagy könnyen figyelmen kívül hagyhatók, ezért hatástalanok számára."
+  ],
+  "quotes": [
+    "\"Ha nem azonnal kerül rögzítésre, akkor nagyon hamar el is felejtem, hogy rögzítsem.\"",
+    "\"Ha nem állítok be vagy 40 ezer ébresztőt, meg akkor is elfelejtem.\"",
+    "\"Katasztrofálisan nem tudjuk összeegyeztetni az időpontjainkat, hónapokkal előre kell beszélnünk.\"",
+    "\"Nekem az kell, hogy reklamáljon nekem hangosan, mint egy ébresztőóra.\"",
+    "\"Ha nem tudom elég hamar rögzíteni a dolgokat, akkor azt is elfelejtem, hogy rögzítenem kéne.\""
+  ]
+}

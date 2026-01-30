@@ -1,0 +1,32 @@
+{
+  "id": "INT-005",
+  "date": "2025-10-27",
+  "method": "online",
+  "participant": {
+    "pseudonym": "Flóra",
+    "segment": "Tanár / magántanár, sok párhuzamos időponttal"
+  },
+  "consent": true,
+  "insights": [
+    "A sokféle, eltérő helyszínű és típusú program (iskolai, egyetemi, magánórák) miatt rendkívül nehéz fejben tartani az időpontokat – jegyzetelés nélkül gyorsan szétesik a rendszer.",
+    "A logisztikai tényezők (helyszínek, utazási idők) alapvetően meghatározzák az időpontválasztást – nem elég csak az időt, a helyet is figyelembe kell venni.",
+    "Papír alapú rendszert használ (tanári napló), mert az gyorsabb, átláthatóbb és színekkel jobban kezelhető számára, mint a digitális naptárak.",
+    "A digitális naptárakat (Google Calendar, Notion) próbálta, de a mobilos elérhetőség, átláthatóság és beviteli sebesség hiánya miatt elvetette őket.",
+    "A több emberrel való egyeztetés sok időt igényel (akár teljes napot is), különösen, ha sokféle élethelyzetű diák időpontjait kell összehangolni.",
+    "Szüksége lenne egy olyan alkalmazásra, amely gyorsan használható, reklámmentes, mobilon elérhető, színkódolt és egyben mutatja a napi/heti teendőket."
+  ],
+  "pain_points": [
+    "Gyakran elfelejti a megbeszélt időpontokat, ha nincs kéznél a füzet, amibe fel tudná írni.",
+    "A különböző élethelyzetű tanítványok időbeosztása miatt nehéz közös időpontokat találni.",
+    "Az online naptárak nem eléggé vizuálisak vagy túl bonyolultak, mobilon pedig kényelmetlen a használatuk.",
+    "Reklámok és zavaró felugró tartalmak miatt a legtöbb alkalmazás használhatatlanná válik.",
+    "A hirtelen változások (lemondások, átszervezések) stresszt és időveszteséget okoznak."
+  ],
+  "quotes": [
+    "\"Ha nincs nálam az a füzetem, amiben mindent vezetek, akkor teljesen szétcsúszik, és elfelejtem, kinek mit ígértem.\"",
+    "\"Nem elég csak az időpontot nézni, azt is, hogy honnan hova kell menni, mert volt, hogy lehetetlenség volt időben hazaérni.\"",
+    "\"Próbáltam már online alkalmazásokat, de egyik sem vált be. Nekem sokkal tovább tart bepötyögni, mint leírni kézzel.\"",
+    "\"Reklámokkal teli app számomra használhatatlan – ha rohanok, nem akarok 10 másodpercig várni, amíg átugorható a videó.\"",
+    "\"Fontos, hogy színekkel lássam a programokat, egyben az egész napot, és gyorsan hozzáférjek telefonról is.\""
+  ]
+}

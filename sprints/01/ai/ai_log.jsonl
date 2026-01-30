@@ -1,0 +1,3 @@
+{"date":"2025-10-17","tool":"ChatGPT","task":"competitor_analysis","decision":"accepted","artifacts":["sprints/01/market/competitors.csv"],"notes": "Elemzést kértem a konkurenciáról, hogy elkerüljem a hosszas tesztelést, illetve ne kelljen fizetni a prémium funkciókért."}
+{"date":"2025-10-17","tool":"ChatGPT","task":"interview_questions","decision":"accepted","artifacts":["sprints/01/interviews/.json"],"notes":"Nem volt elég saját kérdésem, így generáltattam még 3 nem rávezető sablon kérdést."}
+{"date":"2025-10-19","tool":"ChatGPT","task":"tech-choice","decision":"accepted","artifacts":["sprints/01/architecture/adr/0001-first-tech-choice.md"],"notes":"Nem tudtam eldönteni, melyik adatbázis használjam és melyik könnyebb integárlni."}

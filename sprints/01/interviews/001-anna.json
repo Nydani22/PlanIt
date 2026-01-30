@@ -1,0 +1,25 @@
+{
+  "id": "INT-001",
+  "date": "2025-10-27",
+  "method": "online",
+  "participant": {
+    "pseudonym": "Anna",
+    "segment": "Hallgató / fiatal felnőtt"
+  },
+  "consent": true,
+  "insights": [
+    "A résztvevő számára nehéz fejben tartani az időpontokat, ezért külső emlékeztetőre (naptár, jegyzet) támaszkodik.",
+    "A döntéshozatalnál fontos szempont a helyszín és az utazási idő, ami befolyásolja, hogy el tud-e jutni a programra.",
+    "A közös időpont-egyeztetés rendszerint elhúzódik, még kis létszámú csoport esetén is, mert nehéz mindenkihez igazodni."
+  ],
+  "pain_points": [
+    "Gyakran elfelejti felírni az időpontokat, ami feledékenységből kimaradásokhoz vezet.",
+    "Sokszor előfordul, hogy az utolsó pillanatban módosítani kell az időpontot valamilyen közbejövő esemény miatt.",
+    "A közös időpont kiválasztása több ember között manuális és időigényes (papíron, egyesével egyeztetve)."
+  ],
+  "quotes": [
+    "\"Ha nem írom le valahová, akkor nagyon ritka, hogy megmarad az info.\"",
+    "\"Eddig őszintén sosem sikerült hamar előre gyűlőre jutni, akár csak két emberről legyen szó.\"",
+    "\"Mindannyian leírtuk egy papírkára, hogy mikor jó az időpont, és akkor kiválasztottuk a középutat.\""
+  ]
+}

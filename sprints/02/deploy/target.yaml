@@ -1,0 +1,16 @@
+type: static_hosting
+build:
+  command: "npm ci && npm run build"
+  artifacts: ["dist"]
+serve:
+  command: "npm run preview"
+  base_url: "http://localhost:5173"
+smoke:
+  path: "/"
+  expect_status: 200
+iac:
+  tool: "terraform"
+  dir: "infra/terraform"
+  plan_out: "infra/terraform/plan.out"
+notes: "Rövid indoklás a választásról"
+

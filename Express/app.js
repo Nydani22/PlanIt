@@ -4,13 +4,20 @@ const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/auth'); 
 const eventRoutes = require('./src/routes/events');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
 
 const app = express();
 
 connectDB();
 
-
-app.use(cors());
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 

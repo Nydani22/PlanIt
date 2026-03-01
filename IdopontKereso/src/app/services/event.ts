@@ -6,6 +6,7 @@ import { Auth } from './auth';
 @Injectable({
   providedIn: 'root'
 })
+
 export class Event {
   private apiUrl = 'http://localhost:3000/api/events';
 

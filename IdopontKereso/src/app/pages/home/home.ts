@@ -36,7 +36,6 @@ export class Home {
   }
 
   onSubmit() {
-    // 1. Biztonsági ellenőrzés
     if (!this.authService.getToken()) {
       this.router.navigate(['/login']);
       return;

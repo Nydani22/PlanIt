@@ -8,7 +8,7 @@ import { Auth } from './services/auth';
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, MatButtonModule, MatIconModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.scss'
 })
 export class App {
   protected readonly title = signal('IdopontKereso');

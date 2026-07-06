@@ -1,0 +1,48 @@
+@use '@angular/material' as mat;
+
+@import url("tailwindcss");
+@import url("../node_modules/angular-calendar/css/angular-calendar.css");
+
+@include mat.core();
+
+$tailwind-amber-300-palette: (
+  100: #fde68a,
+  500: #fcd34d,
+  700: #fbbf24,
+  contrast: (
+    100: rgba(0, 0, 0, 0.87),
+    500: rgba(0, 0, 0, 0.87),
+    700: rgba(0, 0, 0, 0.87)
+  )
+);
+
+$tailwind-amber-900-palette: (
+  100: #92400e,
+  500: #78350f,
+  700: #451a03,
+  contrast: (
+    100: #ffffff,
+    500: #ffffff,
+    700: #ffffff
+  )
+);
+
+$my-primary: mat.m2-define-palette($tailwind-amber-300-palette, 500); 
+$my-accent: mat.m2-define-palette($tailwind-amber-900-palette, 500);
+$my-warn: mat.m2-define-palette(mat.$m2-red-palette);
+
+
+$my-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $my-primary,
+    accent: $my-accent,
+    warn: $my-warn,
+  )
+));
+
+@include mat.all-component-themes($my-theme);
+
+body {
+  margin: 0;
+  min-height: 100%;
+}

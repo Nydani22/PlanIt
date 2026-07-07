@@ -2,13 +2,12 @@ const eventService = require('../services/event.service');
 
 exports.createEvent = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const savedEvent = await eventService.createEvent(req.body, userId);
+        const userId = req.user.id; 
+        const event = await eventService.createEvent(req.body, userId);
         
-        res.status(201).json({ message: 'Esemény sikeresen létrehozva!', event: savedEvent });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Hiba történt az esemény mentésekor.' });
+        res.status(201).json(event);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -17,9 +16,81 @@ exports.getUserEvents = async (req, res) => {
         const userId = req.user.id;
         const events = await eventService.getUserEvents(userId);
         
-        res.json(events);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Hiba az események lekérésekor.' });
+        res.status(200).json(events);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.findOne = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const eventId = req.params.id;
+        
+        const event = await eventService.getEventById(eventId, userId);
+        
+        if (!event) {
+            return res.status(404).json({ message: 'Esemény nem található, vagy nincs hozzá jogosultságod.' });
+        }
+        
+        res.status(200).json(event);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.update = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const eventId = req.params.id;
+        
+        const updatedEvent = await eventService.updateEvent(eventId, userId, req.body);
+        
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Esemény nem található, vagy nem te vagy a szervezője.' });
+        }
+        
+        res.status(200).json(updatedEvent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.delete = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const eventId = req.params.id;
+        
+        const deletedEvent = await eventService.deleteEvent(eventId, userId);
+        
+        if (!deletedEvent) {
+            return res.status(404).json({ message: 'Esemény nem található, vagy nem te vagy a szervezője.' });
+        }
+        
+        res.status(200).json({ message: 'Esemény sikeresen törölve.' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.updateStatus = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const eventId = req.params.id;
+        const { status } = req.body;
+        
+        if (!status) {
+            return res.status(400).json({ message: 'A státusz megadása kötelező!' });
+        }
+
+        const updatedEvent = await eventService.updateAttendeeStatus(eventId, userId, status);
+        
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Esemény nem található, vagy nem vagy meghívva.' });
+        }
+        
+        res.status(200).json(updatedEvent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };

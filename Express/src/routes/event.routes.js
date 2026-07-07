@@ -5,5 +5,9 @@ const authenticateToken = require('../middleware/authenticateToken');
 
 router.post('/create', authenticateToken, eventController.createEvent);
 router.get('/', authenticateToken, eventController.getUserEvents);
+router.get('/:id', authenticateToken, eventController.findOne);
+router.put('/:id', authenticateToken, eventController.update);
+router.delete('/:id', authenticateToken, eventController.delete);
+router.patch('/:id/status', authenticateToken, eventController.updateStatus);
 
 module.exports = router;

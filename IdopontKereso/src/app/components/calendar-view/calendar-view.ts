@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CalendarModule, CalendarEvent, CalendarView, CalendarEventTimesChangedEvent } from 'angular-calendar';
 import { MatButton, MatButtonModule } from "@angular/material/button";
 import { Subject } from 'rxjs';
-import { Event } from '../../services/event';
-import { Auth } from '../../services/auth';
+import { EventService } from '../../services/event/event.service';
+import { AuthService } from '../../services/auth/auth.service';
 
 @Component({
   selector: 'app-calendar-view',
@@ -14,17 +14,14 @@ import { Auth } from '../../services/auth';
   styleUrl: './calendar-view.css'
 })
 export class CalendarViewComponent implements OnInit {
+  private eventService = inject(EventService);
+  private authService = inject(AuthService);
   view: CalendarView = CalendarView.Week;
   viewDate: Date = new Date();
   refresh = new Subject<void>();
   CalendarView = CalendarView;
   
   events: CalendarEvent[] = [];
-
-  constructor(
-    private eventService: Event,
-    private authService: Auth
-  ) {}
 
   ngOnInit(): void {
     if (this.authService.getToken()) {

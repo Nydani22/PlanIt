@@ -5,10 +5,10 @@ import { routes } from './app.routes';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { AuthInterceptor } from './services/auth.interceptor';
-import { Auth } from './services/auth';
+import { AuthInterceptor } from './services/auth/auth.interceptor';
+import { AuthService } from './services/auth/auth.service';
 
-function initializeApp(authService: Auth) {
+function initializeApp(authService: AuthService) {
   return () => authService.initAuth();
 }
 
@@ -18,7 +18,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
-      deps: [Auth],
+      deps: [AuthService],
       multi: true
     },
     provideBrowserGlobalErrorListeners(),

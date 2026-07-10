@@ -17,8 +17,7 @@ exports.createGroup = async (groupData, userId) => {
 };
 
 exports.getUserGroups = async (userId) => {
-    return await Group.find({ 'members.userId': userId })
-                      .sort({ createdAt: -1 }); // Legújabbak elöl
+    return await Group.find({ 'members.userId': userId }).sort({ createdAt: -1 });
 };
 
 exports.getGroupById = async (groupId, userId) => {

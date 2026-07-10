@@ -1,0 +1,103 @@
+<div class="max-w-4xl mx-auto p-4 mt-6">
+  
+  @if (isLoading()) {
+    <div class="flex justify-center items-center h-64">
+      <p class="text-gray-500 text-lg">Csoportok betöltése...</p>
+    </div>
+  } @else if (myGroups.length === 0) {
+    <div class="text-center p-8 bg-white rounded-lg shadow-sm">
+      <mat-icon class="text-gray-400 text-6xl mb-4" style="height: 60px; width: 60px;">group_off</mat-icon>
+      <h2 class="text-xl font-semibold text-gray-700">Még nincsenek csoportjaid</h2>
+      <p class="text-gray-500 mb-4">Hozz létre egy új csoportot, hogy közösen kezelhesd az eseményeket!</p>
+      <button mat-flat-button color="primary">Új csoport létrehozása</button>
+    </div>
+  } @else {
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-white p-4 rounded-lg shadow-sm">
+      <div class="w-full sm:w-1/2">
+        <p class="text-sm text-gray-500 mb-1 m-0">Kiválasztott csoport:</p>
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-select [ngModel]="selectedGroupId" (ngModelChange)="onGroupSelect($event)">
+            @for (g of myGroups(); track g._id) {
+              <mat-option [value]="g._id">{{ g.groupName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      
+      <button mat-flat-button color="primary">
+        <mat-icon>add</mat-icon> Új csoport
+      </button>
+    </div>
+
+    @if (group()) {
+      
+      <mat-card class="mb-6">
+        <mat-card-header class="flex justify-between items-center w-full mb-4">
+          <div>
+            <mat-card-title class="text-2xl font-bold">{{ group()?.groupName }}</mat-card-title>
+            <mat-card-subtitle>{{ group()?.description }}</mat-card-subtitle>
+          </div>
+          @if (isAdmin()) {
+            <button mat-icon-button color="primary">
+              <mat-icon>edit</mat-icon>
+            </button>
+          }
+        </mat-card-header>
+      </mat-card>
+
+      <mat-card class="mb-6">
+        <mat-card-header class="mb-4">
+          <mat-card-title>Csoport tagjai ({{ group()?.members?.length || 0 }})</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="flex flex-col gap-4">
+            @for (member of group()?.members; track member.userId._id) {
+              <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                <div class="flex items-center gap-3">
+                  <mat-icon color="primary">person</mat-icon>
+                  <div>
+                    <p class="font-semibold m-0">{{ member.userId.fullName || member.userId.userName }}</p>
+                    <p class="text-xs text-gray-500 m-0">Csatlakozott: {{ member.joinedAt | date:'mediumDate' }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  @if (isAdmin() && member.userId._id !== currentUserId) {
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-select [ngModel]="member.role" (ngModelChange)="updateRole(member.userId._id, $event)">
+                        <mat-option value="ADMIN">Admin</mat-option>
+                        <mat-option value="MEMBER">Tag</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    <button mat-icon-button color="warn" (click)="removeMember(member.userId._id)">
+                      <mat-icon>person_remove</mat-icon>
+                    </button>
+                  } @else {
+                    <span class="px-3 py-1 bg-gray-200 rounded-full text-sm font-medium">
+                      {{ member.role === 'ADMIN' ? 'Admin' : 'Tag' }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      @if (isAdmin()) {
+        <mat-card class="border-red-500 border-2">
+          <mat-card-header>
+            <mat-card-title class="text-red-600">Veszélyzóna</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="pt-4 flex justify-between items-center">
+            <p class="m-0 text-gray-700">A csoport törlése végleges, az adatok nem visszaállíthatók.</p>
+            <button mat-raised-button color="warn" (click)="deleteGroup()">
+              <mat-icon>delete_forever</mat-icon>
+              Csoport törlése
+            </button>
+          </mat-card-content>
+        </mat-card>
+      }
+
+    }
+  }
+</div>

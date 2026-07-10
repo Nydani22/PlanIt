@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Auth } from './auth';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 
-export class Event {
+export class EventService {
   private apiUrl = 'http://localhost:3000/api/events';
 
-  constructor(private http: HttpClient, private authService: Auth) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   createEvent(eventData: any): Observable<any> {
     const token = this.authService.getToken();

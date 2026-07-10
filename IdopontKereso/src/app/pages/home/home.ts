@@ -6,8 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { Event } from '../../services/event';
-import { Auth } from '../../services/auth';
+import { EventService } from '../../services/event/event.service';
+import { AuthService } from '../../services/auth/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -24,7 +24,7 @@ export class Home {
   
   @ViewChild(CalendarViewComponent) calendar!: CalendarViewComponent;
 
-  constructor(private fb: FormBuilder, private eventService: Event, private authService: Auth, private router: Router) {
+  constructor(private fb: FormBuilder, private eventService: EventService, private authService: AuthService, private router: Router) {
     this.eventForm = this.fb.group({
       eventName: ['', Validators.required],
       description: ['', Validators.required],

@@ -1,11 +1,11 @@
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Auth } from './auth';
+import { AuthService } from './auth.service';
 import { catchError, EMPTY, switchMap, throwError } from 'rxjs';
 
 
 export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(Auth);
+  const authService = inject(AuthService);
   const token = authService.getToken();
 
   if (req.url.includes('/refresh') || req.url.includes('/login')) {

@@ -1,22 +1,16 @@
 import { Component, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { Auth } from './services/auth';
+import { Router, RouterOutlet } from '@angular/router';
+import { AuthService } from './services/auth/auth.service';
+import { Navbar } from './components/navbar/navbar';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, MatButtonModule, MatIconModule],
+  imports: [RouterOutlet, Navbar],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
   protected readonly title = signal('IdopontKereso');
-
-  constructor(public authService: Auth, private router: Router) {}
-
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
 }

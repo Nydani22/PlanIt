@@ -1,0 +1,99 @@
+<mat-dialog-content class="mat-typography">
+  <mat-stepper orientation="horizontal" [linear]="true" #stepper>
+    
+    <mat-step [stepControl]="basicFormGroup">
+      <form [formGroup]="basicFormGroup">
+        <ng-template matStepLabel>Alapadatok</ng-template>
+        
+        <div class="flex flex-col gap-4 mt-4">
+          <p class="text-gray-600 m-0">Adj egy beszédes nevet a csoportodnak!</p>
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Csoport neve</mat-label>
+            <input matInput formControlName="groupName" placeholder="pl. Családi naptár" required>
+            @if (basicFormGroup.get('groupName')?.hasError('required')) {
+              <mat-error>A csoport neve kötelező!</mat-error>
+            }
+            @if (basicFormGroup.get('groupName')?.hasError('minlength')) {
+              <mat-error>Legalább 3 karakter hosszúnak kell lennie.</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="flex justify-end gap-2 mt-4">
+            <button mat-button type="button" (click)="onCancel()">Mégse</button>
+            <button mat-flat-button color="primary" matStepperNext [disabled]="basicFormGroup.invalid">
+              Tovább
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-step>
+
+    <mat-step [stepControl]="detailsFormGroup">
+      <form [formGroup]="detailsFormGroup">
+        <ng-template matStepLabel>Részletek</ng-template>
+        
+        <div class="flex flex-col gap-4 mt-4">
+          <p class="text-gray-600 m-0">Írd le röviden, miről fog szólni ez a csoport. (Opcionális)</p>
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Leírás</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Itt szervezzük a hétvégi programokat..."></textarea>
+          </mat-form-field>
+
+          <div class="flex justify-end gap-2 mt-4">
+            <button mat-button type="button" matStepperPrevious>Vissza</button>
+            <button mat-flat-button color="primary" matStepperNext>
+              Áttekintés
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-step>
+
+    <mat-step>
+      <ng-template matStepLabel>Kész</ng-template>
+      
+      <div class="flex flex-col gap-4 mt-4 text-center">
+        
+        @if (!isCreated()) {
+          <mat-icon class="text-blue-500 mx-auto" style="height: 48px; width: 48px; font-size: 48px;">fact_check</mat-icon>
+          <h3 class="text-lg font-semibold m-0">Minden készen áll!</h3>
+          <p class="text-gray-600">Nézd át az adatokat, és kattints a létrehozásra.</p>
+          
+          <div class="flex justify-between mt-4">
+            <button mat-button type="button" matStepperPrevious [disabled]="isSubmitting()">Vissza</button>
+            <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Létrehozás...' : 'Csoport létrehozása' }}
+            </button>
+          </div>
+        } @else {
+          <mat-icon class="text-green-500 mx-auto" style="height: 48px; width: 48px; font-size: 48px;">check_circle</mat-icon>
+          <h3 class="text-lg font-semibold m-0">Csoport sikeresen létrehozva!</h3>
+          <p class="text-gray-600 m-0">Oszd meg az alábbi linket vagy QR kódot a tagokkal:</p>
+          
+          <div class="p-3 bg-gray-50 border rounded-lg flex flex-col items-center gap-2 mt-2">
+            
+            <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + inviteUrl()" 
+                 alt="Meghívó QR Kód" 
+                 class="w-28 h-28 border p-1 bg-white shadow-sm rounded">
+            
+            <div class="flex items-center gap-2 w-full justify-center mt-1">
+              <span class="bg-white px-3 py-2 border rounded text-sm text-gray-700 truncate max-w-[200px] sm:max-w-[300px]">
+                {{ inviteUrl() }}
+              </span>
+              <button mat-icon-button color="primary" (click)="copyInviteLink()" title="Link másolása">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex justify-center mt-2">
+            <button mat-flat-button color="primary" (click)="onCloseSuccess()">Kész és Bezárás</button>
+          </div>
+        }
+      </div>
+    </mat-step>
+
+  </mat-stepper>
+</mat-dialog-content>

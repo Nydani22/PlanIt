@@ -93,7 +93,6 @@ export class AuthService {
     );
   }
 
-  // JAVÍTVA: Csak akkor írunk a localStorage-be, ha böngészőben fut a kód
   setToken(token: string | null | undefined): void {
     if (isPlatformBrowser(this.platformId)) {
       if (token && token !== 'undefined' && typeof token === 'string' && token.length > 10) {
@@ -102,7 +101,6 @@ export class AuthService {
     }
   }
   
-  // JAVÍTVA: Szerveren null-t adunk vissza, különben kiolvassuk a localStorage-ből
   getToken(): string | null {
     if (isPlatformBrowser(this.platformId)) {
       return localStorage.getItem('token');
@@ -112,8 +110,6 @@ export class AuthService {
 
   getCurrentUserId(): string {
     const token = this.getToken();
-    
-    // Ha nincs token (pl. SSR alatt, mert ott a getToken null-t ad), egyből kilépünk
     if (!token) {
       return '';
     }
@@ -130,8 +126,6 @@ export class AuthService {
     }
   }
 
-  // JAVÍTVA: Az egész logout folyamatot védjük, mert a `window.location` is 
-  // hibát dobna az SSR (Node.js) szerveren.
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('token');

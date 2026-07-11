@@ -9,7 +9,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { GroupService } from '../../services/group/group.service';
 import { AuthService } from '../../services/auth/auth.service';
-import { Group } from '../../models/group.model';
+import { Group, GroupMember } from '../../models/group.model';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { GroupCreateModalComponent } from '../../components/group-create-modal/group-create-modal';
 
 @Component({
   selector: 'app-groups',
@@ -21,7 +23,8 @@ import { Group } from '../../models/group.model';
     MatIconModule, 
     MatSelectModule, 
     MatDividerModule,
-    FormsModule
+    FormsModule,
+    MatDialogModule
   ],
   templateUrl: './groups.html',
   styleUrl: './groups.scss',
@@ -30,6 +33,7 @@ export class Groups implements OnInit {
   private router = inject(Router);
   private groupService = inject(GroupService);
   private authService = inject(AuthService);
+  private dialog = inject(MatDialog);
 
   myGroups = signal<Group[]>([]);
   selectedGroupId = signal<string>('');
@@ -67,13 +71,36 @@ export class Groups implements OnInit {
     this.loadGroupDetails(groupId);
   }
 
+  copyInviteLink() {
+    const groupId = this.selectedGroupId();
+    if (!groupId) return;
+    const inviteUrl = `${window.location.origin}/join/${groupId}`;
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      alert(`Meghívó link sikeresen másolva!\n${inviteUrl}`);
+    }).catch(err => {
+      console.error('Nem sikerült a vágólapra másolni:', err);
+    });
+  }
+
+  openCreateModal() {
+  const dialogRef = this.dialog.open(GroupCreateModalComponent, {
+    width: '600px',
+    disableClose: true
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result) {
+      this.loadAllGroups();
+    }
+  });
+}
+
   loadGroupDetails(groupId: string) {
     this.groupService.getGroupById(groupId).subscribe({
       next: (data) => {
         this.group.set(data);
-        
         const currentUserMember = this.group()?.members.find(
-          (m: any) => m.userId._id === this.currentUserId
+          (m: GroupMember) => m.userId._id === this.currentUserId
         );
         this.isAdmin.set(currentUserMember?.role === 'ADMIN');
       },
@@ -101,12 +128,11 @@ export class Groups implements OnInit {
   }
 
   deleteGroup() {
-    if (!this.isAdmin() || !this.group()) return;
-    
     const currentGroup = this.group();
-    const groupNameCheck = prompt(`A törléshez írd be a csoport nevét: ${currentGroup?.groupName}`);
+    if (!this.isAdmin() || !currentGroup) return;
+    const groupNameCheck = prompt(`A törléshez írd be a csoport nevét: ${currentGroup.groupName}`);
     
-    if (groupNameCheck === currentGroup?.groupName) {
+    if (groupNameCheck === currentGroup.groupName) {
       this.groupService.deleteGroup(this.selectedGroupId()).subscribe({
         next: () => {
           this.group.set(null);

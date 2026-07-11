@@ -11,7 +11,7 @@ const groupSchema = new mongoose.Schema({
     joinedAt: { type: Date, default: Date.now }
   }]
 }, { 
-  timestamps: true 
+  timestamps: true
 });
 
 module.exports = mongoose.model('Group', groupSchema);

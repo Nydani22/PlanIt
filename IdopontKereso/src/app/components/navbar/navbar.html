@@ -12,6 +12,15 @@
       </li>
       <li class="flex gap-2">
         @if (authService.getToken()) {
+            
+            <button mat-icon-button color="accent" [matMenuTriggerFor]="notificationMenu"
+                    class="flex items-center justify-center leading-none m-0 p-0"
+                    [matBadge]="notificationService.unreadCount()" 
+                    matBadgeColor="warn" 
+                    [matBadgeHidden]="notificationService.unreadCount() === 0">
+                <mat-icon>notifications</mat-icon>
+            </button>
+
             <button mat-icon-button color="accent" routerLink="/profil"
                 class="flex items-center justify-center leading-none m-0 p-0">
                 <mat-icon>person</mat-icon>
@@ -28,6 +37,43 @@
             </button>
         }
       </li>
-
   </ul>
 </nav>
+
+<mat-menu #notificationMenu="matMenu" class="w-80 max-w-[90vw]">
+  
+  <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100" (click)="$event.stopPropagation()">
+    <h3 class="m-0 text-base font-semibold">Értesítések</h3>
+    @if (notificationService.unreadCount() > 0) {
+      <button mat-button color="primary" class="text-sm" (click)="markAllAsRead($event)">
+        Összes olvasott
+      </button>
+    }
+  </div>
+
+  <div class="max-h-96 overflow-y-auto">
+    @if (notificationService.notifications().length === 0) {
+      <div class="p-6 text-center text-gray-500">
+        <mat-icon class="opacity-50 mb-2">notifications_off</mat-icon>
+        <p class="m-0 text-sm">Nincsenek új értesítéseid.</p>
+      </div>
+    } @else {
+      @for (notif of notificationService.notifications(); track notif._id) {
+        
+        <button mat-menu-item 
+                (click)="onNotificationClick(notif._id)" 
+                [ngClass]="{'bg-blue-50/50': !notif.isRead}">
+          <div class="flex flex-col py-1 whitespace-normal leading-tight">
+            <span class="text-sm text-gray-800" [ngClass]="{'font-semibold': !notif.isRead}">
+              {{ notif.message }}
+            </span>
+            <span class="text-xs text-gray-500 mt-1">
+              {{ notif.createdAt | date:'short' }}
+            </span>
+          </div>
+        </button>
+        
+      }
+    }
+  </div>
+</mat-menu>

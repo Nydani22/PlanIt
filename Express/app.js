@@ -18,7 +18,7 @@ connectDB();
 
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:4200',
+  origin: process.env.FRONTEND_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -36,15 +36,8 @@ const PORT = process.env.PORT || 3000;
 const io = socketUtil.init(server);
 
 io.on('connection', (socket) => {
-  console.log('Új Socket kapcsolat:', socket.id);
-  
   socket.on('authenticate', (userId) => {
     socket.join(userId);
-    console.log(`User ${userId} feliratkozott a valós idejű értesítésekre.`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Socket lecsatlakozott:', socket.id);
   });
 });
 

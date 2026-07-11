@@ -48,8 +48,9 @@
               Meghívó link
             </button>
 
-            @if (isAdmin()) {
-              <button mat-icon-button color="primary">
+            @if (isAdmin() || isOwner()) {
+              <button mat-icon-button color="primary"
+                class="flex items-center justify-center leading-none m-0 p-0">
                 <mat-icon>edit</mat-icon>
               </button>
             }
@@ -64,7 +65,8 @@
         <mat-card-content>
           <div class="flex flex-col gap-4">
             @for (member of group()?.members || []; track member.userId._id) {
-              <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+              <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50 min-h-[84px]">
+                
                 <div class="flex items-center gap-3">
                   <mat-icon color="primary">person</mat-icon>
                   <div>
@@ -72,21 +74,27 @@
                     <p class="text-xs text-gray-500 m-0">Csatlakozott: {{ member.joinedAt | date:'mediumDate' }}</p>
                   </div>
                 </div>
+                
                 <div class="flex items-center gap-2">
-                  @if (isAdmin() && member.userId._id !== currentUserId) {
-                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  
+                  @if (isOwner() && member.userId._id !== currentUserId) {
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-32">
                       <mat-select [ngModel]="member.role" (ngModelChange)="updateRole(member.userId._id, $event)">
                         <mat-option value="ADMIN">Admin</mat-option>
                         <mat-option value="MEMBER">Tag</mat-option>
                       </mat-select>
                     </mat-form-field>
-                    <button mat-icon-button color="warn" (click)="removeMember(member.userId._id)">
-                      <mat-icon>person_remove</mat-icon>
-                    </button>
                   } @else {
                     <span class="px-3 py-1 bg-gray-200 rounded-full text-sm font-medium">
-                      {{ member.role === 'ADMIN' ? 'Admin' : 'Tag' }}
+                      {{ member.role === 'OWNER' ? 'Tulajdonos' : (member.role === 'ADMIN' ? 'Admin' : 'Tag') }}
                     </span>
+                  }
+
+                  @if ((isOwner() || (isAdmin() && member.role === 'MEMBER')) && member.userId._id !== currentUserId) {
+                    <button mat-icon-button color="warn" (click)="removeMember(member.userId._id)"
+                      class="flex items-center justify-center leading-none m-0 p-0">
+                      <mat-icon>person_remove</mat-icon>
+                    </button>
                   }
                 </div>
               </div>
@@ -95,21 +103,22 @@
         </mat-card-content>
       </mat-card>
 
-      @if (isAdmin()) {
+      @if (isOwner()) {
         <mat-card class="border-red-500 border-2">
           <mat-card-header>
-            <mat-card-title class="text-red-600">Veszélyzóna</mat-card-title>
+            <mat-card-title class="text-red-600">Csoport megszüntetése</mat-card-title>
           </mat-card-header>
-          <mat-card-content class="pt-4 flex justify-between items-center">
-            <p class="m-0 text-gray-700">A csoport törlése végleges, az adatok nem visszaállíthatók.</p>
-            <button mat-raised-button color="warn" (click)="deleteGroup()">
-              <mat-icon>delete_forever</mat-icon>
-              Csoport törlése
-            </button>
+          <mat-card-content class="pt-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+              <p class="m-0 text-gray-700">A csoport törlése végleges, az adatok nem visszaállíthatók.</p>
+              <button mat-raised-button color="warn" class="self-end sm:self-auto" (click)="deleteGroup()">
+                <mat-icon>delete_forever</mat-icon>
+                Csoport törlése
+              </button>
+            </div>
           </mat-card-content>
         </mat-card>
       }
-
     }
   }
 </div>

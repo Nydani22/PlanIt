@@ -5,9 +5,14 @@ const authenticateToken = require('../middleware/authenticateToken');
 
 router.get('/', authenticateToken, groupController.getUserGroups);
 router.post('/create', authenticateToken, groupController.createGroup);
+
+router.post('/:id/join', authenticateToken, groupController.joinGroup);
+router.patch('/:id/members/:memberId/role', authenticateToken, groupController.updateMemberRole);
+router.delete('/:id/members/:memberId', authenticateToken, groupController.removeMember);
+router.get('/:id/info', groupController.getPublicGroupInfo);
+
 router.get('/:id', authenticateToken, groupController.getGroupById);
 router.put('/:id', authenticateToken, groupController.updateGroup);
 router.delete('/:id', authenticateToken, groupController.deleteGroup);
-router.post('/:id/members', authenticateToken, groupController.addMember);
 
 module.exports = router;

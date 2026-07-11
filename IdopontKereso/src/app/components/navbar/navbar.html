@@ -13,12 +13,16 @@
       <li class="flex gap-2">
         @if (authService.getToken()) {
             
-            <button mat-icon-button color="accent" [matMenuTriggerFor]="notificationMenu"
-                    class="flex items-center justify-center leading-none m-0 p-0"
-                    [matBadge]="notificationService.unreadCount()" 
-                    matBadgeColor="warn" 
-                    [matBadgeHidden]="notificationService.unreadCount() === 0">
-                <mat-icon>notifications</mat-icon>
+            <button mat-icon-button color="accent" [matMenuTriggerFor]="notificationMenu" aria-label="Értesítések"
+                class="flex items-center justify-center leading-none m-0 p-0">
+                <mat-icon 
+                  matBadgeSize="small"
+                  [matBadge]="notificationService.unreadCount()" 
+                  matBadgeColor="warn" 
+                  [matBadgeHidden]="notificationService.unreadCount() === 0"
+                  aria-hidden="false">
+                  notifications
+                </mat-icon>
             </button>
 
             <button mat-icon-button color="accent" routerLink="/profil"

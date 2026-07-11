@@ -7,7 +7,7 @@ const groupSchema = new mongoose.Schema({
   
   members: [{
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    role: { type: String, enum: ['ADMIN', 'MEMBER'], default: 'MEMBER' },
+    role: { type: String, enum: ['OWNER', 'ADMIN', 'MEMBER'], default: 'MEMBER' },
     joinedAt: { type: Date, default: Date.now }
   }]
 }, { 

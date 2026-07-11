@@ -67,17 +67,54 @@ exports.deleteGroup = async (req, res) => {
     }
 };
 
-exports.addMember = async (req, res) => {
+exports.getPublicGroupInfo = async (req, res) => {
     try {
-        const adminUserId = req.user.id;
-        const groupId = req.params.id;
-        const { newMemberId, role } = req.body;
+        const group = await groupService.getPublicGroupInfo(req.params.id);
+        if (!group) return res.status(404).json({ message: 'Csoport nem található.' });
+        res.status(200).json(group);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
-        if (!newMemberId) {
-            return res.status(400).json({ message: 'A hozzáadni kívánt felhasználó ID-ja (newMemberId) kötelező!' });
+
+exports.joinGroup = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const groupId = req.params.id;
+
+        const updatedGroup = await groupService.joinGroup(groupId, userId);
+        res.status(200).json(updatedGroup);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+exports.updateMemberRole = async (req, res) => {
+    try {
+        const adminId = req.user.id;
+        const groupId = req.params.id;
+        const memberId = req.params.memberId;
+        const { role } = req.body;
+
+        if (!role || !['ADMIN', 'MEMBER'].includes(role)) {
+            return res.status(400).json({ message: 'Érvénytelen jogosultság!' });
         }
 
-        const updatedGroup = await groupService.addMember(groupId, adminUserId, newMemberId, role);
+        const updatedGroup = await groupService.updateMemberRole(groupId, adminId, memberId, role);
+        res.status(200).json(updatedGroup);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+exports.removeMember = async (req, res) => {
+    try {
+        const adminId = req.user.id;
+        const groupId = req.params.id;
+        const memberId = req.params.memberId;
+
+        const updatedGroup = await groupService.removeMember(groupId, adminId, memberId);
         res.status(200).json(updatedGroup);
     } catch (error) {
         res.status(400).json({ message: error.message });

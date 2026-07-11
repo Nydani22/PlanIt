@@ -11,7 +11,7 @@ exports.createGroup = async (groupData, userId) => {
         creatorId: userId,
         members: [{
             userId: userId,
-            role: 'ADMIN'
+            role: 'OWNER'
         }]
     });
 
@@ -34,9 +34,9 @@ exports.getGroupById = async (groupId, userId) => {
 
 exports.updateGroup = async (groupId, userId, updateData) => {
     return await Group.findOneAndUpdate(
-        { 
-            _id: groupId, 
-            members: { $elemMatch: { userId: userId, role: 'ADMIN' } } 
+        {
+            _id: groupId,
+            members: { $elemMatch: { userId: userId, role: 'OWNER' } } 
         }, 
         updateData, 
         { new: true, runValidators: true }
@@ -46,30 +46,123 @@ exports.updateGroup = async (groupId, userId, updateData) => {
 exports.deleteGroup = async (groupId, userId) => {
     return await Group.findOneAndDelete({ 
         _id: groupId, 
-        members: { $elemMatch: { userId: userId, role: 'ADMIN' } } 
+        members: { $elemMatch: { userId: userId, role: 'OWNER' } } 
     });
 };
 
-exports.addMember = async (groupId, adminUserId, newMemberId, role = 'MEMBER') => {
-    const group = await Group.findOne({ 
-        _id: groupId, 
-        members: { $elemMatch: { userId: adminUserId, role: 'ADMIN' } } 
-    });
+exports.getPublicGroupInfo = async (groupId) => {
+    return await Group.findOne({ _id: groupId })
+        .select('groupName description');
+};
 
-    if (!group) throw new Error('Nem található a csoport, vagy nincs ADMIN jogosultságod!');
 
-    const isAlreadyMember = group.members.some(member => member.userId.toString() === newMemberId);
-    if (isAlreadyMember) throw new Error('Ez a felhasználó már tagja a csoportnak!');
+exports.joinGroup = async (groupId, userId) => {
+    const group = await Group.findById(groupId);
 
-    group.members.push({ userId: newMemberId, role: role });
+    if (!group) {
+        throw new Error('A csoport nem található!');
+    }
+
+    const isAlreadyMember = group.members.some(member => member.userId.toString() === userId.toString());
+    if (isAlreadyMember) {
+        throw new Error('Már tagja vagy ennek a csoportnak!');
+    }
+
+    group.members.push({ userId: userId, role: 'MEMBER' });
     await group.save();
     
+    await group.populate('members.userId', '_id userName fullName email');
+
+    const joinedMember = group.members.find(m => m.userId._id.toString() === userId.toString());
+    const newMemberName = joinedMember.userId.fullName || joinedMember.userId.userName || 'Egy új tag';
+
+    const adminsAndOwner = group.members.filter(m => m.role === 'ADMIN' || m.role === 'OWNER');
+    for (const admin of adminsAndOwner) {
+        if (admin.userId._id.toString() !== userId.toString()) {
+            await notificationService.createNotification({
+                recipientId: admin.userId._id,
+                senderId: userId,
+                groupId: group._id,
+                type: 'SYSTEM',
+                message: `${newMemberName} csatlakozott a csoportodhoz: ${group.groupName}`
+            });
+        }
+    }
+
     await notificationService.createNotification({
-        recipientId: newMemberId,
-        senderId: adminUserId,
+        recipientId: userId,
         groupId: group._id,
-        type: 'INVITE',
-        message: `Hozzáadtak egy új csoporthoz: ${group.groupName}`
+        type: 'SYSTEM',
+        message: `Sikeresen csatlakoztál a csoporthoz: ${group.groupName}`
+    });
+
+    return group;
+};
+
+
+exports.updateMemberRole = async (groupId, requesterId, targetMemberId, newRole) => {
+    const group = await Group.findOne({ 
+        _id: groupId, 
+        members: { $elemMatch: { userId: requesterId, role: 'OWNER' } } 
+    });
+
+    if (!group) throw new Error('Csak a csoport tulajdonosa módosíthatja a jogosultságokat!');
+
+    const targetMember = group.members.find(m => m.userId.toString() === targetMemberId.toString());
+    if (!targetMember) throw new Error('A felhasználó nem tagja a csoportnak!');
+
+    if (newRole === 'OWNER') {
+        throw new Error('Az OWNER jogosultságot nem lehet átadni!');
+    }
+    if (targetMember.role === 'OWNER') {
+        throw new Error('A csoport tulajdonosának jogosultságát nem lehet módosítani!');
+    }
+
+    targetMember.role = newRole;
+    await group.save();
+
+    await notificationService.createNotification({
+        recipientId: targetMemberId,
+        senderId: requesterId,
+        groupId: group._id,
+        type: 'ROLE_CHANGE', 
+        message: `Megváltozott a jogosultságod a(z) ${group.groupName} csoportban: ${newRole === 'ADMIN' ? 'Admin' : 'Tag'}`
+    });
+
+    return await group.populate('members.userId', '_id userName fullName email');
+};
+
+exports.removeMember = async (groupId, requesterId, targetMemberId) => {
+    const group = await Group.findOne({ 
+        _id: groupId, 
+        members: { $elemMatch: { userId: requesterId, role: { $in: ['OWNER', 'ADMIN'] } } } 
+    });
+
+    if (!group) throw new Error('Nincs jogosultságod a művelethez!');
+
+    if (requesterId.toString() === targetMemberId.toString()) {
+        throw new Error('Saját magadat nem távolíthatod el!');
+    }
+
+    const requester = group.members.find(m => m.userId.toString() === requesterId.toString());
+    const targetMember = group.members.find(m => m.userId.toString() === targetMemberId.toString());
+
+    if (targetMember.role === 'OWNER') {
+        throw new Error('A csoport készítőjét nem lehet eltávolítani!');
+    }
+    if (requester.role === 'ADMIN' && targetMember.role === 'ADMIN') {
+        throw new Error('Admin nem távolíthat el egy másik Admint!');
+    }
+
+    group.members = group.members.filter(m => m.userId.toString() !== targetMemberId.toString());
+    await group.save();
+
+    await notificationService.createNotification({
+        recipientId: targetMemberId,
+        senderId: requesterId,
+        groupId: null,
+        type: 'MEMBER_REMOVED',
+        message: `Eltávolítottak a(z) ${group.groupName} csoportból.`
     });
 
     return await group.populate('members.userId', '_id userName fullName email');

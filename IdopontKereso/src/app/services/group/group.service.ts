@@ -30,12 +30,16 @@ export class GroupService {
     return this.http.delete<Group>(`${this.apiUrl}/${id}`);
   }
 
-  addMember(groupId: string, newMemberId: string, role: string = 'MEMBER'): Observable<Group> {
-    return this.http.post<Group>(`${this.apiUrl}/${groupId}/members`, { newMemberId, role });
+  joinGroup(groupId: string) {
+    return this.http.post(`${this.apiUrl}/${groupId}/join`,{},{ withCredentials: true });
   }
 
   updateMemberRole(groupId: string, memberId: string, role: string): Observable<Group> {
     return this.http.patch<Group>(`${this.apiUrl}/${groupId}/members/${memberId}/role`, { role });
+  }
+
+  getPublicGroupInfo(groupId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${groupId}/info`);
   }
 
   removeMember(groupId: string, memberId: string): Observable<Group> {

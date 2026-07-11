@@ -66,6 +66,14 @@ export class Groups implements OnInit {
     });
   }
 
+  isOwner(): boolean {
+    const currentGroup = this.group();
+    if (!currentGroup || !this.currentUserId) return false;
+    
+    const me = currentGroup.members.find(m => m.userId._id === this.currentUserId);
+    return me?.role === 'OWNER';
+  }
+
   onGroupSelect(groupId: string) {
     this.selectedGroupId.set(groupId);
     this.loadGroupDetails(groupId);
@@ -109,16 +117,17 @@ export class Groups implements OnInit {
   }
 
   updateRole(memberId: string, newRole: string) {
-    if (!this.isAdmin()) return;
+    if (!this.isOwner()) return; 
     
     this.groupService.updateMemberRole(this.selectedGroupId(), memberId, newRole).subscribe({
-      next: () => console.log('Jogosultság frissítve!'),
+      next: () => {},
       error: (err) => console.error(err)
     });
   }
 
   removeMember(memberId: string) {
-    if (!this.isAdmin()) return;
+    if (!this.isAdmin() && !this.isOwner()) return; 
+
     if (confirm('Biztosan el akarod távolítani ezt a tagot?')) {
       this.groupService.removeMember(this.selectedGroupId(), memberId).subscribe({
         next: () => this.loadGroupDetails(this.selectedGroupId()), 
@@ -129,7 +138,8 @@ export class Groups implements OnInit {
 
   deleteGroup() {
     const currentGroup = this.group();
-    if (!this.isAdmin() || !currentGroup) return;
+    if (!this.isOwner() || !currentGroup) return; 
+
     const groupNameCheck = prompt(`A törléshez írd be a csoport nevét: ${currentGroup.groupName}`);
     
     if (groupNameCheck === currentGroup.groupName) {

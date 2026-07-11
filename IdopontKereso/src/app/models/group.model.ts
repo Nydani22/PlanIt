@@ -7,7 +7,7 @@ export interface UserInfo {
 
 export interface GroupMember {
   userId: UserInfo;
-  role: 'ADMIN' | 'MEMBER';
+  role: 'OWNER' | 'ADMIN' | 'MEMBER';
   joinedAt: Date | string;
 }
 

@@ -3,13 +3,12 @@ const socketUtil = require('../utils/socket');
 
 exports.createNotification = async (data) => {
     const notification = new Notification(data);
-    return await notification.save();
-
+    
+    await notification.save(); 
     const io = socketUtil.getIO();
     if (io) {
         io.to(data.recipientId.toString()).emit('newNotification', notification);
     }
-
     return notification;
 };
 

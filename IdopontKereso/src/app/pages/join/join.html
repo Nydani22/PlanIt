@@ -1,0 +1,65 @@
+<div class="flex justify-center items-center min-h-[80vh] bg-gray-50 px-4">
+  <mat-card class="w-full max-w-md p-8 text-center shadow-lg rounded-2xl">
+    
+    @if (isCheckingStatus()) {
+      <div class="flex flex-col items-center animate-pulse">
+        <div class="w-24 h-24 rounded-full skeleton mb-6"></div>
+        <div class="w-48 h-8 skeleton mb-4"></div>
+        <div class="w-64 h-4 skeleton mb-8"></div>
+        <div class="w-32 h-10 skeleton"></div>
+      </div>
+    } @else {
+      @if (!isLoggedIn()) {
+        <div class="mb-6">
+          <mat-icon class="text-6xl text-blue-500">login</mat-icon>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Bejelentkezés szükséges</h2>
+        <p class="text-gray-600 mb-8">A csoporthoz való csatlakozáshoz kérlek jelentkezz be.</p>
+        
+        <button mat-flat-button color="primary" (click)="goToLogin()">
+          Bejelentkezés / Regisztráció
+        </button>
+      } @else {
+        <div class="bg-amber-100 w-24 h-24 rounded-full flex justify-center items-center mx-auto mb-6">
+          <mat-icon color="primary" class="text-5xl scale-150">
+            {{ isAlreadyMember() ? 'check_circle' : 'group_add' }}
+          </mat-icon>
+        </div>
+        
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">
+          {{ isAlreadyMember() ? 'Már tagja vagy!' : 'Meghívó érkezett!' }}
+        </h2>
+        
+        <p class="text-gray-600 mb-8">
+          {{ isAlreadyMember() ? 'Te már csatlakoztál ehhez a csoporthoz. Irány az események!' : 'Egy csoportba kaptál meghívót. Biztosan csatlakozni szeretnél?' }}
+        </p>
+
+        <div class="flex justify-center gap-4">
+          @if (!errorMessage) {
+            @if (isAlreadyMember()) {
+              <button mat-flat-button color="primary" routerLink="/groups">
+                Csoportok megtekintése
+              </button>
+            } @else {
+              <button mat-stroked-button color="warn" (click)="cancel()">Mégsem</button>
+              <button mat-flat-button color="primary" (click)="onJoin()" [disabled]="isLoading">
+                {{ isLoading ? 'Csatlakozás...' : 'Csatlakozom' }}
+              </button>
+            }
+          } @else {
+            <button mat-flat-button color="primary" routerLink="/">
+              Vissza a főoldalra
+            </button>
+          }
+        </div>
+      }
+      
+      
+      @if (errorMessage) {
+        <div class="mt-6 p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium">
+          {{ errorMessage }}
+        </div>
+      }
+    }
+  </mat-card>
+</div>

@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema({
   
   type: { 
     type: String, 
-    enum: ['INVITE', 'ROLE_CHANGE', 'MEMBER_REMOVED', 'SYSTEM'], 
+    enum: ['INVITE', 'ROLE_CHANGE', 'MEMBER_REMOVED', 'MEMBER_LEFT', 'SYSTEM'], 
     required: true 
   },
   

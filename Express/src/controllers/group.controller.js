@@ -22,16 +22,21 @@ exports.getUserGroups = async (req, res) => {
 
 exports.getGroupById = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const groupId = req.params.id;
-        const group = await groupService.getGroupById(groupId, userId);
+        let group;
         
-        if (!group) {
-            return res.status(404).json({ message: 'Csoport nem található, vagy nem vagy a tagja.' });
+        if (req.user && req.user.id) {
+            group = await groupService.getGroupById(req.params.id, req.user.id);
         }
+
+        if (!group) {
+            group = await groupService.getGroupByIdPublic(req.params.id);
+        }
+
+        if (!group) return res.status(404).json({ message: 'A csoport már nem létezik.' });
+        
         res.status(200).json(group);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Hiba történt.' });
     }
 };
 

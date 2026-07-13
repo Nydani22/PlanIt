@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
-
+import { NotificationService } from '../../services/notification/notification.service';
 @Component({
   selector: 'app-login',
   imports: [MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, ReactiveFormsModule, RouterLink],
@@ -19,6 +19,7 @@ export class Login implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private notificationService=inject(NotificationService);
   hide = signal(true);
 
   constructor() {
@@ -49,11 +50,17 @@ export class Login implements OnInit, OnDestroy {
     if (this.loginForm.invalid) return;
     this.authService.login(this.loginForm.value).subscribe({
       next: (response: any) => {
-        console.log('Sikeres bejelentkezés!', response);
-        
         this.authService.setToken(response.token);
-
-        this.router.navigate(['/']);
+        this.notificationService.initNotifications();
+        
+        const redirectUrl = localStorage.getItem('redirectAfterLogin');
+        
+        if (redirectUrl) {
+          localStorage.removeItem('redirectAfterLogin');
+          this.router.navigateByUrl(redirectUrl);
+        } else {
+          this.router.navigate(['/']);
+        }
       },
       error: (err) => {
         console.error('Login hiba:', err);

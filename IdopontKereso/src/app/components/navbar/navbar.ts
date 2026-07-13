@@ -28,6 +28,10 @@ export class Navbar implements OnInit {
   notificationService = inject(NotificationService);
 
   ngOnInit() {
+    this.checkAndInitNotifications();
+  }
+
+  checkAndInitNotifications() {
     if (this.authService.getToken()) {
       this.notificationService.initNotifications();
     }

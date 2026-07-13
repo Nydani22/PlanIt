@@ -136,6 +136,18 @@ export class Groups implements OnInit {
     }
   }
 
+  leaveGroup() {
+    if (confirm('Biztosan ki szeretnél lépni ebből a csoportból?')) {
+      this.groupService.removeMember(this.selectedGroupId(), this.currentUserId).subscribe({
+        next: () => {
+          this.group.set(null);
+          this.loadAllGroups();
+        },
+        error: (err) => console.error('Hiba kilépéskor:', err)
+      });
+    }
+  }
+
   deleteGroup() {
     const currentGroup = this.group();
     if (!this.isOwner() || !currentGroup) return; 

@@ -14,7 +14,7 @@ import { AuthService } from '../../services/auth/auth.service';
   templateUrl: './join.html',
   styleUrl: './join.scss',
 })
-export class JoinComponent implements OnInit {
+export class Join implements OnInit {
   route = inject(ActivatedRoute);
   router = inject(Router);
   groupService = inject(GroupService);
@@ -24,7 +24,7 @@ export class JoinComponent implements OnInit {
   errorMessage: string = '';
   isLoading: boolean = false;
 
-  
+  isLoggedIn = signal<boolean>(true);
   isAlreadyMember = signal<boolean>(false);
   isCheckingStatus = signal<boolean>(true);
 
@@ -32,21 +32,38 @@ export class JoinComponent implements OnInit {
     this.groupId = this.route.snapshot.paramMap.get('id');
     const userId = this.authService.getCurrentUserId();
     
+    if (!userId) {
+      this.isLoggedIn.set(false);
+      this.isCheckingStatus.set(false);
+      return;
+    }
+
     if (!this.groupId) {
       this.errorMessage = 'Érvénytelen vagy hiányzó meghívó link!';
       this.isCheckingStatus.set(false);
       return;
     }
 
-    this.groupService.getPublicGroupInfo(this.groupId).subscribe({
+    this.groupService.getGroupById(this.groupId).subscribe({
       next: (group) => {
+        const isMember = group.members.some((m: any) => m.userId._id === userId);
+        this.isAlreadyMember.set(isMember);
         this.isCheckingStatus.set(false);
       },
-      error: () => {
-        this.errorMessage = 'Nem sikerült betölteni a csoport adatait.';
+      error: (err) => {
+        if (err.status === 404) {
+          this.errorMessage = 'Sajnos ez a csoport már nem létezik vagy törölték.';
+        } else {
+          this.errorMessage = 'Nem sikerült betölteni a csoport adatait.';
+        }
         this.isCheckingStatus.set(false);
       }
     });
+  }
+
+  goToLogin() {
+    localStorage.setItem('redirectAfterLogin', `/join/${this.groupId}`);
+    this.router.navigate(['/login']);
   }
 
   onJoin() {

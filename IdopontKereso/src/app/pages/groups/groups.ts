@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { Group, GroupMember } from '../../models/group.model';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { GroupCreateModalComponent } from '../../components/group-create-modal/group-create-modal';
+import { InviteDialogComponent } from '../../components/invite-dialog/invite-dialog';
 
 @Component({
   selector: 'app-groups',
@@ -82,26 +83,39 @@ export class Groups implements OnInit {
   copyInviteLink() {
     const groupId = this.selectedGroupId();
     if (!groupId) return;
-    const inviteUrl = `${window.location.origin}/join/${groupId}`;
-    navigator.clipboard.writeText(inviteUrl).then(() => {
-      alert(`Meghívó link sikeresen másolva!\n${inviteUrl}`);
-    }).catch(err => {
-      console.error('Nem sikerült a vágólapra másolni:', err);
+
+    this.groupService.generateInvite(groupId).subscribe({
+      next: (response) => {
+        const inviteUrl = `${window.location.origin}/join/${response.token}`;
+        
+        this.dialog.open(InviteDialogComponent, {
+          width: '450px',
+          disableClose: false,
+          data: { 
+            inviteUrl: inviteUrl,
+            groupName: this.group()?.groupName 
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Hiba a meghívó link generálásakor:', err);
+        alert('Nem sikerült meghívót generálni. Nincs jogosultságod, vagy szerverhiba történt.');
+      }
     });
   }
 
   openCreateModal() {
-  const dialogRef = this.dialog.open(GroupCreateModalComponent, {
-    width: '600px',
-    disableClose: true
-  });
+    const dialogRef = this.dialog.open(GroupCreateModalComponent, {
+      width: '600px',
+      disableClose: true
+    });
 
-  dialogRef.afterClosed().subscribe(result => {
-    if (result) {
-      this.loadAllGroups();
-    }
-  });
-}
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadAllGroups();
+      }
+    });
+  }
 
   loadGroupDetails(groupId: string) {
     this.groupService.getGroupById(groupId).subscribe({

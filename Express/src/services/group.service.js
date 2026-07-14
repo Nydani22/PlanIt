@@ -1,5 +1,7 @@
 const Group = require('../models/group.model');
 const notificationService = require('./notification.service');
+const crypto = require('crypto');
+const Invitation = require('../models/invitation.model');
 
 
 exports.createGroup = async (groupData, userId) => {
@@ -55,26 +57,64 @@ exports.deleteGroup = async (groupId, userId) => {
     });
 };
 
-exports.getPublicGroupInfo = async (groupId) => {
-    return await Group.findOne({ _id: groupId })
-        .select('groupName description');
+
+
+exports.generateInvite = async (groupId, userId) => {
+    const group = await Group.findOne({ 
+        _id: groupId, 
+        members: { $elemMatch: { userId: userId, role: { $in: ['OWNER', 'ADMIN'] } } } 
+    });
+
+    if (!group) throw new Error('Nincs jogosultságod meghívót generálni ehhez a csoporthoz!');
+
+    const token = crypto.randomBytes(20).toString('hex');
+    
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    const invitation = new Invitation({
+        token,
+        groupId,
+        inviterId: userId,
+        expiresAt
+    });
+
+    await invitation.save();
+    return token;
+};
+
+exports.getInviteInfo = async (token) => {
+    const invitation = await Invitation.findOne({ token }).populate('groupId', 'groupName description');
+    
+    if (!invitation || !invitation.groupId) {
+        throw new Error('A meghívó érvénytelen, lejárt, vagy már felhasználták.');
+    }
+
+    return invitation.groupId;
 };
 
 
-exports.joinGroup = async (groupId, userId) => {
-    const group = await Group.findById(groupId);
+exports.joinWithInvite = async (token, userId) => {
+    const invitation = await Invitation.findOne({ token });
+    if (!invitation) {
+        throw new Error('A meghívó érvénytelen vagy már felhasználták!');
+    }
 
+    const group = await Group.findById(invitation.groupId);
     if (!group) {
-        throw new Error('A csoport nem található!');
+        throw new Error('A csoport már nem létezik!');
     }
 
     const isAlreadyMember = group.members.some(member => member.userId.toString() === userId.toString());
     if (isAlreadyMember) {
+        await Invitation.deleteOne({ _id: invitation._id });
         throw new Error('Már tagja vagy ennek a csoportnak!');
     }
 
     group.members.push({ userId: userId, role: 'MEMBER' });
     await group.save();
+
+    await Invitation.deleteOne({ _id: invitation._id }); 
     
     await group.populate('members.userId', '_id userName fullName email');
 

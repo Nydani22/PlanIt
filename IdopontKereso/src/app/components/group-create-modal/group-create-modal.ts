@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core'; // <-- signal importálva
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog'; // <-- MatDialog importálva
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { GroupService } from '../../services/group/group.service';
 import { Group } from '../../models/group.model';
+import { InviteDialogComponent } from '../invite-dialog/invite-dialog';
 
 @Component({
   selector: 'app-group-create-modal',
@@ -30,6 +31,8 @@ export class GroupCreateModalComponent {
   private fb = inject(FormBuilder);
   private groupService = inject(GroupService);
   private dialogRef = inject(MatDialogRef<GroupCreateModalComponent>);
+  
+  private dialog = inject(MatDialog); 
 
   basicFormGroup: FormGroup = this.fb.group({
     groupName: ['', [Validators.required, Validators.minLength(3)]]
@@ -39,17 +42,12 @@ export class GroupCreateModalComponent {
     description: ['']
   });
 
-  // --- Változók helyett Szignálok ---
   isSubmitting = signal<boolean>(false);
-  isCreated = signal<boolean>(false);
-  inviteUrl = signal<string>('');
-  
-  createdGroupData: any = null; // Ez maradhat sima változó, mert a HTML nem használja közvetlenül
 
   onSubmit() {
     if (this.basicFormGroup.invalid) return;
 
-    this.isSubmitting.set(true); // .set() használata
+    this.isSubmitting.set(true); 
     
     const newGroupData: Partial<Group> = {
       groupName: this.basicFormGroup.value.groupName,
@@ -58,32 +56,38 @@ export class GroupCreateModalComponent {
 
     this.groupService.createGroup(newGroupData).subscribe({
       next: (createdGroup) => {
-        this.isSubmitting.set(false);
-        this.createdGroupData = createdGroup;
-        
-        // Előbb a linket állítjuk be, aztán váltjuk a nézetet
-        this.inviteUrl.set(`${window.location.origin}/join/${createdGroup._id}`);
-        this.isCreated.set(true);
+        this.groupService.generateInvite(createdGroup._id!).subscribe({
+          next: (response) => {
+            this.isSubmitting.set(false);
+            const generatedUrl = `${window.location.origin}/join/${response.token}`;
+            
+            this.dialogRef.close(true);
+
+            this.dialog.open(InviteDialogComponent, {
+              width: '450px',
+              disableClose: false,
+              data: { 
+                inviteUrl: generatedUrl,
+                groupName: createdGroup.groupName 
+              }
+            });
+          },
+          error: (inviteErr) => {
+            console.error('Hiba a token generálásakor:', inviteErr);
+            this.isSubmitting.set(false);
+            this.dialogRef.close(true);
+            alert('A csoport létrejött, de a meghívó linket nem sikerült automatikusan legenerálni. Később a csoport beállításainál pótolhatod!');
+          }
+        });
       },
       error: (err) => {
-        console.error('Hiba a létrehozáskor:', err);
+        console.error('Hiba a csoport létrehozásakor:', err);
         this.isSubmitting.set(false);
       }
     });
   }
 
-  copyInviteLink() {
-    if (!this.inviteUrl()) return; // () használata kiolvasáskor
-    navigator.clipboard.writeText(this.inviteUrl()).then(() => {
-      alert('Meghívó link sikeresen másolva!');
-    }).catch(err => console.error('Hiba a másoláskor', err));
-  }
-
-  onCloseSuccess() {
-    this.dialogRef.close(this.createdGroupData);
-  }
-
   onCancel() {
-    this.dialogRef.close();
+    this.dialogRef.close(false);
   }
 }

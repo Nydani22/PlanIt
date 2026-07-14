@@ -20,7 +20,7 @@ export class Join implements OnInit {
   groupService = inject(GroupService);
   private authService = inject(AuthService);
 
-  groupId: string | null = null;
+  token: string | null = null;
   errorMessage: string = '';
   isLoading: boolean = false;
 
@@ -29,32 +29,46 @@ export class Join implements OnInit {
   isCheckingStatus = signal<boolean>(true);
 
   ngOnInit() {
-    this.groupId = this.route.snapshot.paramMap.get('id');
+    this.token = this.route.snapshot.paramMap.get('id');
     const userId = this.authService.getCurrentUserId();
     
     if (!userId) {
       this.isLoggedIn.set(false);
-      this.isCheckingStatus.set(false);
-      return;
     }
 
-    if (!this.groupId) {
+    if (!this.token) {
       this.errorMessage = 'Érvénytelen vagy hiányzó meghívó link!';
       this.isCheckingStatus.set(false);
       return;
     }
 
-    this.groupService.getGroupById(this.groupId).subscribe({
-      next: (group) => {
-        const isMember = group.members.some((m: any) => m.userId._id === userId);
-        this.isAlreadyMember.set(isMember);
-        this.isCheckingStatus.set(false);
+    this.groupService.getInviteInfo(this.token).subscribe({
+      next: (groupInfo: any) => {
+        if (userId && groupInfo && groupInfo._id) {
+          this.groupService.getGroupById(groupInfo._id).subscribe({
+            next: (group: any) => {
+              const isMember = group.members.some((m: any) => 
+                (m.userId._id || m.userId) === userId
+              );
+              
+              this.isAlreadyMember.set(isMember);
+              this.isCheckingStatus.set(false);
+            },
+            error: () => {
+              // Ha valamiért 404-et dobna
+              this.isAlreadyMember.set(false);
+              this.isCheckingStatus.set(false);
+            }
+          });
+        } else {
+          this.isCheckingStatus.set(false);
+        }
       },
       error: (err) => {
         if (err.status === 404) {
-          this.errorMessage = 'Sajnos ez a csoport már nem létezik vagy törölték.';
+          this.errorMessage = 'Sajnos a meghívó érvénytelen, lejárt, vagy már felhasználták.';
         } else {
-          this.errorMessage = 'Nem sikerült betölteni a csoport adatait.';
+          this.errorMessage = 'Nem sikerült betölteni a meghívó adatait.';
         }
         this.isCheckingStatus.set(false);
       }
@@ -62,24 +76,30 @@ export class Join implements OnInit {
   }
 
   goToLogin() {
-    localStorage.setItem('redirectAfterLogin', `/join/${this.groupId}`);
+    localStorage.setItem('redirectAfterLogin', `/join/${this.token}`);
     this.router.navigate(['/login']);
   }
 
   onJoin() {
-    if (!this.groupId) return;
+    if (!this.token) return;
     
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.groupService.joinGroup(this.groupId).subscribe({
+    this.groupService.joinWithInvite(this.token).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.router.navigate(['/groups']);
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.message || 'Váratlan hiba történt a csatlakozáskor.';
+        const msg = err.error?.message || 'Váratlan hiba történt a csatlakozáskor.';
+        
+        if (msg === 'Már tagja vagy ennek a csoportnak!') {
+          this.isAlreadyMember.set(true);
+        } else {
+          this.errorMessage = msg;
+        }
       }
     });
   }

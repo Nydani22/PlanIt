@@ -72,24 +72,28 @@ exports.deleteGroup = async (req, res) => {
     }
 };
 
-exports.getPublicGroupInfo = async (req, res) => {
+exports.generateInvite = async (req, res) => {
     try {
-        const group = await groupService.getPublicGroupInfo(req.params.id);
-        if (!group) return res.status(404).json({ message: 'Csoport nem található.' });
-        res.status(200).json(group);
+        const token = await groupService.generateInvite(req.params.id, req.user.id);
+        res.status(201).json({ token });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(403).json({ message: error.message });
     }
 };
 
-
-exports.joinGroup = async (req, res) => {
+exports.getInviteInfo = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const groupId = req.params.id;
+        const groupInfo = await groupService.getInviteInfo(req.params.token);
+        res.status(200).json(groupInfo);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};
 
-        const updatedGroup = await groupService.joinGroup(groupId, userId);
-        res.status(200).json(updatedGroup);
+exports.joinWithInvite = async (req, res) => {
+    try {
+        const group = await groupService.joinWithInvite(req.params.token, req.user.id);
+        res.status(200).json({ message: 'Sikeres csatlakozás!', group });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }

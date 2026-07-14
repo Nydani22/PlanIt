@@ -7,7 +7,7 @@ import { Group } from '../../models/group.model';
   providedIn: 'root'
 })
 export class GroupService {
-  private http = inject(HttpClient);
+private http = inject(HttpClient);
   private apiUrl = 'http://localhost:3000/api/groups'; 
 
   getGroups(): Observable<Group[]> {
@@ -30,19 +30,23 @@ export class GroupService {
     return this.http.delete<Group>(`${this.apiUrl}/${id}`);
   }
 
-  joinGroup(groupId: string) {
-    return this.http.post(`${this.apiUrl}/${groupId}/join`,{},{ withCredentials: true });
-  }
-
   updateMemberRole(groupId: string, memberId: string, role: string): Observable<Group> {
     return this.http.patch<Group>(`${this.apiUrl}/${groupId}/members/${memberId}/role`, { role });
   }
 
-  getPublicGroupInfo(groupId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/${groupId}/info`);
-  }
-
   removeMember(groupId: string, memberId: string): Observable<Group> {
     return this.http.delete<Group>(`${this.apiUrl}/${groupId}/members/${memberId}`);
+  }
+  
+  generateInvite(groupId: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${this.apiUrl}/${groupId}/invites`, {});
+  }
+
+  getInviteInfo(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/invites/${token}`);
+  }
+
+  joinWithInvite(token: string) {
+    return this.http.post(`${this.apiUrl}/invites/${token}/join`, {}, { withCredentials: true });
   }
 }

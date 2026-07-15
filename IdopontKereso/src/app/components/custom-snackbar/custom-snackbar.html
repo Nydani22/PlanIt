@@ -1,0 +1,10 @@
+<div class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+        <mat-icon [color]="getThemeColor()">{{ getIcon() }}</mat-icon>
+        <span class="font-medium text-sm">{{ data.message }}</span>
+    </div>
+
+    <button mat-icon-button (click)="snackBarRef.dismiss()" class="scale-75 opacity-80 hover:opacity-100 flex items-center justify-center leading-none m-0 p-0">
+        <mat-icon>close</mat-icon>
+    </button>
+</div>

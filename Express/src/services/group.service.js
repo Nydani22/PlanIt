@@ -114,7 +114,7 @@ exports.joinWithInvite = async (token, userId) => {
     group.members.push({ userId: userId, role: 'MEMBER' });
     await group.save();
 
-    await Invitation.deleteOne({ _id: invitation._id }); 
+    //await Invitation.deleteOne({ _id: invitation._id }); 
     
     await group.populate('members.userId', '_id userName fullName email');
 

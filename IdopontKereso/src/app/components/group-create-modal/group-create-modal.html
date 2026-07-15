@@ -10,7 +10,7 @@
         <div class="flex flex-col gap-4 mt-6">
           <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
             <mat-label>Csoport neve</mat-label>
-            <input matInput formControlName="groupName" placeholder="Pl. Pénteki sörözés" required>
+            <input matInput formControlName="groupName" placeholder="Pl. Családi események" required>
             @if (basicFormGroup.get('groupName')?.hasError('required')) {
               <mat-error>A csoport neve kötelező!</mat-error>
             }

@@ -65,6 +65,7 @@ export class GroupCreateModalComponent {
 
             this.dialog.open(InviteDialogComponent, {
               width: '450px',
+              maxWidth: '90vw',
               disableClose: false,
               data: { 
                 inviteUrl: generatedUrl,

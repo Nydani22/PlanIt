@@ -57,12 +57,32 @@
       </mat-card>
 
       <mat-card class="mb-6">
-        <mat-card-header class="mb-4">
-          <mat-card-title>Csoport tagjai ({{ group()?.members?.length || 0 }})</mat-card-title>
+        
+        <mat-card-header class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-4 gap-4 p-4 pb-0">
+          <mat-card-title class="m-0 text-xl">
+            Csoport tagjai ({{ group()?.members?.length || 0 }})
+          </mat-card-title>
+          
+          <div class="w-full sm:w-72 shrink-0">
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-icon matPrefix class="text-gray-400 mr-2">search</mat-icon>
+              <input matInput placeholder="Keresés név alapján..." 
+                     [ngModel]="searchQuery()" 
+                     (ngModelChange)="searchQuery.set($event)">
+              
+              @if (searchQuery()) {
+                <button mat-icon-button matSuffix (click)="searchQuery.set('')">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </mat-form-field>
+          </div>
         </mat-card-header>
+        
         <mat-card-content>
-          <div class="flex flex-col gap-4">
-            @for (member of group()?.members || []; track member.userId._id) {
+          <div class="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 mt-2">
+            
+            @for (member of filteredMembers(); track member.userId._id) {
               <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50 min-h-[84px]">
                 
                 <div class="flex items-center gap-3">
@@ -90,13 +110,21 @@
 
                   @if ((isOwner() || (isAdmin() && member.role === 'MEMBER')) && member.userId._id !== currentUserId) {
                     <button mat-icon-button color="warn" (click)="removeMember(member.userId._id)"
-                      class="flex items-center justify-center leading-none m-0 p-0">
+                      class="flex items-center justify-center leading-none m-0 p-0" title="Tag eltávolítása">
                       <mat-icon>person_remove</mat-icon>
                     </button>
                   }
                 </div>
               </div>
             }
+
+            @if (filteredMembers().length === 0) {
+              <div class="text-center py-6 text-gray-500 flex flex-col items-center">
+                <mat-icon class="text-4xl mb-2 opacity-50">person_search</mat-icon>
+                <p class="m-0">Nincs a keresésnek megfelelő tag.</p>
+              </div>
+            }
+            
           </div>
         </mat-card-content>
       </mat-card>

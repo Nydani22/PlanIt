@@ -1,0 +1,15 @@
+<h2 mat-dialog-title class="m-0 text-xl font-bold text-gray-800">{{ data.title }}</h2>
+    
+<mat-dialog-content class="pt-4 pb-2">
+    <p class="text-gray-600 mb-4 leading-relaxed">{{ data.message }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="pb-4 pr-6">
+    <button mat-button (click)="onCancel()">
+        {{ data.cancelText || 'Mégsem' }}
+    </button>
+    
+    <button mat-flat-button [color]="data.color || 'primary'" (click)="onConfirm()">
+        {{ data.confirmText || 'Rendben' }}
+    </button>
+</mat-dialog-actions>

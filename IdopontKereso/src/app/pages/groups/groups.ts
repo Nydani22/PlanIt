@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dialog';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-groups',
@@ -60,7 +61,7 @@ export class Groups implements OnInit {
     if (!currentGroup || !currentGroup.members) return [];
     
     const query = this.searchQuery().toLowerCase().trim();
-    if (!query) return currentGroup.members; // Ha nincs keresés, mindenkit visszaad
+    if (!query) return currentGroup.members;
 
     return currentGroup.members.filter(member => {
       const name = (member.userId.fullName || member.userId.userName || '').toLowerCase();
@@ -111,6 +112,8 @@ export class Groups implements OnInit {
         this.dialog.open(InviteDialogComponent, {
           width: '450px',
           disableClose: false,
+          restoreFocus: false,
+          autoFocus: false,
           data: { 
             inviteUrl: inviteUrl,
             groupName: this.group()?.groupName 
@@ -128,6 +131,8 @@ export class Groups implements OnInit {
     const dialogRef = this.dialog.open(GroupCreateModalComponent, {
       width: '600px',
       maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
       disableClose: true
     });
 
@@ -172,34 +177,66 @@ export class Groups implements OnInit {
   removeMember(memberId: string) {
     if (!this.isAdmin() && !this.isOwner()) return; 
 
-    if (confirm('Biztosan el akarod távolítani ezt a tagot?')) {
-      this.groupService.removeMember(this.selectedGroupId(), memberId).subscribe({
-        next: () => {
-          this.loadGroupDetails(this.selectedGroupId());
-          this.snackbarService.showSuccess('Tag sikeresen eltávolítva!');
-        }, 
-        error: (err) => {
-          console.error(err);
-          this.snackbarService.showError('Nem sikerült eltávolítani a tagot.');
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: {
+        title: 'Tag eltávolítása',
+        message: 'Biztosan el akarod távolítani ezt a tagot a csoportból?',
+        confirmText: 'Eltávolítás',
+        cancelText: 'Mégsem',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.groupService.removeMember(this.selectedGroupId(), memberId).subscribe({
+          next: () => {
+            this.loadGroupDetails(this.selectedGroupId());
+            this.snackbarService.showSuccess('Tag sikeresen eltávolítva!');
+          }, 
+          error: (err) => {
+            console.error(err);
+            this.snackbarService.showError('Nem sikerült eltávolítani a tagot.');
+          }
+        });
+      }
+    });
   }
 
   leaveGroup() {
-    if (confirm('Biztosan ki szeretnél lépni ebből a csoportból?')) {
-      this.groupService.removeMember(this.selectedGroupId(), this.currentUserId).subscribe({
-        next: () => {
-          this.group.set(null);
-          this.loadAllGroups();
-          this.snackbarService.showSuccess('Sikeresen kiléptél a csoportból!');
-        },
-        error: (err) => {
-          console.error('Hiba kilépéskor:', err);
-          this.snackbarService.showError('Hiba történt a kilépés során.');
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: {
+        title: 'Kilépés a csoportból',
+        message: 'Biztosan ki szeretnél lépni ebből a csoportból? Később csak új meghívóval tudsz visszajönni.',
+        confirmText: 'Kilépés',
+        cancelText: 'Mégsem',
+        color: 'warn' 
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.groupService.removeMember(this.selectedGroupId(), this.currentUserId).subscribe({
+          next: () => {
+            this.group.set(null);
+            this.loadAllGroups();
+            this.snackbarService.showSuccess('Sikeresen kiléptél a csoportból!');
+          },
+          error: (err) => {
+            console.error('Hiba kilépéskor:', err);
+            this.snackbarService.showError('Hiba történt a kilépés során.');
+          }
+        });
+      }
+    });
   }
 
   deleteGroup() {
@@ -209,6 +246,8 @@ export class Groups implements OnInit {
     const dialogRef = this.dialog.open(PromptDialogComponent, {
       width: '600px',
       maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
       data: {
         title: 'Csoport törlése',
         message: `A művelet végleges. A törléshez kérlek írd be a csoport nevét: "${currentGroup.groupName}"`,

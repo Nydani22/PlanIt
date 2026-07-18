@@ -1,30 +1,41 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
+import { AppEvent } from '../../models/event.model';
 
 @Injectable({
   providedIn: 'root'
 })
-
 export class EventService {
   private apiUrl = 'http://localhost:3000/api/events';
 
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  private http = inject(HttpClient);
 
-  createEvent(eventData: any): Observable<any> {
-    const token = this.authService.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
-    return this.http.post(`${this.apiUrl}/create`, eventData, { headers });
+  createEvent(event: AppEvent): Observable<AppEvent> {
+    return this.http.post<AppEvent>(`${this.apiUrl}/create`, event);
   }
 
-  getEvents(): Observable<any[]> {
-    const token = this.authService.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+  getEvents(): Observable<AppEvent[]> {
+    return this.http.get<AppEvent[]>(`${this.apiUrl}`);
+  }
 
-    return this.http.get<any[]>(`${this.apiUrl}`, { headers });
+  getEventById(eventId: string): Observable<AppEvent> {
+    return this.http.get<AppEvent>(`${this.apiUrl}/${eventId}`);
+  }
+
+  updateEvent(eventId: string, eventData: Partial<AppEvent>): Observable<AppEvent> {
+    return this.http.put<AppEvent>(`${this.apiUrl}/${eventId}`, eventData);
+  }
+
+  deleteEvent(eventId: string): Observable<AppEvent> {
+    return this.http.delete<AppEvent>(`${this.apiUrl}/${eventId}`);
+  }
+
+  updateAttendeeStatus(eventId: string, status: string): Observable<AppEvent> {
+    return this.http.patch<AppEvent>(`${this.apiUrl}/${eventId}/status`, { status });
+  }
+
+  cancelEventInstance(eventId: string, dateToCancel: string | Date): Observable<AppEvent> {
+    return this.http.patch<AppEvent>(`${this.apiUrl}/${eventId}/cancel-instance`, { dateToCancel });
   }
 }
-
-

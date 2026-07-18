@@ -9,5 +9,5 @@ router.get('/:id', authenticateToken, eventController.findOne);
 router.put('/:id', authenticateToken, eventController.update);
 router.delete('/:id', authenticateToken, eventController.delete);
 router.patch('/:id/status', authenticateToken, eventController.updateStatus);
-
+router.patch('/:id/cancel-instance', authenticateToken, eventController.cancelInstance);
 module.exports = router;

@@ -7,7 +7,7 @@ import { Group } from '../../models/group.model';
   providedIn: 'root'
 })
 export class GroupService {
-private http = inject(HttpClient);
+  private http = inject(HttpClient);
   private apiUrl = 'http://localhost:3000/api/groups'; 
 
   getGroups(): Observable<Group[]> {

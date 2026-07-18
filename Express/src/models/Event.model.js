@@ -4,11 +4,30 @@ const eventSchema = new mongoose.Schema({
   eventName: { type: String, required: true },
   description: { type: String },
   location: { type: String },
-  fromDate: { type: Date, required: true },
-  toDate: { type: Date, required: true },
+  fromDate: { type: Date, },
+  toDate: { type: Date, },
   isAllDay: { type: Boolean, default: false },
   organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
+  recurrence: {
+    frequency: { 
+      type: String, 
+      enum: ['NONE', 'DAILY', 'WEEKLY'], 
+      default: 'NONE' 
+    },
+    daysOfWeek: [{ 
+      type: Number, 
+      min: 0, 
+      max: 6 
+    }],
+    untilDate: { 
+      type: Date 
+    },
+    cancelledDates: [{ 
+      type: Date 
+    }]
+  },
+
   attendees: [{
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     status: { 

@@ -37,12 +37,19 @@
             [viewDate]="viewDate"
             [events]="events"
             [refresh]="refresh"
+            [weekStartsOn]="1"
+            locale="hu"
+            
         />
         } @case (CalendarView.Week) {
         <mwl-calendar-week-view
             [viewDate]="viewDate"
             [events]="events"
             [refresh]="refresh"
+            [weekStartsOn]="1"
+            locale="hu"
+            [dayStartHour]="dayStartHour"
+            [dayEndHour]="dayEndHour"
         />
         } @case (CalendarView.Day) {
         <mwl-calendar-day-view
@@ -50,6 +57,9 @@
             [events]="events"
             [refresh]="refresh"
             (eventTimesChanged)="eventTimesChanged($event)"
+            locale="hu"
+            [dayStartHour]="dayStartHour"
+            [dayEndHour]="dayEndHour"
         />
     } }
 </div>

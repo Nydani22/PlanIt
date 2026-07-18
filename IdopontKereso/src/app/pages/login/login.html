@@ -18,7 +18,7 @@
                     placeholder="pelda@email.hu"
                 />
                 <mat-icon matSuffix class="text-gray-400">email</mat-icon>
-                @if (email?.invalid && (email?.dirty || email?.touched)) {
+                @if (email.invalid && (email.dirty || email.touched)) {
                     <mat-error>{{ errorMessage() }}</mat-error>
                 }
             </mat-form-field>
@@ -40,12 +40,12 @@
                     type="button">
                     <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
                 </button>
-                @if (password?.hasError('required')) {
+                @if (password.hasError('required')) {
                     <mat-error>Jelszó megadása kötelező</mat-error>
                 }
             </mat-form-field>
 
-            @if (errorMessage() && !email?.invalid) {
+            @if (errorMessage() && !email.invalid) {
                 <div class="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-center text-sm font-medium">
                     {{ errorMessage() }}
                 </div>

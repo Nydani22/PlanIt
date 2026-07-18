@@ -1,7 +1,7 @@
 const Event = require('../models/Event.model');
 
 exports.createEvent = async (eventData, userId) => {
-    const { eventName, fromDate, toDate, description, location, isAllDay } = eventData;
+    const { eventName, fromDate, toDate, description, location, isAllDay, recurrence } = eventData;
 
     const newEvent = new Event({
         eventName,
@@ -11,6 +11,7 @@ exports.createEvent = async (eventData, userId) => {
         location,
         isAllDay,
         organizerId: userId,
+        recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
         attendees: [{
             userId: userId,
             status: 'ACCEPTED',
@@ -25,7 +26,6 @@ exports.getUserEvents = async (userId) => {
     return await Event.find({ 'attendees.userId': userId }).sort({ fromDate: 1 });
 };
 
-
 exports.getEventById = async (eventId, userId) => {
     return await Event.findOne({ 
         _id: eventId, 
@@ -35,8 +35,8 @@ exports.getEventById = async (eventId, userId) => {
 
 exports.updateEvent = async (eventId, userId, updateData) => {
     return await Event.findOneAndUpdate(
-        { _id: eventId, organizerId: userId }, 
-        updateData, 
+        { _id: eventId, organizerId: userId },
+        updateData,
         { new: true, runValidators: true }
     );
 };
@@ -52,6 +52,14 @@ exports.updateAttendeeStatus = async (eventId, userId, newStatus) => {
     return await Event.findOneAndUpdate(
         { _id: eventId, 'attendees.userId': userId },
         { $set: { 'attendees.$.status': newStatus } },
+        { new: true }
+    );
+};
+
+exports.cancelEventInstance = async (eventId, userId, dateToCancel) => {
+    return await Event.findOneAndUpdate(
+        { _id: eventId, organizerId: userId },
+        { $addToSet: { 'recurrence.cancelledDates': new Date(dateToCancel) } },
         { new: true }
     );
 };

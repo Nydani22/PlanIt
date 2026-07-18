@@ -94,3 +94,25 @@ exports.updateStatus = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.cancelInstance = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const eventId = req.params.id;
+        const { dateToCancel } = req.body;
+        
+        if (!dateToCancel) {
+            return res.status(400).json({ message: 'A törölni kívánt dátum (dateToCancel) megadása kötelező!' });
+        }
+
+        const updatedEvent = await eventService.cancelEventInstance(eventId, userId, dateToCancel);
+        
+        if (!updatedEvent) {
+            return res.status(404).json({ message: 'Esemény nem található, vagy nem te vagy a szervezője.' });
+        }
+        
+        res.status(200).json(updatedEvent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

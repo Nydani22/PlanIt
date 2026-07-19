@@ -35,10 +35,10 @@
                     mat-icon-button
                     matSuffix
                     (click)="clickEvent($event)"
-                    [attr.aria-label]="'Jelszó elrejtése'"
-                    [attr.aria-pressed]="hide()"
                     type="button">
-                    <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    <mat-icon style="display: flex; align-items: center; justify-content: center;">
+                        {{hide() ? 'visibility_off' : 'visibility'}}
+                    </mat-icon>
                 </button>
                 @if (password.hasError('required')) {
                     <mat-error>Jelszó megadása kötelező</mat-error>

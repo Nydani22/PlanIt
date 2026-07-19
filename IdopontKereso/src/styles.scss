@@ -48,6 +48,11 @@ body {
   min-height: 100%;
 }
 
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
 
 :root {
   --app-primary-color: #{mat.m2-get-color-from-palette($my-primary, 500)};

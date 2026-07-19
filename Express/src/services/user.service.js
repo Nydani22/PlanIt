@@ -11,7 +11,7 @@ exports.updateUser = async (id, updateData) => {
     updateData.password = await bcrypt.hash(updateData.password, salt);
   }
 
-  return await User.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
+  return await User.findByIdAndUpdate(id, updateData, { returnDocument: 'after' }).select('-password');
 };
 
 exports.deleteUser = async (id) => {

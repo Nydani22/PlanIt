@@ -11,7 +11,7 @@ import { EventDialogComponent } from '../../components/event-dialog/event-dialog
   standalone: true,
   imports: [CalendarViewComponent, MatButtonModule, MatDialogModule],
   templateUrl: './home.html',
-  styleUrl: './home.css',
+  styleUrl: './home.scss',
 })
 export class Home {
   successMessage = signal('');

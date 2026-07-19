@@ -5,9 +5,18 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   fullName: { type: String, required: true },
   password: { type: String, required: true },
-  timezone: { type: String, default: 'Europe/Budapest' },
-  workHourStart: { type: String, default: '08:00' },
-  workHourEnd: { type: String, default: '16:00' }
+  settings: {
+    timezone: { type: String, default: 'Europe/Budapest' },
+    defaultView: { 
+      type: String, 
+      enum: ['month', 'week', 'day'], 
+      default: 'week' 
+    },
+    dayStartHour: { type: Number, default: 6 },
+    dayEndHour: { type: Number, default: 22 },
+    hideWeekends: { type: Boolean, default: false },
+    hourSegments: { type: Number, default: 2 },
+  }
 }, { 
   timestamps: true
 });

@@ -5,12 +5,14 @@ import { Signup } from './pages/signup/signup';
 import { authGuard } from './services/auth/auth.guard';
 import { Groups } from './pages/groups/groups';
 import { Join } from './pages/join/join';
+import { Profil } from './pages/profil/profil';
 
 export const routes: Routes = [
     { path: '', component: Home, canActivate: [authGuard] },
     { path: 'login', component: Login },
     { path: 'register', component: Signup},
     { path: 'join/:id', component: Join},
+    { path: 'profil', component: Profil},
     { path: 'groups', component: Groups, canActivate: [authGuard]},
     { path: '**', redirectTo: '', pathMatch: 'full' }
 ];

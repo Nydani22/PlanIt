@@ -1,9 +1,9 @@
-<div class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+<div class="min-h-[80vh] flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
         
         <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Bejelentkezés</h2>
-            <p class="text-gray-500 text-sm mt-1">Kérlek, add meg az adataidat a folytatáshoz</p>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Bejelentkezés</h2>
+            <p class="text-gray-500 dark:text-gray-300 text-sm mt-1">Kérlek, add meg az adataidat a folytatáshoz</p>
         </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="login()" class="flex flex-col gap-4">      
@@ -17,7 +17,7 @@
                     required 
                     placeholder="pelda@email.hu"
                 />
-                <mat-icon matSuffix class="text-gray-400">email</mat-icon>
+                <mat-icon matSuffix class="text-gray-400 dark:text-gray-500">email</mat-icon>
                 @if (email.invalid && (email.dirty || email.touched)) {
                     <mat-error>{{ errorMessage() }}</mat-error>
                 }
@@ -46,7 +46,7 @@
             </mat-form-field>
 
             @if (errorMessage() && !email.invalid) {
-                <div class="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-center text-sm font-medium">
+                <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 rounded-lg p-3 text-center text-sm font-medium">
                     {{ errorMessage() }}
                 </div>
             }
@@ -58,9 +58,9 @@
                 Bejelentkezés
             </button>
 
-            <div class="mt-4 text-center text-sm text-gray-600">
+            <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
                 <p>Nincs még fiókod? 
-                    <a routerLink="/register" class="text-amber-600 font-bold hover:underline hover:text-amber-700 cursor-pointer ml-1">
+                    <a routerLink="/register" class="text-amber-600 dark:text-amber-400 font-bold hover:underline hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer ml-1">
                         Regisztrálj itt!
                     </a>
                 </p>

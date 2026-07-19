@@ -1,1 +1,100 @@
-<p>profil works!</p>
+<div class="max-w-2xl mx-auto my-8 p-6 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Profil és Beállítások</h2>
+
+  @if (isLoading()) {
+    <p class="text-gray-600 dark:text-gray-400 font-medium">Adatok betöltése...</p>
+  } @else {
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+      
+      <section class="flex flex-col gap-2">
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Személyes Adatok</h3>
+        
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Teljes név</mat-label>
+          <input matInput id="name" type="text" formControlName="name">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>E-mail cím</mat-label>
+          <input matInput id="email" type="email" formControlName="email">
+        </mat-form-field>
+      </section>
+
+      <hr class="border-t border-gray-200 dark:border-gray-700">
+
+      <section class="flex flex-col gap-2" formGroupName="settings">
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Naptár Beállítások</h3>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Időzóna</mat-label>
+          <mat-select formControlName="timezone" panelClass="dark:bg-gray-800 dark:text-white">
+            <mat-option value="Europe/Budapest">Budapest (CET/CEST)</mat-option>
+            <mat-option value="Europe/London">London (GMT/BST)</mat-option>
+            <mat-option value="America/New_York">New York (EST/EDT)</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full" color="primary">
+          <mat-label>Alapértelmezett nézet</mat-label>
+          <mat-select formControlName="defaultView" panelClass="dark:bg-gray-800 dark:text-white">
+            <mat-option value="month">Havi</mat-option>
+            <mat-option value="week">Heti</mat-option>
+            <mat-option value="day">Napi</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <mat-form-field appearance="outline" class="flex-1" color="primary">
+            <mat-label>Nap kezdete (óra)</mat-label>
+            <input matInput type="number" formControlName="dayStartHour" min="0" max="23">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="flex-1" color="primary">
+            <mat-label>Nap vége (óra)</mat-label>
+            <input matInput type="number" formControlName="dayEndHour" min="1" max="24">
+          </mat-form-field>
+        </div>
+
+        <div class="mt-2 mb-4">
+          <mat-checkbox formControlName="hideWeekends" color="primary">
+            Hétvégék elrejtése
+          </mat-checkbox>
+        </div>
+
+        <mat-form-field color="primary" appearance="outline" class="w-full">
+          <mat-label>Órák felbontása (rács)</mat-label>
+          <mat-select formControlName="hourSegments" panelClass="dark:bg-gray-800 dark:text-white">
+            <mat-option [value]="1">Óránként (60 perc)</mat-option>
+            <mat-option [value]="2">Félóránként (30 perc)</mat-option>
+            <mat-option [value]="4">Negyedóránként (15 perc)</mat-option>
+            <mat-option [value]="6">10 percenként</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </section>
+
+      <hr class="border-t border-gray-200 dark:border-gray-700">
+
+      <section class="flex flex-col gap-2">
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Megjelenés (Helyi beállítás)</h3>
+        
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Téma</mat-label>
+          <mat-select formControlName="localTheme" panelClass="dark:bg-gray-800 dark:text-white">
+            <mat-option value="Világos">Világos</mat-option>
+            <mat-option value="Sötét">Sötét</mat-option>
+            <mat-option value="Rendszer">Rendszer (Automatikus)</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </section>
+
+      <div class="flex items-center gap-4 mt-2">
+        <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid" class="px-6 py-2.5">
+          Mentés
+        </button>
+        @if (saveMessage()) {
+          <span class="text-green-600 dark:text-green-400 font-medium">{{ saveMessage() }}</span>
+        }
+      </div>
+    </form>
+  }
+</div>

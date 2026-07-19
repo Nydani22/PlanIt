@@ -2,19 +2,19 @@
   
   @if (isLoading()) {
     <div class="flex justify-center items-center h-64">
-      <p class="text-gray-500 text-lg">Csoportok betöltése...</p>
+      <p class="text-gray-500 dark:text-gray-400 text-lg">Csoportok betöltése...</p>
     </div>
   } @else if (myGroups().length === 0) {
-    <div class="text-center p-8 bg-white rounded-lg shadow-sm">
-      <mat-icon class="text-gray-400 text-6xl mb-4" style="height: 60px; width: 60px;">group_off</mat-icon>
-      <h2 class="text-xl font-semibold text-gray-700">Még nincsenek csoportjaid</h2>
-      <p class="text-gray-500 mb-4">Hozz létre egy új csoportot, hogy közösen kezelhesd az eseményeket!</p>
+    <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      <mat-icon class="text-gray-400 dark:text-gray-500 text-6xl mb-4" style="height: 60px; width: 60px;">group_off</mat-icon>
+      <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200">Még nincsenek csoportjaid</h2>
+      <p class="text-gray-500 dark:text-gray-400 mb-4">Hozz létre egy új csoportot, hogy közösen kezelhesd az eseményeket!</p>
       <button mat-flat-button color="primary" (click)="openCreateModal()">Új csoport létrehozása</button>
     </div>
   } @else {
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-white p-4 rounded-lg shadow-sm">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 bg-white dark:bg-[#1f2937] p-4 rounded-lg shadow-sm">
       <div class="w-full sm:w-1/2">
-        <p class="text-sm text-gray-500 mb-1 m-0">Kiválasztott csoport:</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1 m-0">Kiválasztott csoport:</p>
         <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
           <mat-select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupSelect($event)">
             @for (g of myGroups(); track g._id) {
@@ -35,7 +35,7 @@
         <mat-card-header class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-4 gap-4 p-4">
           <div class="flex-1 min-w-0 w-full">
             <mat-card-title class="text-2xl font-bold break-words whitespace-normal">{{ group()?.groupName }}</mat-card-title>
-            <mat-card-subtitle class="break-words whitespace-normal text-gray-600 mt-1">
+            <mat-card-subtitle class="break-words whitespace-normal text-gray-600 dark:text-gray-400 mt-1">
               {{ group()?.description }}
             </mat-card-subtitle>
           </div>
@@ -65,7 +65,7 @@
           
           <div class="w-full sm:w-72 shrink-0">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-              <mat-icon matPrefix class="text-gray-400 mr-2">search</mat-icon>
+              <mat-icon matPrefix class="text-gray-400 dark:text-gray-500 mr-2">search</mat-icon>
               <input matInput placeholder="Keresés név alapján..." 
                      [ngModel]="searchQuery()" 
                      (ngModelChange)="searchQuery.set($event)">
@@ -83,13 +83,13 @@
           <div class="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 mt-2">
             
             @for (member of filteredMembers(); track member.userId._id) {
-              <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50 min-h-[84px]">
+              <div class="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-[#1f2937] min-h-[84px]">
                 
                 <div class="flex items-center gap-3">
                   <mat-icon color="primary">person</mat-icon>
                   <div>
-                    <p class="font-semibold m-0">{{ member.userId.fullName || member.userId.userName }}</p>
-                    <p class="text-xs text-gray-500 m-0">Csatlakozott: {{ member.joinedAt | date:'mediumDate' }}</p>
+                    <p class="font-semibold m-0 text-gray-900 dark:text-gray-100">{{ member.userId.fullName || member.userId.userName }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 m-0">Csatlakozott: {{ member.joinedAt | date:'mediumDate' }}</p>
                   </div>
                 </div>
                 
@@ -103,7 +103,7 @@
                       </mat-select>
                     </mat-form-field>
                   } @else {
-                    <span class="px-3 py-1 bg-gray-200 rounded-full text-sm font-medium">
+                    <span class="px-3 py-1 bg-gray-200 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm font-medium">
                       {{ member.role === 'OWNER' ? 'Tulajdonos' : (member.role === 'ADMIN' ? 'Admin' : 'Tag') }}
                     </span>
                   }
@@ -119,7 +119,7 @@
             }
 
             @if (filteredMembers().length === 0) {
-              <div class="text-center py-6 text-gray-500 flex flex-col items-center">
+              <div class="text-center py-6 text-gray-500 dark:text-gray-400 flex flex-col items-center">
                 <mat-icon class="text-4xl mb-2 opacity-50">person_search</mat-icon>
                 <p class="m-0">Nincs a keresésnek megfelelő tag.</p>
               </div>
@@ -132,11 +132,11 @@
       @if (isOwner()) {
         <mat-card class="border-red-500 border-2">
           <mat-card-header>
-            <mat-card-title class="text-red-600">Csoport megszüntetése</mat-card-title>
+            <mat-card-title class="text-red-600 dark:text-red-400">Csoport megszüntetése</mat-card-title>
           </mat-card-header>
           <mat-card-content class="pt-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-              <p class="m-0 text-gray-700">A csoport törlése végleges, az adatok nem visszaállíthatók.</p>
+              <p class="m-0 text-gray-700 dark:text-gray-300">A csoport törlése végleges, az adatok nem visszaállíthatók.</p>
               <button mat-raised-button color="warn" class="self-end sm:self-auto" (click)="deleteGroup()">
                 <mat-icon>delete_forever</mat-icon>
                 Csoport törlése
@@ -147,11 +147,11 @@
       } @else {
         <mat-card class="border-orange-500 border-2">
           <mat-card-header>
-            <mat-card-title class="text-orange-600">Kilépés a csoportból</mat-card-title>
+            <mat-card-title class="text-orange-600 dark:text-orange-400">Kilépés a csoportból</mat-card-title>
           </mat-card-header>
           <mat-card-content class="pt-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-              <p class="m-0 text-gray-700">Biztosan ki szeretnél lépni? A csoport eseményeihez a továbbiakban nem férsz hozzá.</p>
+              <p class="m-0 text-gray-700 dark:text-gray-300">Biztosan ki szeretnél lépni? A csoport eseményeihez a továbbiakban nem férsz hozzá.</p>
               <button mat-raised-button color="warn" class="self-end sm:self-auto" (click)="leaveGroup()">
                 <mat-icon>exit_to_app</mat-icon>
                 Kilépés

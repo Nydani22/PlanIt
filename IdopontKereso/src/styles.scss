@@ -1,17 +1,18 @@
+@use 'tailwindcss';
 @use '@angular/material' as mat;
 
-@import url("tailwindcss");
 @import url("../node_modules/angular-calendar/css/angular-calendar.css");
+@custom-variant dark (&:where(.dark, .dark *));
 
 @include mat.core();
 
 $tailwind-amber-300-palette: (
-  100: #fde68a,
-  500: #fcd34d,
-  700: #fbbf24,
+  100: var(--color-amber-100, #fde68a),
+  500: var(--color-amber-300),
+  700: var(--color-amber-500, #fbbf24),
   contrast: (
     100: rgba(0, 0, 0, 0.87),
-    500: rgba(0, 0, 0, 0.87),
+    500: #451a03,
     700: rgba(0, 0, 0, 0.87)
   )
 );
@@ -51,4 +52,216 @@ body {
 :root {
   --app-primary-color: #{mat.m2-get-color-from-palette($my-primary, 500)};
   --app-primary-contrast: #{mat.m2-get-color-from-palette($my-primary, default-contrast)};
+}
+
+$my-dark-theme: mat.m2-define-dark-theme((
+  color: (
+    primary: $my-primary,
+    accent: $my-accent,
+    warn: $my-warn,
+  )
+));
+
+.dark {
+  color-scheme: dark;
+
+  @include mat.all-component-colors($my-dark-theme);
+  
+  @include mat.form-field-overrides((
+    outlined-label-text-color: #9ca3af,
+    outlined-focus-label-text-color: var(--app-primary-color),
+    outlined-hover-label-text-color: #e5e7eb,
+    outlined-outline-color: #4b5563,
+    outlined-hover-outline-color: #d1d5db,
+    outlined-focus-outline-color: var(--app-primary-color),
+    outlined-input-text-color: #ffffff,
+    outlined-caret-color: var(--app-primary-color),
+    state-layer-color: #ffffff,
+    hover-state-layer-opacity: 0.05
+  ));
+
+  @include mat.select-overrides((
+    enabled-trigger-text-color: #ffffff,
+    enabled-arrow-color: #9ca3af,
+    focused-arrow-color: var(--app-primary-color),
+    panel-background-color: #1f2937
+  ));
+
+  @include mat.checkbox-overrides((
+    label-text-color: #ffffff,
+    unselected-icon-color: #9ca3af,
+    selected-icon-color: var(--app-primary-color),
+    selected-checkmark-color: #ffffff,
+    selected-hover-state-layer-color: var(--app-primary-color),
+    unselected-hover-state-layer-color: #ffffff
+  ));
+
+  @include mat.dialog-overrides((
+    container-color: #1f2937,
+  ));
+
+  @include mat.stepper-overrides((
+    container-color: #1f2937,
+    header-label-text-color: #ffffff,
+    header-selected-state-label-text-color: #ffffff,
+    line-color: #4b5563
+  ));
+
+  @include mat.card-overrides((
+    elevated-container-color: #1f2937,
+  ));
+
+  @include mat.menu-overrides((
+    container-shape: 12px,
+    container-color: #1f2937,
+  ));
+
+
+  --cal-bg: #1f2937;
+  --cal-border-color: #374151;
+  --cal-today-header-bg: rgba(16, 185, 129, 0.15);
+  --cal-today-column-bg: rgba(16, 185, 129, 0.03);
+  --cal-weekend-color: #fca5a5;
+  --cal-day-text-color: #f3f4f6;
+  --cal-day-secondary-text-color: #9ca3af;
+  --cal-event-color: #e5e7eb;
+  --cal-time-text-color: #f3f4f6;
+  --cal-hour-segment-border-color: rgba(255, 255, 255, 0.05); 
+  --cal-hour-odd-bg: rgba(0, 0, 0, 0.15);
+  
+  .cal-month-view {
+    background-color: var(--cal-bg);
+    border: none;
+
+    .cal-days {
+      border: 1px solid var(--cal-border-color);
+    }
+
+    .cal-header {
+      border-bottom: none;
+      
+      .cal-cell {
+        color: var(--cal-day-text-color);
+        border-right: none;
+        
+        &:hover {
+          background-color: #4b5563; 
+          color: var(--cal-day-text-color); 
+        }
+      }
+    }
+
+    .cal-cell-row {
+      border-bottom-color: var(--cal-border-color);
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.02); 
+      }
+    }
+
+    .cal-day-cell {
+      background-color: transparent;
+      border-right-color: var(--cal-border-color);
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.06); 
+      }
+
+      &.cal-today {
+        background-color: var(--cal-today-header-bg); 
+      }
+
+      &.cal-weekend .cal-day-number {
+        color: var(--cal-weekend-color);
+      }
+
+      &.cal-out-month .cal-day-number {
+        opacity: 0.3; 
+        color: var(--cal-day-secondary-text-color);
+      }
+    }
+  }
+  
+  .cal-week-view,
+  .cal-day-view {
+    background-color: var(--cal-bg);
+    border-color: var(--cal-border-color);
+    border-top: 1px solid var(--cal-border-color);
+    
+    .cal-hour-odd {
+      background-color: var(--cal-hour-odd-bg);
+    }
+  }
+  
+  .cal-week-view,
+  .cal-day-view {
+    .cal-day-headers {
+      border-color: var(--cal-border-color);
+      border-top: 1px solid var(--cal-border-color); 
+      
+      .cal-header {
+        color: var(--cal-day-text-color);
+        border-color: var(--cal-border-color);
+        border-left-color: var(--cal-border-color);
+        border-right-color: var(--cal-border-color);
+        
+        &:hover, &:focus {
+          background-color: #4b5563;
+          color: var(--cal-day-text-color); 
+        }
+        
+        &.cal-today {
+          background-color: var(--cal-today-header-bg);
+        }
+        
+        &.cal-weekend {
+          color: var(--cal-weekend-color); 
+          span {
+            color: var(--cal-weekend-color);
+          }
+        }
+      }
+    }
+
+    .cal-time-events {
+      border-color: var(--cal-border-color);
+      
+      .cal-day-column {
+        border-color: var(--cal-border-color);
+        border-left-color: var(--cal-border-color); 
+        
+        &.cal-today {
+          background-color: var(--cal-today-column-bg);
+        }
+
+        .cal-hour-segment.cal-hour-start {
+          border-bottom-color: var(--cal-hour-segment-border-color);
+          border-bottom-style: dashed; 
+        }
+        
+        .cal-hour-segment.cal-after-hour-start {
+          border-bottom-color: var(--cal-border-color);
+          border-bottom-style: solid;
+        }
+      }
+    }
+    
+    .cal-time-label-column {
+      border-color: var(--cal-border-color);
+
+      .cal-hour-segment.cal-hour-start {
+        border-bottom-color: var(--cal-hour-segment-border-color);
+        border-bottom-style: dashed;
+      }
+      
+      .cal-hour-segment.cal-after-hour-start {
+        border-bottom-color: var(--cal-border-color);
+        border-bottom-style: solid;
+      }
+    }
+
+    .cal-time-events .cal-day-column .cal-hour-segment:hover,
+    .cal-time-events .cal-hour-segment:hover {
+      background-color: rgba(255, 255, 255, 0.05); 
+    }
+  }
 }

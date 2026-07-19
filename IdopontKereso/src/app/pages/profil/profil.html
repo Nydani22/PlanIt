@@ -87,13 +87,13 @@
         </mat-form-field>
       </section>
 
-      <div class="flex items-center gap-4 mt-2">
-        <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid" class="px-6 py-2.5">
-          Mentés
-        </button>
+      <div class="flex self-end items-center gap-4 mt-2">
         @if (saveMessage()) {
           <span class="text-green-600 dark:text-green-400 font-medium">{{ saveMessage() }}</span>
         }
+        <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid" class="px-6 py-2.5">
+          Mentés
+        </button>
       </div>
     </form>
   }

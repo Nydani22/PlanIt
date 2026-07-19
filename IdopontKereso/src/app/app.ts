@@ -1,9 +1,7 @@
-import { Component, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterOutlet } from '@angular/router';
-import { AuthService } from './services/auth/auth.service';
+import { Component, inject, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { Navbar } from './components/navbar/navbar';
+import { ThemeService } from './services/theme/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -13,4 +11,5 @@ import { Navbar } from './components/navbar/navbar';
 })
 export class App {
   protected readonly title = signal('IdopontKereso');
+  private themeService = inject(ThemeService);
 }

@@ -6,10 +6,18 @@ import { MatButton, MatButtonModule } from "@angular/material/button";
 import { Subject } from 'rxjs';
 import { EventService } from '../../services/event/event.service';
 import { AuthService } from '../../services/auth/auth.service';
+import { UserService } from '../../services/user/user.service';
 import { AppEvent } from '../../models/event.model';
+import { UserSettings } from '../../models/user.model';
 import { CustomDateFormatter } from './custom-date-formatter.provider';
 
 registerLocaleData(localeHu);
+
+const VIEW_MAP: Record<UserSettings['defaultView'], CalendarView> = {
+  month: CalendarView.Month,
+  week: CalendarView.Week,
+  day: CalendarView.Day
+};
 
 @Component({
   selector: 'app-calendar-view',
@@ -28,6 +36,8 @@ registerLocaleData(localeHu);
 export class CalendarViewComponent implements OnInit {
   private eventService = inject(EventService);
   private authService = inject(AuthService);
+  private userService = inject(UserService);
+
   view: CalendarView = CalendarView.Week;
   viewDate: Date = new Date();
   refresh = new Subject<void>();
@@ -35,13 +45,44 @@ export class CalendarViewComponent implements OnInit {
 
   dayStartHour: number = 6;
   dayEndHour: number = 22;
+  hourSegments: number = 2;
+  excludeDays: number[] = [];
 
   events: CalendarEvent[] = [];
 
   ngOnInit(): void {
     if (this.authService.getToken()) {
+      this.loadUserSettings();
       this.loadEvents();
     }
+  }
+
+  private loadUserSettings() {
+    const userId = this.authService.getCurrentUserId();
+
+    if (!userId) {
+      return;
+    }
+
+    this.userService.getUser(userId).subscribe({
+      next: (user) => {
+        const settings = user.settings;
+        if (!settings) {
+          return;
+        }
+
+        this.dayStartHour = settings.dayStartHour;
+        this.dayEndHour = settings.dayEndHour;
+        this.hourSegments = settings.hourSegments;
+        this.view = VIEW_MAP[settings.defaultView] ?? CalendarView.Week;
+        this.excludeDays = settings.hideWeekends ? [0, 6] : [];
+
+        this.refresh.next();
+      },
+      error: (err) => {
+        console.error('Hiba történt a felhasználói beállítások betöltésekor:', err);
+      }
+    });
   }
 
   loadEvents() {
@@ -83,9 +124,9 @@ export class CalendarViewComponent implements OnInit {
       }
 
       const recurrence = item.recurrence;
-      
-      const limitDate = recurrence.untilDate 
-        ? new Date(recurrence.untilDate) 
+
+      const limitDate = recurrence.untilDate
+        ? new Date(recurrence.untilDate)
         : new Date(startDate.getFullYear() + MAX_RECURRENCE_YEARS, startDate.getMonth(), startDate.getDate());
 
       if (recurrence.frequency === 'DAILY') {
@@ -103,7 +144,6 @@ export class CalendarViewComponent implements OnInit {
         if (recurrence.daysOfWeek && recurrence.daysOfWeek.length > 0) {
           let dayIterator = new Date(startDate);
           while (dayIterator <= limitDate) {
-            
             const jsDay = dayIterator.getDay();
             if (recurrence.daysOfWeek.includes(jsDay)) {
               calendarEvents.push({

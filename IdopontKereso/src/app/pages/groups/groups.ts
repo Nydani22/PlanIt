@@ -101,6 +101,28 @@ export class Groups implements OnInit {
     this.loadGroupDetails(groupId);
   }
 
+  editGroup() {
+    const currentGroup = this.group();
+    if (!currentGroup) return;
+
+    const dialogRef = this.dialog.open(GroupCreateModalComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      disableClose: true,
+      data: { group: currentGroup }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadAllGroups(); 
+        this.loadGroupDetails(currentGroup._id);
+        this.snackbarService.showSuccess('A csoport sikeresen frissítve!');
+      }
+    });
+  }
+
   copyInviteLink() {
     const groupId = this.selectedGroupId();
     if (!groupId) return;

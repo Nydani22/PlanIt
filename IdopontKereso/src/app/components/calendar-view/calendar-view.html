@@ -50,6 +50,7 @@
                 [refresh]="refresh"
                 [weekStartsOn]="1"
                 locale="hu"
+                (eventClicked)="onEventClick($event.event)"
             />
         } 
         @case (CalendarView.Week) {
@@ -64,6 +65,7 @@
                 [hourSegments]="hourSegments"
                 [excludeDays]="excludeDays"
                 (eventTimesChanged)="eventTimesChanged($event)"
+                (eventClicked)="onEventClick($event.event)"
             />
         } 
         @case (CalendarView.Day) {
@@ -76,6 +78,7 @@
                 [dayStartHour]="dayStartHour"
                 [dayEndHour]="dayEndHour"
                 [hourSegments]="hourSegments"
+                (eventClicked)="onEventClick($event.event)"
             />
         } 
     }

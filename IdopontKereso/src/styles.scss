@@ -121,6 +121,11 @@ $my-dark-theme: mat.m2-define-dark-theme((
     container-color: #1f2937,
   ));
 
+  @include mat.snack-bar-overrides((
+    container-shape: 12px,
+    container-color: #1f2937,
+  ));
+
 
   --cal-bg: #1f2937;
   --cal-border-color: #374151;
@@ -225,6 +230,10 @@ $my-dark-theme: mat.m2-define-dark-theme((
           }
         }
       }
+    }
+
+    .cal-drag-over .cal-hour-segment {
+      background-color: transparent;
     }
 
     .cal-time-events {

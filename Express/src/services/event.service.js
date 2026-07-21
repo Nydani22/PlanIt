@@ -37,7 +37,7 @@ exports.updateEvent = async (eventId, userId, updateData) => {
     return await Event.findOneAndUpdate(
         { _id: eventId, organizerId: userId },
         updateData,
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
     );
 };
 
@@ -52,7 +52,7 @@ exports.updateAttendeeStatus = async (eventId, userId, newStatus) => {
     return await Event.findOneAndUpdate(
         { _id: eventId, 'attendees.userId': userId },
         { $set: { 'attendees.$.status': newStatus } },
-        { new: true }
+        { returnDocument: 'after', runValidators: true }
     );
 };
 
@@ -60,6 +60,6 @@ exports.cancelEventInstance = async (eventId, userId, dateToCancel) => {
     return await Event.findOneAndUpdate(
         { _id: eventId, organizerId: userId },
         { $addToSet: { 'recurrence.cancelledDates': new Date(dateToCancel) } },
-        { new: true }
+        { returnDocument: 'after', runValidators: true }
     );
 };

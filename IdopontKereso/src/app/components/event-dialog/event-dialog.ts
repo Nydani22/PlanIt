@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog'; // MAT_DIALOG_DATA importálva
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -14,6 +14,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { SlicePipe } from '@angular/common';
 import { AppEvent } from '../../models/event.model';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+
+export interface EventDialogData {
+  event?: AppEvent;
+}
 
 @Component({
   selector: 'app-event-dialog',
@@ -36,12 +41,17 @@ import { AppEvent } from '../../models/event.model';
   templateUrl: './event-dialog.html',
   styleUrls: ['./event-dialog.scss']
 })
-export class EventDialogComponent {
+
+export class EventDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private eventService = inject(EventService);
   private dialogRef = inject(MatDialogRef<EventDialogComponent>);
+  private dialog = inject(MatDialog);
+  public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
 
   eventForm: FormGroup;
+  isEditMode = signal<boolean>(false);
+  
   daysOfWeekList = [
     { value: 1, name: 'Hétfő' },
     { value: 2, name: 'Kedd' },
@@ -87,13 +97,11 @@ export class EventDialogComponent {
       if (isRecurring) {
         freqCtrl?.enable();
         untilCtrl?.enable();
-        
         endDateCtrl?.clearValidators(); 
       } else {
         freqCtrl?.disable();
         untilCtrl?.disable();
         freqCtrl?.setValue('');
-        
         endDateCtrl?.setValidators([Validators.required]); 
       }
 
@@ -127,6 +135,44 @@ export class EventDialogComponent {
         endTimeCtrl?.enable();
       }
     });
+
+    if (this.data && this.data.event) {
+      this.isEditMode.set(true);
+      const ev = this.data.event;
+
+      this.eventForm.get('basicDetails')?.patchValue({
+        eventName: ev.eventName,
+        description: ev.description
+      });
+
+      const fromDate = new Date(ev.fromDate);
+      const toDate = new Date(ev.toDate);
+      const startTime = this.extractTime(fromDate);
+      const endTime = this.extractTime(toDate);
+
+      this.eventForm.get('timeDetails')?.patchValue({
+        isAllDay: ev.isAllDay,
+        startDate: fromDate,
+        startTime: startTime,
+        endDate: toDate,
+        endTime: endTime
+      });
+
+      if (ev.recurrence) {
+        this.eventForm.get('recurrenceDetails')?.patchValue({
+          isRecurring: true,
+          frequency: ev.recurrence.frequency,
+          daysOfWeek: ev.recurrence.daysOfWeek || [],
+          untilDate: ev.recurrence.untilDate ? new Date(ev.recurrence.untilDate) : ''
+        });
+      }
+    }
+  }
+
+  private extractTime(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
   onSubmit() {
@@ -159,12 +205,50 @@ export class EventDialogComponent {
         };
       }
 
-      this.eventService.createEvent(payload).subscribe({
-        next: (res) => {
-          this.dialogRef.close(true);
-        },
-        error: (err) => console.error('Hiba az esemény létrehozásakor:', err)
+      if (this.isEditMode() && this.data?.event?._id) {
+        this.eventService.updateEvent(this.data.event._id, payload).subscribe({
+          next: (res) => {
+            this.dialogRef.close(true);
+          },
+          error: (err) => console.error('Hiba az esemény frissítésekor:', err)
+        });
+      } else {
+        this.eventService.createEvent(payload).subscribe({
+          next: (res) => {
+            this.dialogRef.close(true);
+          },
+          error: (err) => console.error('Hiba az esemény létrehozásakor:', err)
+        });
+      }
+    }
+  }
+
+  onDelete() {
+    if (this.isEditMode() && this.data?.event?._id) {
+      const confirmDialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '500px',
+        maxWidth: '90vw',
+        restoreFocus: false,
+        autoFocus: false,
+        data: {
+          title: 'Esemény törlése',
+          message: 'Biztosan törölni szeretnéd ezt az eseményt? Ezt a műveletet nem lehet visszavonni.',
+          confirmText: 'Törlés',
+          cancelText: 'Mégsem',
+          color: 'warn' 
+        }
       });
+
+      confirmDialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          this.eventService.deleteEvent(this.data!.event!._id!).subscribe({
+            next: () => {
+              this.dialogRef.close(true);
+            },
+            error: (err) => console.error('Hiba az esemény törlésekor:', err)
+          });
+        }
+      });      
     }
   }
 

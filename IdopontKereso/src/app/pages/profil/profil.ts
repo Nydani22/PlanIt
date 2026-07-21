@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
+import { SnackbarService } from '../../services/snackbar/snackbar.service';
 
 @Component({
   selector: 'app-profil',
@@ -21,11 +22,11 @@ export class Profil implements OnInit {
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
+  private snackbarService = inject(SnackbarService);
 
   profileForm!: FormGroup;
   
   isLoading = signal(true);
-  saveMessage = signal('');
 
   ngOnInit(): void {
     this.initForm();
@@ -96,11 +97,7 @@ export class Profil implements OnInit {
 
     this.userService.updateUser(userId, updateData).subscribe({
       next: () => {
-        this.saveMessage.set('Beállítások sikeresen elmentve!');
-        
-        setTimeout(() => {
-          this.saveMessage.set('');
-        }, 3000);
+        this.snackbarService.showSuccess('Beállítások sikeresen elmentve!');
       },
       error: (err) => console.error('Hiba a mentés során', err)
     });

@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog'; // <-- MatDialog importálva
+import { MatDialogRef, MatDialogModule, MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog'; // MAT_DIALOG_DATA importálva[cite: 2]
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,6 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { GroupService } from '../../services/group/group.service';
 import { Group } from '../../models/group.model';
 import { InviteDialogComponent } from '../invite-dialog/invite-dialog';
+
+export interface GroupDialogData {
+  group?: Group; 
+}
 
 @Component({
   selector: 'app-group-create-modal',
@@ -27,12 +31,13 @@ import { InviteDialogComponent } from '../invite-dialog/invite-dialog';
   templateUrl: './group-create-modal.html',
   styleUrl: './group-create-modal.scss'
 })
-export class GroupCreateModalComponent {
+export class GroupCreateModalComponent implements OnInit {
   private fb = inject(FormBuilder);
   private groupService = inject(GroupService);
   private dialogRef = inject(MatDialogRef<GroupCreateModalComponent>);
-  
   private dialog = inject(MatDialog); 
+  
+  public data = inject<GroupDialogData>(MAT_DIALOG_DATA, { optional: true });
 
   basicFormGroup: FormGroup = this.fb.group({
     groupName: ['', [Validators.required, Validators.minLength(3)]]
@@ -43,49 +48,75 @@ export class GroupCreateModalComponent {
   });
 
   isSubmitting = signal<boolean>(false);
+  isEditMode = signal<boolean>(false);
+
+  ngOnInit() {
+    if (this.data && this.data.group) {
+      this.isEditMode.set(true);
+      this.basicFormGroup.patchValue({
+        groupName: this.data.group.groupName
+      });
+      this.detailsFormGroup.patchValue({
+        description: this.data.group.description || ''
+      });
+    }
+  }
 
   onSubmit() {
     if (this.basicFormGroup.invalid) return;
 
     this.isSubmitting.set(true); 
     
-    const newGroupData: Partial<Group> = {
+    const groupData: Partial<Group> = {
       groupName: this.basicFormGroup.value.groupName,
       description: this.detailsFormGroup.value.description
     };
 
-    this.groupService.createGroup(newGroupData).subscribe({
-      next: (createdGroup) => {
-        this.groupService.generateInvite(createdGroup._id!).subscribe({
-          next: (response) => {
-            this.isSubmitting.set(false);
-            const generatedUrl = `${window.location.origin}/join/${response.token}`;
-            
-            this.dialogRef.close(true);
+    if (this.isEditMode() && this.data?.group?._id) {
+      this.groupService.updateGroup(this.data.group._id, groupData).subscribe({
+        next: (updatedGroup) => {
+          this.isSubmitting.set(false);
+          this.dialogRef.close(true);
+        },
+        error: (err) => {
+          console.error('Hiba a csoport frissítésekor:', err);
+          this.isSubmitting.set(false);
+        }
+      });
+    } else {
+      this.groupService.createGroup(groupData).subscribe({
+        next: (createdGroup) => {
+          this.groupService.generateInvite(createdGroup._id!).subscribe({
+            next: (response) => {
+              this.isSubmitting.set(false);
+              const generatedUrl = `${window.location.origin}/join/${response.token}`;
+              
+              this.dialogRef.close(true);
 
-            this.dialog.open(InviteDialogComponent, {
-              width: '450px',
-              maxWidth: '90vw',
-              disableClose: false,
-              data: { 
-                inviteUrl: generatedUrl,
-                groupName: createdGroup.groupName 
-              }
-            });
-          },
-          error: (inviteErr) => {
-            console.error('Hiba a token generálásakor:', inviteErr);
-            this.isSubmitting.set(false);
-            this.dialogRef.close(true);
-            alert('A csoport létrejött, de a meghívó linket nem sikerült automatikusan legenerálni. Később a csoport beállításainál pótolhatod!');
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Hiba a csoport létrehozásakor:', err);
-        this.isSubmitting.set(false);
-      }
-    });
+              this.dialog.open(InviteDialogComponent, {
+                width: '450px',
+                maxWidth: '90vw',
+                disableClose: false,
+                data: { 
+                  inviteUrl: generatedUrl,
+                  groupName: createdGroup.groupName 
+                }
+              });
+            },
+            error: (inviteErr) => {
+              console.error('Hiba a token generálásakor:', inviteErr);
+              this.isSubmitting.set(false);
+              this.dialogRef.close(true);
+              alert('A csoport létrejött, de a meghívó linket nem sikerült automatikusan legenerálni.');
+            }
+          });
+        },
+        error: (err) => {
+          console.error('Hiba a csoport létrehozásakor:', err);
+          this.isSubmitting.set(false);
+        }
+      });
+    }
   }
 
   onCancel() {

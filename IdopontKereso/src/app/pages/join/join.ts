@@ -50,12 +50,10 @@ export class Join implements OnInit {
               const isMember = group.members.some((m: any) => 
                 (m.userId._id || m.userId) === userId
               );
-              
               this.isAlreadyMember.set(isMember);
               this.isCheckingStatus.set(false);
             },
             error: () => {
-              // Ha valamiért 404-et dobna
               this.isAlreadyMember.set(false);
               this.isCheckingStatus.set(false);
             }

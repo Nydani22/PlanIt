@@ -2,6 +2,7 @@ import { CommonModule, registerLocaleData } from '@angular/common';
 import { Component, OnInit, inject, LOCALE_ID } from '@angular/core';
 import localeHu from '@angular/common/locales/hu';
 import { CalendarModule, CalendarEvent, CalendarView, CalendarEventTimesChangedEvent, CalendarDateFormatter } from 'angular-calendar';
+import { MatDialog } from '@angular/material/dialog';
 import { MatButton, MatButtonModule } from "@angular/material/button";
 import { Subject } from 'rxjs';
 import { EventService } from '../../services/event/event.service';
@@ -10,6 +11,7 @@ import { UserService } from '../../services/user/user.service';
 import { AppEvent } from '../../models/event.model';
 import { UserSettings } from '../../models/user.model';
 import { CustomDateFormatter } from './custom-date-formatter.provider';
+import { EventDialogComponent } from '../event-dialog/event-dialog';
 
 registerLocaleData(localeHu);
 
@@ -37,6 +39,7 @@ export class CalendarViewComponent implements OnInit {
   private eventService = inject(EventService);
   private authService = inject(AuthService);
   private userService = inject(UserService);
+  private dialog = inject(MatDialog);
 
   view: CalendarView = CalendarView.Week;
   viewDate: Date = new Date();
@@ -111,10 +114,16 @@ export class CalendarViewComponent implements OnInit {
         start: startDate,
         end: endDate,
         allDay: item.isAllDay,
+        draggable: true, 
+        resizable: {
+          beforeStart: true,
+          afterEnd: true,
+        },
         meta: {
           description: item.description,
           originalId: item._id,
-          recurrence: item.recurrence
+          recurrence: item.recurrence,
+          originalEvent: item
         }
       };
 
@@ -175,11 +184,38 @@ export class CalendarViewComponent implements OnInit {
     return calendarEvents;
   }
 
+  onEventClick(calendarEvent: CalendarEvent): void {
+    const originalAppEvent = calendarEvent.meta?.originalEvent;
+    
+    if (!originalAppEvent) return;
+
+    const dialogRef = this.dialog.open(EventDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      disableClose: true,
+      data: { event: originalAppEvent }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadEvents();
+      }
+    });
+  }
+
   eventTimesChanged({
     event,
     newStart,
     newEnd,
   }: CalendarEventTimesChangedEvent): void {
+    const originalEvent = event.meta?.originalEvent;
+    
+    if (!originalEvent || !originalEvent._id) {
+      return;
+    }
+
     this.events = this.events.map((iEvent) => {
       if (iEvent === event) {
         return {
@@ -189,6 +225,27 @@ export class CalendarViewComponent implements OnInit {
         };
       }
       return iEvent;
+    });
+    
+    this.refresh.next();
+    
+    const targetEnd = newEnd ? newEnd : newStart;
+    
+    const payload: AppEvent = {
+      ...originalEvent,
+      fromDate: newStart,
+      toDate: targetEnd
+    };
+
+    this.eventService.updateEvent(originalEvent._id, payload).subscribe({
+      next: () => {
+        console.log('Esemény új időpontja sikeresen elmentve!');
+        this.loadEvents();
+      },
+      error: (err) => {
+        console.error('Hiba az esemény mozgatásakor:', err);
+        this.loadEvents();
+      }
     });
   }
 

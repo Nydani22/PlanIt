@@ -203,6 +203,45 @@
         </div>
       </mat-step>
 
+      <mat-step formGroupName="settingsDetails" [stepControl]="eventForm.get('settingsDetails')!">
+        <ng-template matStepLabel>Beállítások</ng-template>
+        
+        <div class="flex flex-col gap-8 mt-6 max-w-lg mx-auto w-full">
+          
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-gray-700">Esemény egyedi színe</label>
+            <div class="flex items-center gap-4">
+              <input type="color" formControlName="color" 
+                     class="h-12 w-24 cursor-pointer rounded border border-gray-300 p-1 bg-white">
+              <span class="text-sm text-gray-500">Kattints a szín módosításához</span>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="flex flex-col gap-6">
+            <mat-slide-toggle formControlName="sendNotification" color="primary">
+              <div class="flex flex-col">
+                <span class="font-medium">Értesítés küldése</span>
+                <span class="text-xs text-gray-500 font-normal">Értesítés a résztvevőknek vagy emlékeztető beállítása.</span>
+              </div>
+            </mat-slide-toggle>
+
+            <mat-slide-toggle formControlName="allowOverlap" color="primary">
+              <div class="flex flex-col">
+                <span class="font-medium">Párhuzamos esemény (Ütközés engedélyezése)</span>
+                <span class="text-xs text-gray-500 font-normal">Ha be van kapcsolva, az időpontkereső figyelmen kívül hagyja ezt az eseményt.</span>
+              </div>
+            </mat-slide-toggle>
+          </div>
+          
+          <div class="flex justify-between mt-4">
+            <button mat-button type="button" matStepperPrevious>Vissza</button>
+            <button mat-flat-button color="primary" matStepperNext type="button">Tovább</button>
+          </div>
+        </div>
+      </mat-step>
+
       <mat-step>
         <ng-template matStepLabel>Kész</ng-template>
         

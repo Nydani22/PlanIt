@@ -16,6 +16,8 @@ import { SlicePipe } from '@angular/common';
 import { AppEvent } from '../../models/event.model';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { FIXED_CATEGORIES, CategoryDefinition } from '../../constants/category-icons.constants';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatDividerModule } from '@angular/material/divider';
 
 export interface EventDialogData {
   event?: AppEvent;
@@ -29,6 +31,7 @@ export interface EventDialogData {
     MatDialogModule,
     MatStepperModule,
     MatFormFieldModule,
+    MatSlideToggleModule,
     MatInputModule,
     MatButtonModule,
     MatDatepickerModule,
@@ -36,8 +39,9 @@ export interface EventDialogData {
     MatCheckboxModule,
     MatIconModule,
     MatButtonToggleModule,
-    SlicePipe
-  ],
+    SlicePipe,
+    MatDividerModule
+],
   providers: [provideNativeDateAdapter()],
   templateUrl: './event-dialog.html',
   styleUrls: ['./event-dialog.scss']
@@ -86,6 +90,11 @@ export class EventDialogComponent implements OnInit {
         frequency: ['none'],
         daysOfWeek: [[]],
         untilDate: ['']
+      }),
+      settingsDetails: this.fb.group({
+        color: ['#3b82f6'],
+        sendNotification: [false],
+        allowOverlap: [false]
       })
     });
   }
@@ -149,6 +158,14 @@ export class EventDialogComponent implements OnInit {
       }
     });
 
+    this.eventForm.get('categoryDetails.categoryId')?.valueChanges.subscribe(categoryId => {
+      const selectedCategory = this.categoriesList.find(cat => cat.id === categoryId);
+      
+      if (selectedCategory && selectedCategory.defaultColor) {
+        this.eventForm.get('settingsDetails.color')?.setValue(selectedCategory.defaultColor);
+      }
+    });
+
     if (this.data && this.data.event) {
       this.isEditMode.set(true);
       const ev = this.data.event;
@@ -185,6 +202,12 @@ export class EventDialogComponent implements OnInit {
           untilDate: ev.recurrence.untilDate ? new Date(ev.recurrence.untilDate) : ''
         });
       }
+
+      this.eventForm.get('settingsDetails')?.patchValue({
+        color: ev.color || '#3b82f6',
+        //sendNotification: ev.sendNotification || false,
+        //allowOverlap: ev.allowOverlap || false
+      });
     }
     this.cdr.detectChanges();
   }
@@ -201,14 +224,12 @@ export class EventDialogComponent implements OnInit {
       const catDetails = this.eventForm.get('categoryDetails')?.getRawValue();
       const time = this.eventForm.get('timeDetails')?.getRawValue();
       const rec = this.eventForm.get('recurrenceDetails')?.getRawValue();
-
       const targetEndDate = time.endDate ? time.endDate : time.startDate;
-
       const sTime = time.isAllDay ? '00:00' : time.startTime;
       const eTime = time.isAllDay ? '23:59' : time.endTime;
-
       const fullFromDate = this.combineDateAndTime(time.startDate, sTime);
       const fullToDate = this.combineDateAndTime(targetEndDate, eTime);
+      const settings = this.eventForm.get('settingsDetails')?.getRawValue();
 
       const payload: AppEvent = {
         eventName: basic.eventName,
@@ -216,7 +237,10 @@ export class EventDialogComponent implements OnInit {
         category: catDetails.categoryId,
         isAllDay: time.isAllDay,
         fromDate: fullFromDate,
-        toDate: fullToDate
+        toDate: fullToDate,
+        color: settings.color,
+        //sendNotification: settings.sendNotification,
+        //allowOverlap: settings.allowOverlap
       };
 
       if (rec.isRecurring && rec.frequency !== 'none') {

@@ -114,6 +114,11 @@ export class CalendarViewComponent implements OnInit {
         start: startDate,
         end: endDate,
         allDay: item.isAllDay,
+        color: item.color ? {
+          primary: `${item.color}`,
+          secondary: `color-mix(in srgb, ${item.color} 20%, white)`,
+          secondaryText: `${item.color}`
+        } : undefined,
         draggable: true, 
         resizable: {
           beforeStart: true,

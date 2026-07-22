@@ -190,8 +190,8 @@ export class CalendarViewComponent implements OnInit {
     if (!originalAppEvent) return;
 
     const dialogRef = this.dialog.open(EventDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '800px',
+      maxWidth: '95vw',
       restoreFocus: false,
       autoFocus: false,
       disableClose: true,

@@ -5,4 +5,11 @@
     selected-state-background-color: var(--app-primary-color),
     selected-state-text-color: var(--app-primary-contrast)
   ));
+
+  .category-transparent-theme {
+    @include mat.button-toggle-overrides((
+      background-color: transparent,
+      selected-state-background-color: transparent
+    ));
+  }
 }

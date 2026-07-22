@@ -232,6 +232,22 @@ $my-dark-theme: mat.m2-define-dark-theme((
       }
     }
 
+    .cal-all-day-events {
+      border-color: var(--cal-border-color);
+      border-bottom-color: var(--cal-border-color);
+      border-top-color: var(--cal-border-color);
+      
+      .cal-day-column {
+        border-color: var(--cal-border-color);
+        border-left-color: var(--cal-border-color);
+        border-right-color: var(--cal-border-color);
+      }
+
+      .cal-time-label-column {
+        border-color: var(--cal-border-color);
+      }
+    }
+
     .cal-drag-over .cal-hour-segment {
       background-color: transparent;
     }

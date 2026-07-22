@@ -8,7 +8,17 @@ const eventSchema = new mongoose.Schema({
   toDate: { type: Date, },
   isAllDay: { type: Boolean, default: false },
   organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  
+
+  category: { 
+    type: String, 
+    required: true 
+  },
+
+  color: {
+      type: String,
+      required: false
+  },
+
   recurrence: {
     frequency: { 
       type: String, 

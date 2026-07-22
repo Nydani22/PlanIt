@@ -1,6 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog'; // MAT_DIALOG_DATA importálva
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog'; 
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,6 +15,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { SlicePipe } from '@angular/common';
 import { AppEvent } from '../../models/event.model';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+import { FIXED_CATEGORIES, CategoryDefinition } from '../../constants/category-icons.constants';
 
 export interface EventDialogData {
   event?: AppEvent;
@@ -41,16 +42,18 @@ export interface EventDialogData {
   templateUrl: './event-dialog.html',
   styleUrls: ['./event-dialog.scss']
 })
-
 export class EventDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private eventService = inject(EventService);
   private dialogRef = inject(MatDialogRef<EventDialogComponent>);
   private dialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
   public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
 
   eventForm: FormGroup;
   isEditMode = signal<boolean>(false);
+  
+  categoriesList: CategoryDefinition[] = FIXED_CATEGORIES;
   
   daysOfWeekList = [
     { value: 1, name: 'Hétfő' },
@@ -67,6 +70,9 @@ export class EventDialogComponent implements OnInit {
       basicDetails: this.fb.group({
         eventName: ['', Validators.required],
         description: ['', Validators.required]
+      }),
+      categoryDetails: this.fb.group({
+        categoryId: ['', Validators.required]
       }),
       timeDetails: this.fb.group({
         isAllDay: [false],
@@ -98,13 +104,20 @@ export class EventDialogComponent implements OnInit {
         freqCtrl?.enable();
         untilCtrl?.enable();
         endDateCtrl?.clearValidators(); 
+        freqCtrl?.setValidators([
+          Validators.required, 
+          Validators.pattern('^(DAILY|WEEKLY)$')
+        ]);
       } else {
         freqCtrl?.disable();
         untilCtrl?.disable();
         freqCtrl?.setValue('');
         endDateCtrl?.setValidators([Validators.required]); 
+        
+        freqCtrl?.clearValidators();
       }
 
+      freqCtrl?.updateValueAndValidity(); 
       endDateCtrl?.updateValueAndValidity(); 
     });
 
@@ -144,6 +157,10 @@ export class EventDialogComponent implements OnInit {
         eventName: ev.eventName,
         description: ev.description
       });
+      
+      this.eventForm.get('categoryDetails')?.patchValue({
+        categoryId: ev.category
+      });
 
       const fromDate = new Date(ev.fromDate);
       const toDate = new Date(ev.toDate);
@@ -159,14 +176,17 @@ export class EventDialogComponent implements OnInit {
       });
 
       if (ev.recurrence) {
+        const isReallyRecurring = ev.recurrence.frequency !== 'NONE' && ev.recurrence.frequency !== 'none';
+
         this.eventForm.get('recurrenceDetails')?.patchValue({
-          isRecurring: true,
-          frequency: ev.recurrence.frequency,
+          isRecurring: isReallyRecurring,
+          frequency: isReallyRecurring ? ev.recurrence.frequency : 'none',
           daysOfWeek: ev.recurrence.daysOfWeek || [],
           untilDate: ev.recurrence.untilDate ? new Date(ev.recurrence.untilDate) : ''
         });
       }
     }
+    this.cdr.detectChanges();
   }
 
   private extractTime(date: Date): string {
@@ -178,6 +198,7 @@ export class EventDialogComponent implements OnInit {
   onSubmit() {
     if (this.eventForm.valid) {
       const basic = this.eventForm.get('basicDetails')?.getRawValue();
+      const catDetails = this.eventForm.get('categoryDetails')?.getRawValue();
       const time = this.eventForm.get('timeDetails')?.getRawValue();
       const rec = this.eventForm.get('recurrenceDetails')?.getRawValue();
 
@@ -192,6 +213,7 @@ export class EventDialogComponent implements OnInit {
       const payload: AppEvent = {
         eventName: basic.eventName,
         description: basic.description,
+        category: catDetails.categoryId,
         isAllDay: time.isAllDay,
         fromDate: fullFromDate,
         toDate: fullToDate
@@ -203,6 +225,10 @@ export class EventDialogComponent implements OnInit {
           daysOfWeek: rec.daysOfWeek,
           untilDate: rec.untilDate ? new Date(rec.untilDate) : null
         };
+      } else {
+        payload.recurrence = {
+          frequency: 'NONE'
+        }
       }
 
       if (this.isEditMode() && this.data?.event?._id) {

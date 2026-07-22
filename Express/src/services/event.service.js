@@ -1,7 +1,7 @@
 const Event = require('../models/Event.model');
 
 exports.createEvent = async (eventData, userId) => {
-    const { eventName, fromDate, toDate, description, location, isAllDay, recurrence } = eventData;
+    const { eventName, fromDate, toDate, description, location, isAllDay, recurrence, category, color } = eventData;
 
     const newEvent = new Event({
         eventName,
@@ -11,6 +11,8 @@ exports.createEvent = async (eventData, userId) => {
         location,
         isAllDay,
         organizerId: userId,
+        category,
+        color,
         recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
         attendees: [{
             userId: userId,

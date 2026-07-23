@@ -129,7 +129,16 @@ export class CalendarViewComponent implements OnInit {
           originalId: item._id,
           recurrence: item.recurrence,
           originalEvent: item
-        }
+        }/*,
+        actions: [
+          {
+            label: ' 🗑️ ',
+            a11yLabel: 'Törlés',
+            onClick: ({ event }: { event: CalendarEvent }): void => {
+              console.log('Törlésre kattintottak:', event);
+            },
+          }
+        ]*/
       };
 
       if (!item.recurrence || item.recurrence.frequency === 'none') {
@@ -233,7 +242,7 @@ export class CalendarViewComponent implements OnInit {
     });
     
     this.refresh.next();
-    
+
     const targetEnd = newEnd ? newEnd : newStart;
     
     const payload: AppEvent = {
@@ -244,12 +253,11 @@ export class CalendarViewComponent implements OnInit {
 
     this.eventService.updateEvent(originalEvent._id, payload).subscribe({
       next: () => {
-        console.log('Esemény új időpontja sikeresen elmentve!');
         this.loadEvents();
       },
       error: (err) => {
         console.error('Hiba az esemény mozgatásakor:', err);
-        this.loadEvents();
+        this.loadEvents(); 
       }
     });
   }

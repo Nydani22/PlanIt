@@ -12,11 +12,15 @@
                 Következő
             </button>
         </div>
-        
-        <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-center">
-            {{ viewDate | date:'yyyy MMM' }}
-        </div>
-        
+        @if (view === 'day') {
+            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-center">
+                {{ viewDate | date:'MM. EEEE':'':'hu' }}
+            </div>
+        } @else {
+            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-center">
+                {{ viewDate | date:'yyyy MMM' }}
+            </div>
+        }
         <div class="flex flex-wrap justify-center gap-2">
             <button
                 mat-flat-button 

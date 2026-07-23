@@ -56,7 +56,7 @@ export class EventDialogComponent implements OnInit {
 
   eventForm: FormGroup;
   isEditMode = signal<boolean>(false);
-  
+  isUpdateMode: boolean = false;
   categoriesList: CategoryDefinition[] = FIXED_CATEGORIES;
   
   daysOfWeekList = [
@@ -100,6 +100,10 @@ export class EventDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+
+    if (this.data && this.data.event?._id) {
+      this.isUpdateMode = true;
+    }
     this.eventForm.get('recurrenceDetails.frequency')?.disable();
     this.eventForm.get('recurrenceDetails.daysOfWeek')?.disable();
     this.eventForm.get('recurrenceDetails.untilDate')?.disable();

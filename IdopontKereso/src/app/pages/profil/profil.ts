@@ -39,7 +39,7 @@ export class Profil implements OnInit {
       name: ['', Validators.required],
       email: [{ value: '', disabled: true }],
       settings: this.fb.group({
-        timezone: ['Europe/Budapest'],
+        //timezone: ['Europe/Budapest'],
         defaultView: ['week'],
         dayStartHour: [8, [Validators.min(0), Validators.max(23)]],
         dayEndHour: [20, [Validators.min(1), Validators.max(24)]],

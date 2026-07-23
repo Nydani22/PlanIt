@@ -15,8 +15,8 @@ const eventSchema = new mongoose.Schema({
   },
 
   color: {
-      type: String,
-      required: false
+    type: String,
+    required: false
   },
 
   recurrence: {
@@ -50,9 +50,20 @@ const eventSchema = new mongoose.Schema({
       enum: ['REQUIRED', 'OPTIONAL'], 
       default: 'REQUIRED' 
     }
-  }]
+  }],
+
+  uid: { 
+    type: String,
+    sparse: true
+  },
+  isExternal: { 
+    type: Boolean, 
+    default: false 
+  }
 }, { 
   timestamps: true 
 });
+
+eventSchema.index({ organizerId: 1, uid: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Event', eventSchema);

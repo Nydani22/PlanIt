@@ -1,5 +1,5 @@
 export interface UserSettings {
-  timezone: string;
+  //timezone: string;
   defaultView: 'month' | 'week' | 'day';
   dayStartHour: number;
   dayEndHour: number;
@@ -13,6 +13,7 @@ export interface User {
   email: string;
   fullName: string;
   password?: string;
+  externalCalendarUrl: string | null;
   settings: UserSettings;
   createdAt?: string;
   updatedAt?: string;

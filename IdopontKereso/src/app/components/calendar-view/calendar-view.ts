@@ -89,8 +89,12 @@ export class CalendarViewComponent implements OnInit {
   }
 
   loadEvents() {
-    this.eventService.getEvents().subscribe({
+    const currentViewDate = new Date(this.viewDate);
+    const startDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() - 1, 1);
+    const endDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 2, 0, 23, 59, 59);
+    this.eventService.getEvents(startDate, endDate).subscribe({
       next: (data: AppEvent[]) => {
+        console.log(`Események betöltve ${startDate.toLocaleDateString()} és ${endDate.toLocaleDateString()} között:`, data);
         this.events = this.expandEvents(data);
         this.refresh.next();
       },
@@ -110,6 +114,7 @@ export class CalendarViewComponent implements OnInit {
       const duration = endDate.getTime() - startDate.getTime();
 
       const baseEvent: CalendarEvent = {
+        id: item._id,
         title: item.eventName,
         start: startDate,
         end: endDate,
@@ -157,6 +162,7 @@ export class CalendarViewComponent implements OnInit {
         while (currentStart <= limitDate) {
           calendarEvents.push({
             ...baseEvent,
+            id: `${item._id}-${currentStart.getTime()}`,
             start: new Date(currentStart),
             end: new Date(currentStart.getTime() + duration)
           });
@@ -171,6 +177,7 @@ export class CalendarViewComponent implements OnInit {
             if (recurrence.daysOfWeek.includes(jsDay)) {
               calendarEvents.push({
                 ...baseEvent,
+                id: `${item._id}-${dayIterator.getTime()}`,
                 start: new Date(dayIterator),
                 end: new Date(dayIterator.getTime() + duration)
               });
@@ -183,6 +190,7 @@ export class CalendarViewComponent implements OnInit {
           while (currentStart <= limitDate) {
             calendarEvents.push({
               ...baseEvent,
+              id: `${item._id}-${currentStart.getTime()}`,
               start: new Date(currentStart),
               end: new Date(currentStart.getTime() + duration)
             });

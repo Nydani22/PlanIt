@@ -11,6 +11,7 @@ const categories = require('./src/routes/category.routes');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const socketUtil = require('./src/utils/socket');
+const initCronJobs = require('./src/utils/cronJobs').initCronJobs;
 
 const app = express();
 const server = http.createServer(app);
@@ -34,7 +35,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/category',categories);
 
 const PORT = process.env.PORT || 3000;
-
+initCronJobs();
 const io = socketUtil.init(server);
 
 io.on('connection', (socket) => {

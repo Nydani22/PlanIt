@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppEvent } from '../../models/event.model';
+
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +16,15 @@ export class EventService {
     return this.http.post<AppEvent>(`${this.apiUrl}/create`, event);
   }
 
-  getEvents(): Observable<AppEvent[]> {
-    return this.http.get<AppEvent[]>(`${this.apiUrl}`);
+  getEvents(startDate?: Date, endDate?: Date): Observable<AppEvent[]> {
+    let params = new HttpParams();
+  
+    if (startDate && endDate) {
+      params = params.set('startDate', startDate.toISOString());
+      params = params.set('endDate', endDate.toISOString());
+    }
+
+    return this.http.get<AppEvent[]>(this.apiUrl, { params });
   }
 
   getEventById(eventId: string): Observable<AppEvent> {

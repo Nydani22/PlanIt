@@ -14,11 +14,12 @@ exports.createEvent = async (req, res) => {
 exports.getUserEvents = async (req, res) => {
     try {
         const userId = req.user.id;
-        const events = await eventService.getUserEvents(userId);
+        const { startDate, endDate } = req.query;
+        const events = await eventService.getUserEvents(userId, startDate, endDate);
         
         res.status(200).json(events);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Hiba az események lekérésekor', error });
     }
 };
 

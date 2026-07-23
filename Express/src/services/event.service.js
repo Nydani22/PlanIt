@@ -24,8 +24,26 @@ exports.createEvent = async (eventData, userId) => {
     return await newEvent.save();
 };
 
-exports.getUserEvents = async (userId) => {
-    return await Event.find({ 'attendees.userId': userId }).sort({ fromDate: 1 });
+exports.getUserEvents = async (userId, startDate, endDate) => {
+    const query = { 'attendees.userId': userId };
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        query.$or = [
+            {
+                fromDate: { $lte: end },
+                toDate: { $gte: start },
+                'recurrence.frequency': 'NONE'
+            },
+            {
+                'recurrence.frequency': { $ne: 'NONE' },
+                fromDate: { $lte: end }
+            }
+        ];
+    }
+
+    return await Event.find(query).sort({ fromDate: 1 });
 };
 
 exports.getEventById = async (eventId, userId) => {

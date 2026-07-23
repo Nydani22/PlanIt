@@ -5,8 +5,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   fullName: { type: String, required: true },
   password: { type: String, required: true },
+  externalCalendarUrl: { type: String },
   settings: {
-    timezone: { type: String, default: 'Europe/Budapest' },
+    //timezone: { type: String, default: 'Europe/Budapest' },
     defaultView: { 
       type: String, 
       enum: ['month', 'week', 'day'], 

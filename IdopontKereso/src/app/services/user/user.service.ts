@@ -10,7 +10,11 @@ export class UserService {
   private readonly API_URL = 'http://localhost:3000/api/users';
   private http = inject(HttpClient);
   
+  getCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${this.API_URL}/me`);
+  }
 
+  
   getUser(id: string): Observable<User> {
     return this.http.get<User>(`${this.API_URL}/${id}`);
   }

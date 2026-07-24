@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User.model');
 const RefreshToken = require('../models/RefreshToken.model');
+const crypto = require('crypto');
+const { encryptToken } = require('../utils/encryption.util');
 
 const generateTokens = async (user) => {
     const accessToken = jwt.sign(
@@ -32,15 +34,24 @@ exports.registerUser = async (userData) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const generatedToken = crypto.randomBytes(24).toString('hex');
+    
+    const encryptedToken = encryptToken(generatedToken);
+
     const newUser = new User({
         userName,
         fullName,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        calendarFeedToken: encryptedToken
     });
 
     await newUser.save();
-    return newUser;
+    
+    const userResponse = newUser.toObject();
+    userResponse.calendarFeedToken = generatedToken; 
+    
+    return userResponse;
 };
 
 exports.loginUser = async (email, password) => {

@@ -9,11 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [ReactiveFormsModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule],
+  imports: [ReactiveFormsModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, CommonModule],
   templateUrl: './profil.html',
   styleUrl: './profil.scss',
 })
@@ -27,6 +29,7 @@ export class Profil implements OnInit {
   profileForm!: FormGroup;
   
   isLoading = signal(true);
+  isCopied = signal(false);
 
   ngOnInit(): void {
     this.initForm();
@@ -38,8 +41,9 @@ export class Profil implements OnInit {
     this.profileForm = this.fb.group({
       name: ['', Validators.required],
       email: [{ value: '', disabled: true }],
+      externalCalendarUrl: [''],
+      calendarFeedToken: [{ value: '', disabled: true }],
       settings: this.fb.group({
-        //timezone: ['Europe/Budapest'],
         defaultView: ['week'],
         dayStartHour: [8, [Validators.min(0), Validators.max(23)]],
         dayEndHour: [20, [Validators.min(1), Validators.max(24)]],
@@ -47,6 +51,22 @@ export class Profil implements OnInit {
         hourSegments: [2]
       }),
       localTheme: [this.themeService.currentTheme()] 
+    });
+  }
+  copyToClipboard(): void {
+    const feedUrl = this.profileForm.get('calendarFeedToken')?.value;
+    
+    if (!feedUrl || feedUrl === 'Nincs még token generálva') {
+      return;
+    }
+
+    navigator.clipboard.writeText(feedUrl).then(() => {
+      this.isCopied.set(true);
+      setTimeout(() => {
+        this.isCopied.set(false);
+      }, 3000);
+    }).catch(err => {
+      console.error('Hiba történt a másolás során: ', err);
     });
   }
 
@@ -65,11 +85,17 @@ export class Profil implements OnInit {
       return;
     }
 
-    this.userService.getUser(userId).subscribe({
+    this.userService.getCurrentUser().subscribe({
       next: (user) => {
+        const feedUrl = user.calendarFeedToken 
+          ? `http://localhost:3000/api/events/feed/${user.calendarFeedToken}` 
+          : 'Nincs még token generálva';
+
         this.profileForm.patchValue({
           name: user.fullName,
           email: user.email,
+          externalCalendarUrl: user.externalCalendarUrl || '',
+          calendarFeedToken: feedUrl,
           settings: user.settings
         });
         
@@ -92,6 +118,7 @@ export class Profil implements OnInit {
 
     const updateData = {
       fullName: formValues.name,
+      externalCalendarUrl: formValues.externalCalendarUrl, 
       settings: formValues.settings
     };
 

@@ -20,6 +20,7 @@
     "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "ical-generator": "^11.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.2",
     "node-cron": "^4.6.0",

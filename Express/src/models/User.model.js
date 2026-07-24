@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   fullName: { type: String, required: true },
   password: { type: String, required: true },
-  externalCalendarUrl: { type: String },
   settings: {
     //timezone: { type: String, default: 'Europe/Budapest' },
     defaultView: { 
@@ -17,6 +16,12 @@ const userSchema = new mongoose.Schema({
     dayEndHour: { type: Number, default: 22 },
     hideWeekends: { type: Boolean, default: false },
     hourSegments: { type: Number, default: 2 },
+  },
+  externalCalendarUrl: { type: String },
+  calendarFeedToken: {
+    type: String,
+    unique: true,
+    sparse: true
   }
 }, { 
   timestamps: true

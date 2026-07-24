@@ -11,6 +11,28 @@ exports.createEvent = async (req, res) => {
     }
 };
 
+exports.generateICalFeed = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const iCalString = await eventService.generateICalStringByToken(token);
+
+        if (!iCalString) {
+            return res.status(404).send('Naptár nem található vagy érvénytelen link.');
+        }
+
+        res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="naptar.ics"`);
+
+        res.send(iCalString);
+
+    } catch (error) {
+        console.error('Hiba az iCal generálásakor:', error);
+        res.status(500).send('Belső szerverhiba.');
+    }
+};
+
+
 exports.getUserEvents = async (req, res) => {
     try {
         const userId = req.user.id;

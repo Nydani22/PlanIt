@@ -3,7 +3,7 @@ import { PLATFORM_ID, inject, Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { tap, catchError, filter, take } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
-import { environment } from '../../../environments/environment.development'; 
+import { environment } from '../../../environments/environment'; 
 
 @Injectable({
   providedIn: 'root',

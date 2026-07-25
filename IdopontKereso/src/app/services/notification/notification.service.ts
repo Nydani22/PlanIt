@@ -24,7 +24,7 @@ export class NotificationService {
     this.loadInitialNotifications();
 
     if (!this.socket) {
-      this.socket = io('http://localhost:3000');
+      this.socket = io(environment.apiUrl);
 
       this.socket.on('connect', () => {
         this.socket?.emit('authenticate', userId);

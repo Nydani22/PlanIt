@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { environment } from '../../../environments/environment.development';
 
 @Component({
   selector: 'app-profil',
@@ -40,6 +41,7 @@ export class Profil implements OnInit {
   private initForm(): void {
     this.profileForm = this.fb.group({
       name: ['', Validators.required],
+      userName: ['', Validators.required],
       email: [{ value: '', disabled: true }],
       externalCalendarUrl: [''],
       calendarFeedToken: [{ value: '', disabled: true }],
@@ -87,12 +89,14 @@ export class Profil implements OnInit {
 
     this.userService.getCurrentUser().subscribe({
       next: (user) => {
+        
         const feedUrl = user.calendarFeedToken 
-          ? `http://localhost:3000/api/events/feed/${user.calendarFeedToken}` 
+          ? `${environment.apiUrl}/api/events/feed/${user.calendarFeedToken}` 
           : 'Nincs még token generálva';
 
         this.profileForm.patchValue({
           name: user.fullName,
+          userName: user.userName,
           email: user.email,
           externalCalendarUrl: user.externalCalendarUrl || '',
           calendarFeedToken: feedUrl,
@@ -118,6 +122,7 @@ export class Profil implements OnInit {
 
     const updateData = {
       fullName: formValues.name,
+      userName: formValues.userName,
       externalCalendarUrl: formValues.externalCalendarUrl, 
       settings: formValues.settings
     };

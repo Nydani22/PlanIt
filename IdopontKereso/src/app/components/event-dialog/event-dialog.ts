@@ -73,7 +73,7 @@ export class EventDialogComponent implements OnInit {
     this.eventForm = this.fb.group({
       basicDetails: this.fb.group({
         eventName: ['', Validators.required],
-        description: ['', Validators.required]
+        description: ['']
       }),
       categoryDetails: this.fb.group({
         categoryId: ['', Validators.required]

@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Group } from '../../models/group.model';
+import { environment } from '../../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GroupService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api/groups'; 
+  private apiUrl = `${environment.apiUrl}/api/groups`;
 
   getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(this.apiUrl);

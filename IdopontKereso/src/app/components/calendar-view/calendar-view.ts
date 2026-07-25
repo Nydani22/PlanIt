@@ -67,7 +67,7 @@ export class CalendarViewComponent implements OnInit {
       return;
     }
 
-    this.userService.getUser(userId).subscribe({
+    this.userService.getCurrentUser().subscribe({
       next: (user) => {
         const settings = user.settings;
         if (!settings) {

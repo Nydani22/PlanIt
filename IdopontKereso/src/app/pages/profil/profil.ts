@@ -11,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profil',

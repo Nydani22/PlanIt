@@ -36,7 +36,7 @@ exports.refresh = async (req, res) => {
     try {
         const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(oldRefreshToken);
 
-        res.cookie('refreshToken', refreshToken, {
+        res.cookie('refreshToken', newRefreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', 
             sameSite: 'none',

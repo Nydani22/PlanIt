@@ -18,8 +18,8 @@ exports.login = async (req, res) => {
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: 'none',
             maxAge: ONE_WEEK
         });
 
@@ -36,10 +36,10 @@ exports.refresh = async (req, res) => {
     try {
         const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(oldRefreshToken);
 
-        res.cookie('refreshToken', newRefreshToken, {
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: 'none',
             maxAge: ONE_WEEK
         });
 

@@ -1,7 +1,7 @@
-const Group = require('../models/group.model');
+const Group = require('../models/Group.model');
 const notificationService = require('./notification.service');
 const crypto = require('crypto');
-const Invitation = require('../models/invitation.model');
+const Invitation = require('../models/Invitation.model');
 
 
 exports.createGroup = async (groupData, userId) => {

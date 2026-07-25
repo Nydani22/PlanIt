@@ -183,8 +183,19 @@ export class EventDialogComponent implements OnInit {
         categoryId: ev.category
       });
 
-      const fromDate = new Date(ev.fromDate);
-      const toDate = new Date(ev.toDate);
+      let fromDate: Date;
+      let toDate: Date;
+
+      if (ev.isAllDay) {
+        const utcFrom = new Date(ev.fromDate);
+        const utcTo = new Date(ev.toDate);
+        fromDate = new Date(utcFrom.getUTCFullYear(), utcFrom.getUTCMonth(), utcFrom.getUTCDate());
+        toDate = new Date(utcTo.getUTCFullYear(), utcTo.getUTCMonth(), utcTo.getUTCDate());
+      } else {
+        fromDate = new Date(ev.fromDate);
+        toDate = new Date(ev.toDate);
+      }
+
       const startTime = this.extractTime(fromDate);
       const endTime = this.extractTime(toDate);
 
@@ -231,8 +242,8 @@ export class EventDialogComponent implements OnInit {
       const targetEndDate = time.endDate ? time.endDate : time.startDate;
       const sTime = time.isAllDay ? '00:00' : time.startTime;
       const eTime = time.isAllDay ? '23:59' : time.endTime;
-      const fullFromDate = this.combineDateAndTime(time.startDate, sTime);
-      const fullToDate = this.combineDateAndTime(targetEndDate, eTime);
+      const fullFromDate = this.combineDateAndTime(time.startDate, sTime, time.isAllDay);
+      const fullToDate = this.combineDateAndTime(targetEndDate, eTime, time.isAllDay);
       const settings = this.eventForm.get('settingsDetails')?.getRawValue();
 
       const payload: AppEvent = {
@@ -306,12 +317,17 @@ export class EventDialogComponent implements OnInit {
     }
   }
 
-  private combineDateAndTime(date: Date, time: string): Date {
+  private combineDateAndTime(date: Date, time: string, isAllDay: boolean = false): Date {
     if (!date) return new Date();
-    const combined = new Date(date);
     const timeStr = time || '00:00';
     const [hours, minutes] = timeStr.split(':').map(Number);
-    combined.setHours(hours, minutes, 0, 0);
-    return combined;
+    
+    if (isAllDay) {
+      return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes, 0));
+    } else {
+      const combined = new Date(date);
+      combined.setHours(hours, minutes, 0, 0);
+      return combined;
+    }
   }
 }

@@ -12,7 +12,7 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/api/auth`;
   private http = inject(HttpClient);
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   
   private platformId = inject(PLATFORM_ID);
 
@@ -84,7 +84,7 @@ export class AuthService {
       tap((res: any) => {
         this.isRefreshing = false;
         this.setToken(res.accessToken);
-        this.refreshTokenSubject.next(res.accessToken);
+        this.refreshTokenSubject.next(res);
       }),
       catchError((err) => {
         this.isRefreshing = false;

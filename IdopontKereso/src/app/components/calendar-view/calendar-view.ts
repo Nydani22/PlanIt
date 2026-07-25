@@ -109,8 +109,19 @@ export class CalendarViewComponent implements OnInit {
     const MAX_RECURRENCE_YEARS = 1;
 
     events.forEach(item => {
-      const startDate = new Date(item.fromDate);
-      const endDate = new Date(item.toDate);
+      let startDate: Date;
+      let endDate: Date;
+
+      if (item.isAllDay) {
+        const utcStart = new Date(item.fromDate);
+        const utcEnd = new Date(item.toDate);
+        
+        startDate = new Date(utcStart.getUTCFullYear(), utcStart.getUTCMonth(), utcStart.getUTCDate(), 0, 0, 0);
+        endDate = new Date(utcEnd.getUTCFullYear(), utcEnd.getUTCMonth(), utcEnd.getUTCDate(), 23, 59, 59);
+      } else {
+        startDate = new Date(item.fromDate);
+        endDate = new Date(item.toDate);
+      }
       const duration = endDate.getTime() - startDate.getTime();
 
       const baseEvent: CalendarEvent = {

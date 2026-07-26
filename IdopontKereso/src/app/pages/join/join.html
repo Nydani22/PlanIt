@@ -10,8 +10,10 @@
       </div>
     } @else {
       @if (!isLoggedIn()) {
-        <div class="mb-6">
-          <mat-icon class="text-6xl text-blue-500 dark:text-blue-400">login</mat-icon>
+        <div class="bg-amber-100 dark:bg-amber-900/30 w-20 h-20 rounded-full flex justify-center items-center mx-auto mb-6">
+          <mat-icon color="primary" class="text-5xl scale-120">
+            login
+          </mat-icon>
         </div>
         <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Bejelentkezés szükséges</h2>
         <p class="text-gray-600 dark:text-gray-300 mb-8">A csoporthoz való csatlakozáshoz kérlek jelentkezz be.</p>
@@ -20,8 +22,8 @@
           Bejelentkezés / Regisztráció
         </button>
       } @else {
-        <div class="bg-amber-100 dark:bg-amber-900/30 w-24 h-24 rounded-full flex justify-center items-center mx-auto mb-6">
-          <mat-icon color="primary" class="text-5xl scale-150">
+        <div class="bg-amber-100 dark:bg-amber-900/30 w-20 h-20 rounded-full flex justify-center items-center mx-auto mb-6">
+          <mat-icon color="primary" class="text-5xl scale-120">
             {{ isAlreadyMember() ? 'check_circle' : 'group_add' }}
           </mat-icon>
         </div>

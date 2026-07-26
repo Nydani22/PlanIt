@@ -6,7 +6,9 @@
     </div>
   } @else if (myGroups().length === 0) {
     <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-      <mat-icon class="text-gray-400 dark:text-gray-500 text-6xl mb-4" style="height: 60px; width: 60px;">group_off</mat-icon>
+      <div class="bg-amber-100 dark:bg-amber-900/30 w-20 h-20 rounded-full flex justify-center items-center mx-auto mb-6">
+        <mat-icon color="primary" class="text-5xl scale-120">group_off</mat-icon>
+      </div>
       <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200">Még nincsenek csoportjaid</h2>
       <p class="text-gray-500 dark:text-gray-400 mb-4">Hozz létre egy új csoportot, hogy közösen kezelhesd az eseményeket!</p>
       <button mat-flat-button color="primary" (click)="openCreateModal()">Új csoport létrehozása</button>

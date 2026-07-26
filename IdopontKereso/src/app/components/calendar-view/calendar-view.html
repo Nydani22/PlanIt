@@ -1,89 +1,111 @@
-<div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-    <div class="flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
+<!-- A legkülső konténer most már átlátszó, csak a flex elrendezést és a magasságot biztosítja, gap-4 a távolság a header és a naptár között -->
+<div class="flex flex-col h-full gap-4">
+    
+    <!-- HEADER SZEKCIÓ: Átlátszó háttérrel -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-2">
         
-        <div class="flex flex-wrap justify-center gap-2">
-            <button mat-flat-button color="primary" mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate" (viewDateChange)="loadEvents()">
-                Előző
+        <!-- Lapozó gombok -->
+        <div class="flex justify-center gap-1 w-full md:w-auto">
+            <button mat-flat-button color="primary" class="!px-2 min-w-0 flex-1 md:flex-none" mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate" (viewDateChange)="loadEvents()">
+                &laquo; Előző
             </button>
-            <button mat-flat-button color="primary" mwlCalendarToday [(viewDate)]="viewDate" (viewDateChange)="loadEvents()">
+            <button mat-flat-button color="primary" class="!px-2 min-w-0 flex-1 md:flex-none" mwlCalendarToday [(viewDate)]="viewDate" (viewDateChange)="loadEvents()">
                 Ma
             </button>
-            <button mat-flat-button color="primary" mwlCalendarNextView [view]="view" [(viewDate)]="viewDate" (viewDateChange)="loadEvents()">
-                Következő
+            <button mat-flat-button color="primary" class="!px-2 min-w-0 flex-1 md:flex-none" mwlCalendarNextView [view]="view" [(viewDate)]="viewDate" (viewDateChange)="loadEvents()">
+                Köv. &raquo;
             </button>
         </div>
-        @if (view === 'day') {
-            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-center">
+
+        <!-- Dátum / Cím -->
+        <div class="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-center order-first md:order-none w-full md:w-auto py-2">
+            @if (view === 'day') {
                 {{ viewDate | date:'MM. EEEE':'':'hu' }}
-            </div>
-        } @else {
-            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-center">
+            } @else {
                 {{ viewDate | date:'yyyy MMM' }}
-            </div>
-        }
-        <div class="flex flex-wrap justify-center gap-2">
-            <button
-                mat-flat-button 
-                [color]="view === CalendarView.Month ? 'primary' : ''"
-                (click)="setView(CalendarView.Month)"
-            >
+            }
+        </div>
+        
+        <!-- Nézetváltó gombok -->
+        <div class="flex justify-center gap-1 w-full md:w-auto">
+            <button mat-flat-button class="flex-1 md:flex-none" [color]="view === CalendarView.Month ? 'primary' : ''" (click)="setView(CalendarView.Month)">
                 Hónap
             </button>
-            <button
-                mat-flat-button 
-                [color]="view === CalendarView.Week ? 'primary' : ''"
-                (click)="setView(CalendarView.Week)"
-            >
+            <button mat-flat-button class="flex-1 md:flex-none" [color]="view === CalendarView.Week ? 'primary' : ''" (click)="setView(CalendarView.Week)">
                 Hét
             </button>
-            <button
-                mat-flat-button 
-                [color]="view === CalendarView.Day ? 'primary' : ''"
-                (click)="setView(CalendarView.Day)"
-            >
+            <button mat-flat-button class="flex-1 md:flex-none" [color]="view === CalendarView.Day ? 'primary' : ''" (click)="setView(CalendarView.Day)">
                 Nap
             </button>
         </div>
     </div>
 
-    @switch (view) { 
-        @case (CalendarView.Month) {
-            <mwl-calendar-month-view
-                [viewDate]="viewDate"
-                [events]="events"
-                [refresh]="refresh"
-                [weekStartsOn]="1"
-                locale="hu"
-                (eventClicked)="onEventClick($event.event)"
-            />
-        } 
-        @case (CalendarView.Week) {
-            <mwl-calendar-week-view
-                [viewDate]="viewDate"
-                [events]="events"
-                [refresh]="refresh"
-                [weekStartsOn]="1"
-                locale="hu"
-                [dayStartHour]="dayStartHour"
-                [dayEndHour]="dayEndHour"
-                [hourSegments]="hourSegments"
-                [excludeDays]="excludeDays"
-                (eventTimesChanged)="eventTimesChanged($event)"
-                (eventClicked)="onEventClick($event.event)"
-            />
-        } 
-        @case (CalendarView.Day) {
-            <mwl-calendar-day-view
-                [viewDate]="viewDate"
-                [events]="events"
-                [refresh]="refresh"
-                (eventTimesChanged)="eventTimesChanged($event)"
-                locale="hu"
-                [dayStartHour]="dayStartHour"
-                [dayEndHour]="dayEndHour"
-                [hourSegments]="hourSegments"
-                (eventClicked)="onEventClick($event.event)"
-            />
-        }
-    }
+    <!-- NAPTÁR SZEKCIÓ: Ide kerültek át a háttér, a padding és az árnyék osztályai -->
+    <div class="bg-white dark:bg-gray-800 p-2 md:p-4 rounded-lg shadow-sm flex-1 w-full overflow-x-auto pb-2">
+        <div class="min-w-[700px] lg:min-w-0 h-full">
+            @switch (view) { 
+                @case (CalendarView.Month) {
+                    <mwl-calendar-month-view
+                        [viewDate]="viewDate"
+                        [events]="events"
+                        [refresh]="refresh"
+                        [weekStartsOn]="1"
+                        locale="hu"
+                        (eventClicked)="onEventClick($event.event)"
+                    />
+                } 
+                @case (CalendarView.Week) {
+                    <mwl-calendar-week-view
+                        [headerTemplate]="customHeaderTemplate"
+                        [viewDate]="viewDate"
+                        [events]="events"
+                        [refresh]="refresh"
+                        [weekStartsOn]="1"
+                        locale="hu"
+                        [dayStartHour]="dayStartHour"
+                        [dayEndHour]="dayEndHour"
+                        [hourSegments]="hourSegments"
+                        [excludeDays]="excludeDays"
+                        (eventTimesChanged)="eventTimesChanged($event)"
+                        (eventClicked)="onEventClick($event.event)"
+                    />
+                } 
+                @case (CalendarView.Day) {
+                    <mwl-calendar-day-view
+                        [viewDate]="viewDate"
+                        [events]="events"
+                        [refresh]="refresh"
+                        (eventTimesChanged)="eventTimesChanged($event)"
+                        locale="hu"
+                        [dayStartHour]="dayStartHour"
+                        [dayEndHour]="dayEndHour"
+                        [hourSegments]="hourSegments"
+                        (eventClicked)="onEventClick($event.event)"
+                    />
+                }
+            }
+        </div>
+    </div>
 </div>
+
+<ng-template #customHeaderTemplate let-days="days" let-locale="locale" let-dayClicked="dayClicked" let-eventDropped="eventDropped">
+  <div class="cal-day-headers">
+    @for (day of days; track day.date) {
+      <div
+        class="cal-header"
+        [class.cal-past]="day.isPast"
+        [class.cal-today]="day.isToday"
+        [class.cal-future]="day.isFuture"
+        [class.cal-weekend]="day.isWeekend"
+        mwlDroppable
+        dragOverClass="cal-drag-over"
+        (drop)="eventDropped.emit({event: $event.dropData?.event, newStart: day.date, dropData: $event.dropData})"
+        (click)="dayClicked.emit({date: day.date})">
+        
+        <b class="hidden md:block">{{ day.date | calendarDate:'weekViewColumnHeader':locale }}</b>
+        
+        <span class="block text-lg py-1">{{ day.date | calendarDate:'weekViewColumnSubHeader':locale }}</span>
+      </div>
+    }
+  </div>
+</ng-template>

@@ -1,14 +1,24 @@
 <nav class="w-full px-4 py-2 bg-amber-300">
   <ul class="flex items-center justify-between w-full m-0 p-0 list-none">
       <li>
+        @if (authService.getToken()) {
+        <button mat-icon-button color="accent" (click)="onToggleMenu()"
+            class="flex items-center justify-center leading-none m-0 p-0">
+            <mat-icon>menu</mat-icon>
+        </button>
         <button mat-icon-button color="accent" routerLink="/" 
             class="flex items-center justify-center leading-none m-0 p-0">
             <mat-icon>calendar_month</mat-icon>
         </button>
         <button mat-icon-button color="accent" routerLink="/groups" title="Csoportjaim"
-                class="flex items-center justify-center leading-none m-0 p-0">
+            class="flex items-center justify-center leading-none m-0 p-0">
             <mat-icon>groups</mat-icon>
         </button>
+        <button mat-icon-button color="accent" routerLink="/profil"
+            class="flex items-center justify-center leading-none m-0 p-0">
+            <mat-icon>person</mat-icon>
+        </button>
+        }
       </li>
       <li class="flex gap-2">
         @if (authService.getToken()) {
@@ -25,10 +35,7 @@
                 </mat-icon>
             </button>
 
-            <button mat-icon-button color="accent" routerLink="/profil"
-                class="flex items-center justify-center leading-none m-0 p-0">
-                <mat-icon>person</mat-icon>
-            </button>
+            
             
             <button mat-icon-button color="accent" (click)="logout()" 
                     class="flex items-center justify-center leading-none m-0 p-0">

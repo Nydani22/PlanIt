@@ -1,2 +1,33 @@
-<app-navbar></app-navbar>
-<router-outlet />
+<div class="flex flex-col h-screen w-full">
+
+  <app-navbar (menuToggled)="sidenav.toggle()"></app-navbar>
+
+  <mat-sidenav-container class="flex-1 w-full bg-transparent">
+    
+    <mat-sidenav 
+      #sidenav 
+      mode="side" 
+      [opened]="isSidebarOpen()" 
+      (openedChange)="isSidebarOpen.set($event)"
+      class="w-full lg:w-72 bg-[#1e293b] dark:bg-gray-900 border-none p-4">
+      
+      <div class="flex flex-col gap-6 mt-2">
+        <button
+            (click)="openEventDialog()"
+            class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"> 
+            <span class="text-2xl leading-none mb-1">+</span>
+            <span>Létrehozás</span>
+        </button>
+      </div>
+
+    </mat-sidenav>
+
+    <mat-sidenav-content class="flex flex-col p-2 md:p-4 overflow-auto">
+      <main class="flex-1 w-full h-full">
+          <router-outlet />
+      </main>
+    </mat-sidenav-content>
+
+  </mat-sidenav-container>
+
+</div>

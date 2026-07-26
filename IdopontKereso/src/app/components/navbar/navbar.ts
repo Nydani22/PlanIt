@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -27,6 +27,8 @@ export class Navbar implements OnInit {
   router = inject(Router);
   notificationService = inject(NotificationService);
 
+  @Output() menuToggled = new EventEmitter<void>();
+
   ngOnInit() {
     this.checkAndInitNotifications();
   }
@@ -49,5 +51,9 @@ export class Navbar implements OnInit {
   markAllAsRead(event: Event) {
     event.stopPropagation();
     this.notificationService.markAllAsRead();
+  }
+
+  onToggleMenu() {
+    this.menuToggled.emit();
   }
 }

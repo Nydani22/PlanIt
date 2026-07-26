@@ -126,6 +126,12 @@ $my-dark-theme: mat.m2-define-dark-theme((
     container-color: #1f2937,
   ));
 
+  @include mat.sidenav-overrides((
+    container-background-color: #1f2937,
+    content-background-color:transparent,
+    scrim-color: none,
+  ));
+
 
   --cal-bg: #1f2937;
   --cal-border-color: #374151;

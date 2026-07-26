@@ -15,13 +15,16 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const { accessToken, refreshToken } = await authService.loginUser(email, password);
+        const isProduction = process.env.NODE_ENV === 'production';
 
-        res.cookie('refreshToken', refreshToken, {
+        const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'none',
+            secure: isProduction,
+            sameSite: isProduction ? 'None' : 'Lax',
             maxAge: ONE_WEEK
-        });
+        };
+
+        res.cookie('refreshToken', refreshToken, cookieOptions);
 
         res.json({ accessToken });
     } catch (err) {
@@ -36,12 +39,16 @@ exports.refresh = async (req, res) => {
     try {
         const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(oldRefreshToken);
 
-        res.cookie('refreshToken', newRefreshToken, {
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'none',
+            secure: isProduction,
+            sameSite: isProduction ? 'None' : 'Lax',
             maxAge: ONE_WEEK
-        });
+        };
+
+        res.cookie('refreshToken', newRefreshToken, cookieOptions);
 
         res.json({ accessToken });
     } catch (err) {

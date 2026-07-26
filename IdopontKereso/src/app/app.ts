@@ -8,7 +8,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from './services/auth/auth.service';
 import { SnackbarService } from './services/snackbar/snackbar.service';
 import { EventDialogComponent } from './components/event-dialog/event-dialog';
-
+import { CalendarRefreshService } from './services/calendarRefresh/calendar-refresh.service';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -22,13 +22,13 @@ import { EventDialogComponent } from './components/event-dialog/event-dialog';
   styleUrl: './app.scss'
 })
 export class App implements OnInit {
-  protected readonly title = signal('IdopontKereso');
   private themeService = inject(ThemeService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snackbarService = inject(SnackbarService);
-  
+  private calendarRefreshService = inject(CalendarRefreshService);
+
   showNavbar = signal<boolean>(true);
   
   isSidebarOpen = signal<boolean>(this.getInitialSidebarState());
@@ -81,7 +81,13 @@ export class App implements OnInit {
       return false;
     }
 
-    if (typeof localStorage !== 'undefined') {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        return false;
+      }
+
       const storedState = localStorage.getItem('sidebarOpen');
       if (storedState !== null) {
         return JSON.parse(storedState);
@@ -110,6 +116,7 @@ export class App implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.snackbarService.showSuccess('Esemény sikeresen rögzítve!');
+        this.calendarRefreshService.triggerRefresh();
       }
     });
   }

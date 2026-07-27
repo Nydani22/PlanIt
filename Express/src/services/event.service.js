@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
 
 exports.createEvent = async (eventData, userId) => {
-    const { eventName, fromDate, toDate, description, location, isAllDay, recurrence, category, color } = eventData;
+    const { eventName, fromDate, toDate, description, location, isAllDay, recurrence, category, color, timezone } = eventData;
 
     const newEvent = new Event({
         eventName,
@@ -17,6 +17,7 @@ exports.createEvent = async (eventData, userId) => {
         organizerId: userId,
         category,
         color,
+        timezone,
         recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
         attendees: [{
             userId: userId,
@@ -130,4 +131,46 @@ exports.generateICalStringByToken = async (token) => {
     });
 
     return calendar.toString();
+};
+
+
+exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) => {
+  const start = new Date(searchStart);
+  const end = new Date(searchEnd);
+
+  const events = await Event.find({
+    $or: [
+      { 'attendees.userId': { $in: attendeeIds } },
+      { organizerId: { $in: attendeeIds } } 
+    ]
+  });
+
+  let allRelevantEvents = [];
+
+  events.forEach(event => {
+    if (!event.recurrence || event.recurrence.frequency === 'NONE') {
+      if (event.fromDate <= end && event.toDate >= start) {
+        allRelevantEvents.push({
+          _id: event._id,
+          eventName: event.eventName,
+          isExternal: event.isExternal,
+          organizerId: event.organizerId,
+          category: event.category,
+          attendees: event.attendees,
+          fromDate: event.fromDate,
+          toDate: event.toDate
+        });
+      }
+    } 
+    else {
+      if (!event.recurrence.untilDate || new Date(event.recurrence.untilDate) >= start) {
+        const expanded = expandEventInWindow(event, start, end);
+        allRelevantEvents = allRelevantEvents.concat(expanded);
+      }
+    }
+  });
+
+  allRelevantEvents.sort((a, b) => a.fromDate - b.fromDate);
+
+  return allRelevantEvents;
 };

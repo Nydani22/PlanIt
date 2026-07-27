@@ -5,8 +5,7 @@
 <mat-dialog-content class="mat-typography p-0 sm:p-6">
   <form [formGroup]="eventForm">
     
-    <mat-stepper orientation="horizontal" [linear]="!isUpdateMode" #stepper>
-
+    <mat-stepper [orientation]="isMobile() ? 'vertical' : 'horizontal'" [linear]="!isUpdateMode" #stepper>
       <mat-step formGroupName="basicDetails" [stepControl]="eventForm.get('basicDetails')!">
       <ng-template matStepLabel>Alapadatok</ng-template>
   

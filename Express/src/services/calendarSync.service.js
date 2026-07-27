@@ -19,15 +19,25 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
                 const isAllDay = event.datetype === 'date';
 
+                let fromDate = event.start;
                 let adjustedToDate = event.end || event.start;
-                if (isAllDay && event.end) {
-                    adjustedToDate = new Date(event.end.getTime() - 1);
+
+                if (isAllDay) {
+                    fromDate = new Date(Date.UTC(event.start.getFullYear(), event.start.getMonth(), event.start.getDate(), 0, 0, 0));
+                    
+                    if (event.end) {
+                        const pureUtcEnd = new Date(Date.UTC(event.end.getFullYear(), event.end.getMonth(), event.end.getDate(), 0, 0, 0));
+                        adjustedToDate = new Date(pureUtcEnd.getTime() - 1);
+                    } else {
+                        adjustedToDate = new Date(Date.UTC(event.start.getFullYear(), event.start.getMonth(), event.start.getDate(), 23, 59, 59, 999));
+                    }
                 }
+
                 const eventData = {
                     organizerId: userId,
                     uid: uid,
                     eventName: event.summary || 'Névtelen esemény',
-                    fromDate: event.start,
+                    fromDate: fromDate,
                     toDate: adjustedToDate,
                     description: event.description || '',
                     location: event.location || '',

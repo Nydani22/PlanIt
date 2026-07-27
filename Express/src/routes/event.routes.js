@@ -5,6 +5,7 @@ const authenticateToken = require('../middleware/authenticateToken');
 
 router.post('/create', authenticateToken, eventController.createEvent);
 router.get('/', authenticateToken, eventController.getUserEvents);
+router.post('/find-time', eventController.getEventsForTimeSearch);
 router.get('/feed/:token', eventController.generateICalFeed);
 router.get('/:id', authenticateToken, eventController.findOne);
 router.put('/:id', authenticateToken, eventController.update);

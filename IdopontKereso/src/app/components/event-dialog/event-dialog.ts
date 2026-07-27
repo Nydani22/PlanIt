@@ -18,6 +18,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { FIXED_CATEGORIES, CategoryDefinition } from '../../constants/category-icons.constants';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDividerModule } from '@angular/material/divider';
+import { BreakpointObserver } from '@angular/cdk/layout';
 
 export interface EventDialogData {
   event?: AppEvent;
@@ -53,12 +54,14 @@ export class EventDialogComponent implements OnInit {
   private dialog = inject(MatDialog);
   private cdr = inject(ChangeDetectorRef);
   public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
+  private breakpointObserver = inject(BreakpointObserver);
 
   eventForm: FormGroup;
   isEditMode = signal<boolean>(false);
   isUpdateMode: boolean = false;
   categoriesList: CategoryDefinition[] = FIXED_CATEGORIES;
-  
+  isMobile = signal<boolean>(false);
+
   daysOfWeekList = [
     { value: 1, name: 'Hétfő' },
     { value: 2, name: 'Kedd' },
@@ -70,6 +73,10 @@ export class EventDialogComponent implements OnInit {
   ];
 
   constructor() {
+    this.breakpointObserver.observe('(max-width: 640px)').subscribe(result => {
+      this.isMobile.set(result.matches);
+    });
+
     this.eventForm = this.fb.group({
       basicDetails: this.fb.group({
         eventName: ['', Validators.required],

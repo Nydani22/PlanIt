@@ -94,7 +94,6 @@ export class CalendarViewComponent implements OnInit {
     const endDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 2, 0, 23, 59, 59);
     this.eventService.getEvents(startDate, endDate).subscribe({
       next: (data: AppEvent[]) => {
-        console.log(`Események betöltve ${startDate.toLocaleDateString()} és ${endDate.toLocaleDateString()} között:`, data);
         this.events = this.expandEvents(data);
         this.refresh.next();
       },

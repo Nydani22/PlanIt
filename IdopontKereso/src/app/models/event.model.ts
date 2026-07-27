@@ -21,7 +21,7 @@ export interface AppEvent {
   isAllDay: boolean;
   fromDate: Date | string;
   toDate: Date | string;
-
+  timezone?: string;
   category: string; 
   
   color?: CategoryColor; 

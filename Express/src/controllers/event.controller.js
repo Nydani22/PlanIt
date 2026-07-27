@@ -1,5 +1,5 @@
 const eventService = require('../services/event.service');
-const freeBusyService = require('../services/freeBusy.service');
+const freeBusyService = require('../services/freebusy.service');
 
 exports.createEvent = async (req, res) => {
     try {

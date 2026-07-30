@@ -48,10 +48,15 @@ exports.registerUser = async (userData) => {
 
     await newUser.save();
     
+    const tokens = await generateTokens(newUser);
+    
     const userResponse = newUser.toObject();
     userResponse.calendarFeedToken = generatedToken; 
     
-    return userResponse;
+    return {
+        user: userResponse,
+        ...tokens
+    };
 };
 
 exports.loginUser = async (email, password) => {

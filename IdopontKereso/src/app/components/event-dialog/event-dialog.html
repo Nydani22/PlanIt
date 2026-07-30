@@ -113,12 +113,12 @@
               Mely napokon?
             </label>
             <mat-button-toggle-group formControlName="daysOfWeek" multiple hideMultipleSelectionIndicator="true" class="w-full">
-            @for (day of daysOfWeekList; track day.value) { 
+              @for (day of daysOfWeekList; track day.value) { 
                 <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
-                <span class="hidden sm:inline">{{ day.name }}</span>
-                <span class="sm:hidden">{{ day.name | slice:0:2 }}</span>
+                  <span class="hidden sm:inline">{{ day.name }}</span>
+                  <span class="sm:hidden">{{ day.name | slice:0:2 }}</span>
                 </mat-button-toggle> 
-            } 
+              }
             </mat-button-toggle-group>
           </div>
           <mat-form-field appearance="outline" class="w-full mt-2" subscriptSizing="dynamic"> 

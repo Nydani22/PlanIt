@@ -7,7 +7,6 @@ const authRoutes = require('./src/routes/auth.routes');
 const eventRoutes = require('./src/routes/event.routes');
 const groupRoutes = require('./src/routes/group.routes');
 const notificationRoutes = require('./src/routes/notification.routes');
-const categories = require('./src/routes/category.routes');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const socketUtil = require('./src/utils/socket');
@@ -32,7 +31,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/category',categories);
 
 const PORT = process.env.PORT || 3000;
 initCronJobs();

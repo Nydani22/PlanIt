@@ -1,0 +1,9 @@
+@use '@angular/material' as mat;
+
+:host {
+  @include mat.button-toggle-overrides((
+    background-color:var(--cal-bg),
+    selected-state-background-color: var(--app-primary-color),
+    selected-state-text-color: var(--app-primary-contrast)
+  ));
+}

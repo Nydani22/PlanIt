@@ -1,13 +1,8 @@
-/**
- * free-busy.service.js
- * Intelligens időpontkereső algoritmus
- */
-
 exports.findAvailableTimeSlots = (params, events) => {
   const {
     searchStart, searchEnd,
     durationMinutes = 0,
-    durationDays = 0,           // ÚJ: Többnapos események hossza napokban
+    durationDays = 0,
     allowedDays = [1, 2, 3, 4, 5], 
     startHour = 9, endHour = 17,  
     requiredAttendees = [],     
@@ -16,7 +11,9 @@ exports.findAvailableTimeSlots = (params, events) => {
     bufferAfterMinutes = 0
   } = params;
 
-  const durationMs = durationMinutes * 60000;
+  const totalDurationMinutes = (durationDays * 24 * 60) + durationMinutes;
+  const durationMs = totalDurationMinutes * 60000;
+  
   const bufferBeforeMs = bufferBeforeMinutes * 60000;
   const bufferAfterMs = bufferAfterMinutes * 60000;
   const availableSlots = [];
@@ -26,7 +23,6 @@ exports.findAvailableTimeSlots = (params, events) => {
   const endDay = new Date(searchEnd);
   endDay.setUTCHours(23, 59, 59, 999);
 
-  // Segédfüggvény az ütközések vizsgálatára, hogy ne duplikáljuk a kódot
   const checkCollisions = (checkStart, checkEnd) => {
     let isRequiredBusy = false;
     let busyOptionalCount = 0;
@@ -55,60 +51,43 @@ exports.findAvailableTimeSlots = (params, events) => {
     const dayOfWeek = currentDay.getUTCDay();
 
     if (allowedDays.includes(dayOfWeek)) {
-      // --- 1. ESET: TÖBBNAPOS ESEMÉNY (durationDays > 0) ---
-      if (durationDays > 0) {
-        
-        // ÚJ: Ellenőrizzük, hogy a többnapos esemény MINDEN napja engedélyezett-e!
-        let isAllDaysAllowed = true;
-        for (let i = 0; i < durationDays; i++) {
-          const checkDate = new Date(currentDay);
-          checkDate.setUTCDate(checkDate.getUTCDate() + i);
-          
-          if (!allowedDays.includes(checkDate.getUTCDay())) {
-            isAllDaysAllowed = false;
-            break; // Ha találunk egy tiltott napot (pl. vasárnap), azonnal megszakítjuk
-          }
-        }
+      let slotStart = new Date(currentDay);
+      slotStart.setUTCHours(startHour, 0, 0, 0);
 
-        // Csak akkor megyünk tovább, ha a teljes blokk engedélyezett napokra esik
-        if (isAllDaysAllowed) {
-          let slotStart = new Date(currentDay);
-          slotStart.setUTCHours(startHour, 0, 0, 0);
-
-          let slotEnd = new Date(currentDay);
-          // Hozzáadjuk a napokat (pl. 3 napos esemény esetén +2 nap a kezdethez képest)
-          slotEnd.setUTCDate(slotEnd.getUTCDate() + (durationDays - 1));
-          slotEnd.setUTCHours(endHour, 0, 0, 0);
-
-          // Csak akkor vizsgáljuk, ha a vége nem csúszik túl a teljes keresési ablakon
-          if (slotEnd <= endDay) {
-            const checkStart = new Date(slotStart.getTime() - bufferBeforeMs);
-            const checkEnd = new Date(slotEnd.getTime() + bufferAfterMs);
-
-            // Itt már az új (előzőleg javított) checkCollisions függvényed hívódik meg
-            const { isRequiredBusy, busyOptionalCount } = checkCollisions(checkStart, checkEnd);
-
-            if (!isRequiredBusy) {
-              availableSlots.push({
-                start: new Date(slotStart),
-                end: new Date(slotEnd),
-                availableOptionalCount: optionalAttendees.length - busyOptionalCount
-              });
-            }
-          }
-        }
+      const activeEnd = new Date(currentDay);
+      activeEnd.setUTCHours(endHour, 0, 0, 0);
+      
+      if (endHour <= startHour) {
+        activeEnd.setUTCDate(activeEnd.getUTCDate() + 1);
       }
-      // --- 2. ESET: NAPON BELÜLI ESEMÉNY (durationDays === 0) ---
-      else {
-        let slotStart = new Date(currentDay);
-        slotStart.setUTCHours(startHour, 0, 0, 0);
 
-        const dailyEnd = new Date(currentDay);
-        dailyEnd.setUTCHours(endHour, 0, 0, 0);
-        const stepMs = 30 * 60000; 
+      const stepMs = 30 * 60000; 
 
-        while (slotStart.getTime() + durationMs <= dailyEnd.getTime()) {
-          const slotEnd = new Date(slotStart.getTime() + durationMs);
+      
+      while (slotStart.getTime() <= activeEnd.getTime() && (slotStart.getTime() + durationMs) <= endDay.getTime()) {
+        const slotEnd = new Date(slotStart.getTime() + durationMs);
+        
+        let isAllDaysAllowed = true;
+        let checkDay = new Date(slotStart);
+        checkDay.setUTCHours(0, 0, 0, 0);
+        
+        let endCheckDay = new Date(slotEnd);
+        endCheckDay.setUTCHours(0, 0, 0, 0);
+        
+        if (slotEnd.getUTCHours() === 0 && slotEnd.getUTCMinutes() === 0 && slotEnd.getTime() > slotStart.getTime()) {
+           endCheckDay.setUTCDate(endCheckDay.getUTCDate() - 1);
+        }
+
+        let tempDay = new Date(checkDay);
+        while (tempDay <= endCheckDay) {
+          if (!allowedDays.includes(tempDay.getUTCDay())) {
+            isAllDaysAllowed = false;
+            break;
+          }
+          tempDay.setUTCDate(tempDay.getUTCDate() + 1);
+        }
+
+        if (isAllDaysAllowed) {
           const checkStart = new Date(slotStart.getTime() - bufferBeforeMs);
           const checkEnd = new Date(slotEnd.getTime() + bufferAfterMs);
 
@@ -121,21 +100,17 @@ exports.findAvailableTimeSlots = (params, events) => {
               availableOptionalCount: optionalAttendees.length - busyOptionalCount
             });
           }
-          slotStart = new Date(slotStart.getTime() + stepMs);
         }
+        
+        slotStart = new Date(slotStart.getTime() + stepMs);
       }
     }
     currentDay.setUTCDate(currentDay.getUTCDate() + 1);
   }
 
-  // Eredmények szűrése és rendezése
-  // A start limit a kezdőnap 00:00:00-ja lesz
   const startLimitDate = new Date(searchStart);
   startLimitDate.setUTCHours(0, 0, 0, 0);
   const startLimitMs = startLimitDate.getTime();
-
-  // Az endLimitMs-hez felhasználhatjuk a kód elején már létrehozott endDay változót, 
-  // ami pontosan a zárónap 23:59:59.999-es időpontját tartalmazza.
   const endLimitMs = endDay.getTime();
 
   const filteredSlots = availableSlots.filter(slot => {

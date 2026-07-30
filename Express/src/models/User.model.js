@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   password: { type: String, required: true },
   settings: {
-    //timezone: { type: String, default: 'Europe/Budapest' },
     defaultView: { 
       type: String, 
       enum: ['month', 'week', 'day'], 

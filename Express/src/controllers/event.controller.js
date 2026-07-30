@@ -146,33 +146,26 @@ exports.cancelInstance = async (req, res) => {
 
 exports.getEventsForTimeSearch = async (req, res) => {
   try {
-    // 1. Bemenet (beállítások) kinyerése az Angular kérésből
     const searchParams = req.body; 
     const { searchStart, searchEnd, requiredAttendees = [], optionalAttendees = [] } = searchParams;
 
-    // Összes érintett felhasználó ID-ja (kötelezők + opcionálisak)
     const allAttendeeIds = [...new Set([...requiredAttendees, ...optionalAttendees])];
 
-    // 2. ELSŐ SERVICE: Lekérjük és kibontjuk az eddigi naptárbejegyzéseket
-    // (Ez volt az a fájl, ami lekérdezte a MongoDB-t és kibontotta az ismétlődéseket)
     const expandedEvents = await eventService.getExpandedEventsForUsers(
       searchStart, 
       searchEnd, 
       allAttendeeIds
     );
 
-    // 3. MÁSODIK SERVICE: Ráeresztjük a Free/Busy algoritmust az adatokra
-    // (Ez az a kód, ami megnézi a napokat, órákat, puffereket, és megkeresi a lyukakat)
     const availableTimeSlots = freeBusyService.findAvailableTimeSlots(
       searchParams, 
       expandedEvents
     );
 
-    // 4. Eredmény visszaküldése az Angularnak
     return res.status(200).json({
       success: true,
       count: availableTimeSlots.length,
-      data: availableTimeSlots // A letisztult, felkínálható szabad időpontok
+      data: availableTimeSlots
     });
 
   } catch (error) {

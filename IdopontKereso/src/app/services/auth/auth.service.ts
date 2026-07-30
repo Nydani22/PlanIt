@@ -58,7 +58,13 @@ export class AuthService {
   }
 
   register(userData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, userData);
+    return this.http.post(`${this.apiUrl}/register`, userData).pipe(
+      tap((res: any) => {
+        if (res && res.accessToken) {
+          this.setToken(res.accessToken);
+        }
+      })
+    );
   }
 
   login(credentials: any): Observable<any> {

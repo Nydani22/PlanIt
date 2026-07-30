@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../../services/event/event.service';
@@ -12,25 +12,30 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { AuthService } from '../../services/auth/auth.service';
+
 
 @Component({
   selector: 'app-find-time',
   standalone: true,
-  imports: [DatePipe, SlicePipe, FormsModule,MatFormFieldModule, MatInputModule, MatSelectModule,
+  imports: [DatePipe, SlicePipe, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatDatepickerModule, MatNativeDateModule,
-    MatCheckboxModule, MatButtonModule],
+    MatCheckboxModule, MatButtonModule, MatButtonToggleModule],
   templateUrl: './find-time.html',
   styleUrls: ['./find-time.scss']
 })
-export class FindTime implements OnInit {
+export class FindTime implements OnInit, OnDestroy {
   private eventService = inject(EventService);
   private groupService = inject(GroupService);
-
+  private readonly STORAGE_KEY = 'findTime_savedParams';
   availableSlots = signal<TimeSlot[]>([]);
   groups = signal<Group[]>([]);
   selectedGroupId = signal<string>('');
   isLoading = signal<boolean>(false);
+  private authService = inject(AuthService);
   errorMessage = signal<string>('');
+  currentUserId: string = '';
   
   weekDays = [
     { value: 1, label: 'Hétfő' },
@@ -57,21 +62,84 @@ export class FindTime implements OnInit {
   };
 
   selectedGroupMembers = signal<any[]>([]);
+  bufferType: 'symmetric' | 'before' | 'after' | 'custom' = 'symmetric';
+  sharedBufferMinutes: number = 0;
+  durationUnit: 'minutes' | 'hours' | 'days' = 'minutes';
+  durationValue: number = 30;
 
   ngOnInit() {
+    this.currentUserId = this.authService.getCurrentUserId(); 
+    this.loadSavedState();
     this.loadUserGroups();
+  }
+
+  ngOnDestroy() {
+    this.saveState();
   }
 
   loadUserGroups() {
     this.groupService.getGroups().subscribe({
       next: (groupsData) => {
-        this.groups.set(groupsData);
+        const filteredGroups = groupsData.filter(group => {
+          const currentUserInGroup = group.members.find((member: any) => {
+            const memberId = typeof member.userId === 'object' && member.userId !== null 
+              ? member.userId._id 
+              : member.userId;
+            
+            return memberId === this.currentUserId;
+          });
+
+          return currentUserInGroup && (currentUserInGroup.role === 'ADMIN' || currentUserInGroup.role === 'OWNER');
+        });
+
+        this.groups.set(filteredGroups);
       },
       error: (err) => {
         console.error('Hiba a csoportok betöltésekor', err);
         this.errorMessage.set('Hiba történt a csoportok betöltésekor.');
       }
     });
+  }
+
+  loadSavedState() {
+    const savedState = sessionStorage.getItem(this.STORAGE_KEY);
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        
+        this.searchParams = {
+          ...this.searchParams, 
+          ...parsed.searchParams,
+          searchStart: new Date(parsed.searchParams.searchStart),
+          searchEnd: new Date(parsed.searchParams.searchEnd)
+        };
+
+        if (parsed.selectedGroupId) {
+          this.selectedGroupId.set(parsed.selectedGroupId);
+        }
+        
+        if (parsed.bufferType) this.bufferType = parsed.bufferType;
+        if (parsed.sharedBufferMinutes !== undefined) this.sharedBufferMinutes = parsed.sharedBufferMinutes;
+        
+        if (parsed.durationUnit) this.durationUnit = parsed.durationUnit;
+        if (parsed.durationValue !== undefined) this.durationValue = parsed.durationValue;
+        
+      } catch (e) {
+        console.error('Hiba a mentett beállítások betöltésekor', e);
+      }
+    }
+  }
+
+  saveState() {
+    const stateToSave = {
+      searchParams: this.searchParams,
+      selectedGroupId: this.selectedGroupId(),
+      bufferType: this.bufferType,
+      sharedBufferMinutes: this.sharedBufferMinutes,
+      durationUnit: this.durationUnit,
+      durationValue: this.durationValue
+    };
+    sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(stateToSave));
   }
 
   onGroupSelected(groupId: string) {
@@ -102,7 +170,6 @@ export class FindTime implements OnInit {
     }
   }
 
-  // Frissítve: HTML Event helyett MatCheckboxChange
   toggleAttendeeRequirement(memberId: string, event: MatCheckboxChange) {
     const isChecked = event.checked;
     
@@ -119,16 +186,43 @@ export class FindTime implements OnInit {
     }
   }
 
-  toggleDay(dayValue: number) {
-    const index = this.searchParams.allowedDays.indexOf(dayValue);
-    if (index > -1) {
-      this.searchParams.allowedDays.splice(index, 1);
-    } else {
-      this.searchParams.allowedDays.push(dayValue);
+  onDurationUnitChange(unit: 'minutes' | 'hours' | 'days') {
+    this.durationUnit = unit;
+    
+    if (unit === 'hours') {
+      this.durationValue = 1;
+    } else if (unit === 'days') {
+      this.durationValue = 1;
+    } else if (unit === 'minutes') {
+      this.durationValue = 30;
     }
   }
 
   searchTimeSlots() {
+    if (this.durationUnit === 'minutes') {
+      this.searchParams.durationMinutes = this.durationValue;
+      this.searchParams.durationDays = 0;
+    } else if (this.durationUnit === 'hours') {
+      this.searchParams.durationMinutes = this.durationValue * 60;
+      this.searchParams.durationDays = 0;
+    } else if (this.durationUnit === 'days') {
+      this.searchParams.durationMinutes = 0;
+      this.searchParams.durationDays = this.durationValue;
+    }
+
+    if (this.bufferType === 'symmetric') {
+      this.searchParams.bufferBeforeMinutes = this.sharedBufferMinutes;
+      this.searchParams.bufferAfterMinutes = this.sharedBufferMinutes;
+    } else if (this.bufferType === 'before') {
+      this.searchParams.bufferBeforeMinutes = this.sharedBufferMinutes;
+      this.searchParams.bufferAfterMinutes = 0;
+    } else if (this.bufferType === 'after') {
+      this.searchParams.bufferBeforeMinutes = 0;
+      this.searchParams.bufferAfterMinutes = this.sharedBufferMinutes;
+    }
+
+    this.saveState();
+
     if (this.searchParams.requiredAttendees.length === 0) {
       this.errorMessage.set('Kérlek, válassz ki egy csoportot!');
       return;
@@ -138,10 +232,7 @@ export class FindTime implements OnInit {
     this.errorMessage.set('');
 
     const offsetHours = new Date().getTimezoneOffset() / 60;
-
-    // Feltuningolt dátum-előkészítő függvény
-    // A kezdő dátumot a nap elejére (00:00:00), a végdátumot a nap végére (23:59:59) igazítja UTC-ben,
-    // így a backend adatbázis lekérdezése biztosan behúzza az adott napra eső összes eseményt.
+    
     const getAdjustedDate = (date: Date, isEnd: boolean) => {
       const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       if (isEnd) {

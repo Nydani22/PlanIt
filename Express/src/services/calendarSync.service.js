@@ -4,8 +4,6 @@ const User = require('../models/User.model');
 
 async function syncExternalCalendar(userId, calendarUrl) {
     try {
-        //console.log(`Szinkronizáció indítása: UserID ${userId}`);
-        
         const events = await ical.async.fromURL(calendarUrl);
         const incomingUids = [];
         const bulkOps = [];
@@ -81,7 +79,6 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
         if (bulkOps.length > 0) {
             const result = await Event.bulkWrite(bulkOps);
-            // console.log(`Szinkronizáció kész (User ${userId}). Upsert: ${result.upsertedCount + result.modifiedCount}, Törölve: ${result.deletedCount}`);
         }
 
     } catch (error) {

@@ -13,19 +13,23 @@
       
       <div class="flex flex-col gap-6 mt-2">
         <button
-            (click)="openEventDialog()"
-            class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"> 
-            <span class="text-2xl leading-none mb-1">+</span>
-            <span>Esemény</span>
+          (click)="openEventDialog()"
+          class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
+          
+          <mat-icon>add</mat-icon>
+          
+          <span class="flex-1 text-center px-2">Hozzáadás</span>
         </button>
+        
         <button
           (click)="navigateToFindTime()"
-          class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"> 
-          <span class="text-2xl leading-none mb-1">+</span>
-          <span>Időpont keresése</span>
-      </button>
+          class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
+          
+          <mat-icon>search</mat-icon>
+          
+          <span class="flex-1 text-center px-2">Keresés</span>
+        </button>
       </div>
-
     </mat-sidenav>
 
     <mat-sidenav-content class="flex flex-col p-2 md:p-4 overflow-auto">

@@ -4,8 +4,24 @@ const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 exports.register = async (req, res) => {
     try {
-        await authService.registerUser(req.body);
-        res.status(201).json({ message: 'Sikeres regisztráció!' });
+        const { user, accessToken, refreshToken } = await authService.registerUser(req.body);
+        
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        const cookieOptions = {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'None' : 'Lax',
+            maxAge: ONE_WEEK
+        };
+
+        res.cookie('refreshToken', refreshToken, cookieOptions);
+
+        res.status(201).json({ 
+            message: 'Sikeres regisztráció!',
+            accessToken: accessToken,
+            user: user
+        });
     } catch (err) {
         res.status(400).json({ message: err.message });
     }

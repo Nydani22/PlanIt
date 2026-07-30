@@ -120,4 +120,15 @@ export class App implements OnInit {
       }
     });
   }
+
+  navigateToFindTime() {
+  // 1. Az autentikációs ellenőrzés marad a régi
+  if (!this.authService.getToken()) {
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  // 2. Dialógus nyitása helyett egyszerűen átnavigálunk az új oldalra
+  this.router.navigate(['/find-time']);
+}
 }

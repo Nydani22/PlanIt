@@ -22,7 +22,7 @@ export interface AppEvent {
   fromDate: Date | string;
   toDate: Date | string;
   timezone?: string;
-  category: string; 
+  category: string;
   
   color?: CategoryColor; 
   

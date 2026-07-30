@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppEvent } from '../../models/event.model';
 import { environment } from '../../../environments/environment';
+import { TimeSearchParams, TimeSearchResponse } from '../../models/findtime.model';
 
 
 @Injectable({
@@ -26,6 +27,10 @@ export class EventService {
     }
 
     return this.http.get<AppEvent[]>(this.apiUrl, { params });
+  }
+
+  findAvailableTimeSlots(searchParams: TimeSearchParams): Observable<TimeSearchResponse> {
+    return this.http.post<TimeSearchResponse>(`${this.apiUrl}/find-time`, searchParams);
   }
 
   getEventById(eventId: string): Observable<AppEvent> {

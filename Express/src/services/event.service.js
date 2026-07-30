@@ -3,6 +3,7 @@ const ical = require('ical-generator').default;
 const User = require('../models/User.model');
 const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
+const { expandEventInWindow } = require('../utils/event.util');
 
 exports.createEvent = async (eventData, userId) => {
     const { eventName, fromDate, toDate, description, location, isAllDay, recurrence, category, color, timezone } = eventData;

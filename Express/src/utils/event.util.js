@@ -6,7 +6,7 @@ const { RRule } = require('rrule');
 function expandEventInWindow(event, searchStart, searchEnd) {
   // Ha nincs ismétlődés, nincs mit kibontani (a séma 'NONE' default értéke alapján)
   if (!event.recurrence || event.recurrence.frequency === 'NONE') {
-    return [];
+    return [event];
   }
 
   const freqMapping = {
@@ -21,14 +21,28 @@ function expandEventInWindow(event, searchStart, searchEnd) {
 
   const durationMs = new Date(event.toDate).getTime() - new Date(event.fromDate).getTime();
 
-  const ruleOptions = {
-    freq: freqMapping[event.recurrence.frequency],
-    dtstart: new Date(event.fromDate),
+  // --- ÚJ: Időzóna kompenzáló segédfüggvények ---
+  // Mivel az adatbázis UTC-ben tárol, az rrule viszont a Date objektum helyi összetevőit olvassa,
+  // el kell tolnunk a percekkel, hogy ne csússzanak el a találatok.
+  const shiftToRrule = (d) => {
+    const date = new Date(d);
+    return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  };
+  
+  const shiftFromRrule = (d) => {
+    const date = new Date(d);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   };
 
-  // untilDate kezelése a sémából
+  const ruleOptions = {
+    freq: freqMapping[event.recurrence.frequency],
+    // Alkalmazzuk az eltolást a kezdődátumra
+    dtstart: shiftToRrule(event.fromDate),
+  };
+
+  // untilDate kezelése a sémából (eltolással)
   if (event.recurrence.untilDate) {
-    ruleOptions.until = new Date(event.recurrence.untilDate);
+    ruleOptions.until = shiftToRrule(event.recurrence.untilDate);
   }
 
   // Heti ismétlődés napjainak kezelése a daysOfWeek tömb alapján
@@ -37,7 +51,9 @@ function expandEventInWindow(event, searchStart, searchEnd) {
   }
 
   const rule = new RRule(ruleOptions);
-  const generatedDates = rule.between(new Date(searchStart), new Date(searchEnd), true);
+  
+  // A keresési ablak végeit is kompenzálva adjuk át
+  const generatedDatesRrule = rule.between(shiftToRrule(searchStart), shiftToRrule(searchEnd), true);
 
   const expandedEvents = [];
   
@@ -46,7 +62,11 @@ function expandEventInWindow(event, searchStart, searchEnd) {
     ? event.recurrence.cancelledDates.map(d => new Date(d).getTime()) 
     : [];
 
-  for (const startDate of generatedDates) {
+  for (const rruleDate of generatedDatesRrule) {
+    // Visszatoljuk a legenerált dátumot a valós (UTC-vel szinkronban lévő) időpontra
+    const startDate = shiftFromRrule(rruleDate);
+
+    // Így már a timestamp alapú egyezés is tökéletesen fog működni
     if (!cancelledTimestamps.includes(startDate.getTime())) {
       expandedEvents.push({
         _id: event._id,

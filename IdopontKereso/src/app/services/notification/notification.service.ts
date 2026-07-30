@@ -33,8 +33,6 @@ export class NotificationService {
       this.socket.on('newNotification', (newNotif: any) => {
         this.notifications.update(current => [newNotif, ...current]);
         this.unreadCount.update(count => count + 1);
-        
-        console.log('VALÓS IDEJŰ ÉRTESÍTÉS JÖTT!', newNotif);
       });
     }
   }

@@ -64,6 +64,11 @@ const eventSchema = new mongoose.Schema({
   timestamps: true 
 });
 
-eventSchema.index({ organizerId: 1, uid: 1 }, { unique: true, sparse: true });
+eventSchema.index({ organizerId: 1, uid: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { uid: { $type: "string" } } 
+  }
+);
 
 module.exports = mongoose.model('Event', eventSchema);

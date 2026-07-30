@@ -5,10 +5,6 @@ exports.createEvent = async (req, res) => {
     try {
         const userId = req.user.id; 
         
-        if (!req.body.uid) {
-            delete req.body.uid;
-        }
-        
         const event = await eventService.createEvent(req.body, userId);
         
         res.status(201).json(event);

@@ -1,0 +1,143 @@
+<div class="find-time-container p-4">
+  <h2 class="text-xl font-bold mb-4">Szabad időpont keresése</h2>
+
+  <div class="search-form flex flex-col gap-4 mb-6">
+    
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Melyik csoportnak keresel időpontot?</mat-label>
+      <mat-select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupSelected($event)">
+        <mat-option value="">-- Válassz egy csoportot --</mat-option>
+        @for (group of groups(); track group._id) {
+          <mat-option [value]="group._id">{{ group.groupName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Keresés kezdete</mat-label>
+        <input matInput [matDatepicker]="startPicker" [(ngModel)]="searchParams.searchStart">
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Keresés vége</mat-label>
+        <input matInput [matDatepicker]="endPicker" [(ngModel)]="searchParams.searchEnd">
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Időtartam (perc)</mat-label>
+        <input matInput type="number" min="15" step="15" [(ngModel)]="searchParams.durationMinutes">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Időtartam (nap)</mat-label>
+        <input matInput type="number" min="0" step="1" [(ngModel)]="searchParams.durationDays">
+        <mat-hint>Ha 0-nál nagyobb, akkor többnapos blokkot keres.</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Puffer idő előtte (perc)</mat-label>
+        <input matInput type="number" min="0" step="5" [(ngModel)]="searchParams.bufferBeforeMinutes">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Puffer idő utána (perc)</mat-label>
+        <input matInput type="number" min="0" step="5" [(ngModel)]="searchParams.bufferAfterMinutes">
+      </mat-form-field>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Nap kezdete (óra)</mat-label>
+        <input matInput type="number" min="0" max="23" [(ngModel)]="searchParams.startHour">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nap vége (óra)</mat-label>
+        <input matInput type="number" min="0" max="24" [(ngModel)]="searchParams.endHour">
+      </mat-form-field>
+    </div>
+
+    <div class="flex flex-col mt-2">
+      <label class="font-semibold mb-2">Engedélyezett napok</label>
+      <div class="flex flex-wrap gap-4">
+        @for (day of weekDays; track day.value) {
+          <mat-checkbox 
+            [checked]="searchParams.allowedDays.includes(day.value)"
+            (change)="toggleDay(day.value)"
+            color="primary">
+            {{ day.label }}
+          </mat-checkbox>
+        }
+      </div>
+    </div>
+
+    @if (selectedGroupMembers().length > 0) {
+      <div class="flex flex-col mt-4 p-4 rounded border bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600">
+        <label class="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+          Résztvevők (pipáld be, akinek kötelező a részvétel)
+        </label>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          A be nem pipált személyeket a rendszer "opcionális" résztvevőként kezeli, így a szabad időpontjaik növelhetik a találat pontszámát, de ütközésük nem zárja ki az időpontot.
+        </p>
+        
+        <div class="flex flex-wrap gap-4">
+          @for (member of selectedGroupMembers(); track member.id) {
+            <mat-checkbox 
+              [checked]="searchParams.requiredAttendees.includes(member.id)"
+              (change)="toggleAttendeeRequirement(member.id, $event)"
+              color="primary">
+              {{ member.name !== 'Ismeretlen felhasználó' ? member.name : 'Felhasználó (' + (member.id | slice:0:6) + '...)' }}
+            </mat-checkbox>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="actions mb-4">
+    <button mat-flat-button color="primary"
+      (click)="searchTimeSlots()" 
+      [disabled]="isLoading()">
+      {{ isLoading() ? 'Keresés folyamatban...' : 'Szabad időpontok keresése' }}
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-alert text-red-600 bg-red-100 p-3 rounded mb-4">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (!isLoading() && availableSlots().length > 0) {
+    <div class="results-container overflow-y-auto max-h-96">
+      <h3 class="font-bold mb-2">Talált időpontok ({{ availableSlots().length }} db)</h3>
+      <ul class="slot-list flex flex-col gap-2">
+        @for (slot of availableSlots(); track $index) {
+          <li class="slot-item border p-3 rounded flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-700">
+            @if ((slot.start | date:'yyyyMMdd') === (slot.end | date:'yyyyMMdd')) {
+              <span>{{ slot.start | date:'yyyy. MM. dd. HH:mm' }} - {{ slot.end | date:'HH:mm' }}</span>
+            } @else {
+              <span>{{ slot.start | date:'yyyy. MM. dd. HH:mm' }} - {{ slot.end | date:'yyyy. MM. dd. HH:mm' }}</span>
+            }
+            
+            <button mat-flat-button color="primary"
+              (click)="selectSlot(slot)">
+              Kiválaszt
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (!isLoading() && availableSlots().length === 0 && !errorMessage()) {
+    <div class="p-3 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded">
+      Nincs megfelelő szabad időpont a megadott feltételekkel.
+    </div>
+  }
+</div>

@@ -123,9 +123,18 @@ export class CalendarViewComponent implements OnInit {
       }
       const duration = endDate.getTime() - startDate.getTime();
 
+      let displayTitle = item.eventName;
+      
+      if (!item.isAllDay) {
+        const startTimeStr = startDate.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+        const endTimeStr = endDate.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+        
+        displayTitle = `${startTimeStr} - ${endTimeStr} | ${item.eventName}`;
+      }
+
       const baseEvent: CalendarEvent = {
         id: item._id,
-        title: item.eventName,
+        title: displayTitle,
         start: startDate,
         end: endDate,
         allDay: item.isAllDay,

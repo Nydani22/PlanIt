@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
+import { SnackbarService } from '../../services/snackbar/snackbar.service';
 
 
 const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -25,6 +26,7 @@ export class Signup {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private snackbarService = inject(SnackbarService);
   registerForm: FormGroup;
   errorMessage = signal('');
 
@@ -57,7 +59,7 @@ export class Signup {
       this.errorMessage.set('');
       this.authService.register(userData).subscribe({
         next: (response) => {
-          console.log('Sikeres regisztráció!', response);
+          this.snackbarService.showSuccess('Sikeres regisztráció!');
           this.router.navigate(['/login']); 
         },
         error: (err) => {

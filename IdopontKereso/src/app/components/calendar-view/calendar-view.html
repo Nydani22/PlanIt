@@ -35,11 +35,14 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 p-2 md:p-4 rounded-lg shadow-sm flex-1 w-full overflow-x-auto pb-2">
-        <div class="min-w-[700px] lg:min-w-0 h-full">
+    <div class="bg-white dark:bg-gray-800 p-2 md:p-4 rounded-lg shadow-sm w-full overflow-x-auto pb-2" [class.h-fit]="view === CalendarView.Month" [class.flex-1]="view !== CalendarView.Month">
+        
+        <div class="min-w-[700px] lg:min-w-0" [class.h-full]="view !== CalendarView.Month" [class.overflow-y-auto]="view !== CalendarView.Month">
+            
             @switch (view) { 
                 @case (CalendarView.Month) {
                     <mwl-calendar-month-view
+                        [headerTemplate]="monthHeaderTemplate"
                         [viewDate]="viewDate"
                         [events]="events"
                         [refresh]="refresh"
@@ -83,7 +86,7 @@
 </div>
 
 <ng-template #customHeaderTemplate let-days="days" let-locale="locale" let-dayClicked="dayClicked" let-eventDropped="eventDropped">
-  <div class="cal-day-headers">
+  <div class="cal-day-headers sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
     @for (day of days; track day.date) {
       <div
         class="cal-header"
@@ -96,9 +99,29 @@
         (drop)="eventDropped.emit({event: $event.dropData?.event, newStart: day.date, dropData: $event.dropData})"
         (click)="dayClicked.emit({date: day.date})">
         
-        <b class="hidden md:block">{{ day.date | calendarDate:'weekViewColumnHeader':locale }}</b>
+        <b class="hidden md:block uppercase">{{ day.date | date:'EEEE':'':'hu' }}</b>
         
-        <span class="block text-lg py-1">{{ day.date | calendarDate:'weekViewColumnSubHeader':locale }}</span>
+        <span class="block text-lg py-1 uppercase">{{ day.date | date:'dd' }}</span>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<ng-template #monthHeaderTemplate let-days="days" let-locale="locale">
+  <div class="cal-cell-row cal-header bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    @for (day of days; track day.date) {
+      <div
+        class="cal-cell py-2"
+        [class.cal-past]="day.isPast"
+        [class.cal-today]="day.isToday"
+        [class.cal-future]="day.isFuture"
+        [class.cal-weekend]="day.isWeekend"
+        [ngClass]="day.cssClass">
+        
+        <span class="block uppercase font-bold text-gray-800 dark:text-gray-100">
+          {{ day.date | calendarDate:'monthViewColumnHeader':locale }}
+        </span>
+        
       </div>
     }
   </div>

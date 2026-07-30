@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth/auth.service';
+import { SnackbarService } from '../../services/snackbar/snackbar.service';
 
 @Component({
   selector: 'app-join',
@@ -19,7 +20,7 @@ export class Join implements OnInit {
   router = inject(Router);
   groupService = inject(GroupService);
   private authService = inject(AuthService);
-
+  private snackbarService = inject(SnackbarService);
   token: string | null = null;
   errorMessage: string = '';
   isLoading: boolean = false;
@@ -27,6 +28,7 @@ export class Join implements OnInit {
   isLoggedIn = signal<boolean>(true);
   isAlreadyMember = signal<boolean>(false);
   isCheckingStatus = signal<boolean>(true);
+  
 
   ngOnInit() {
     this.token = this.route.snapshot.paramMap.get('id');
@@ -87,6 +89,7 @@ export class Join implements OnInit {
     this.groupService.joinWithInvite(this.token).subscribe({
       next: (response) => {
         this.isLoading = false;
+        this.snackbarService.showSuccess('Sikeres csatlakozás a csoportba!');
         this.router.navigate(['/groups']);
       },
       error: (err) => {

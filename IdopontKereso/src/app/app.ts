@@ -10,6 +10,7 @@ import { SnackbarService } from './services/snackbar/snackbar.service';
 import { EventDialogComponent } from './components/event-dialog/event-dialog';
 import { CalendarRefreshService } from './services/calendarRefresh/calendar-refresh.service';
 import { MatIcon } from '@angular/material/icon';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -31,9 +32,8 @@ export class App implements OnInit {
   private snackbarService = inject(SnackbarService);
   private calendarRefreshService = inject(CalendarRefreshService);
 
-  showNavbar = signal<boolean>(true);
-  
   isSidebarOpen = signal<boolean>(this.getInitialSidebarState());
+  private previousUrl: string = '';
 
   constructor() {
     effect(() => {
@@ -54,7 +54,9 @@ export class App implements OnInit {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      this.checkRoute(event.urlAfterRedirects || event.url);
+      const currentUrl = event.urlAfterRedirects || event.url;
+      this.checkRoute(currentUrl);
+      this.previousUrl = currentUrl; 
     });
   }
 
@@ -63,10 +65,11 @@ export class App implements OnInit {
                            url.startsWith('/register') || 
                            url.startsWith('/join');
 
-    this.showNavbar.set(!isExcludedPage);
-
     if (isExcludedPage) {
       this.isSidebarOpen.set(false);
+    } else if (this.previousUrl.startsWith('/login') || this.previousUrl.startsWith('/register')) {
+      this.isSidebarOpen.set(true);
+      localStorage.setItem('sidebarOpen', 'true');
     } else {
       this.isSidebarOpen.set(this.getInitialSidebarState(url));
     }
@@ -124,11 +127,6 @@ export class App implements OnInit {
   }
 
   navigateToFindTime() {
-  if (!this.authService.getToken()) {
-    this.router.navigate(['/login']);
-    return;
+    this.router.navigate(['/find-time']);
   }
-
-  this.router.navigate(['/find-time']);
-}
 }

@@ -1,159 +1,157 @@
-<div class="max-w-2xl mx-auto my-8 p-6 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-  <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Profil és Beállítások</h2>
+<div class="max-w-4xl mx-auto p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 md:p-8">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Profil és Beállítások</h2>
 
-  @if (isLoading()) {
-    <p class="text-gray-600 dark:text-gray-400 font-medium">Adatok betöltése...</p>
-  } @else {
-    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
-      
-      <section class="flex flex-col gap-2">
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Személyes Adatok</h3>
+    @if (isLoading()) {
+      <p class="text-gray-600 dark:text-gray-400 font-medium">Adatok betöltése...</p>
+    } @else {
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
         
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Teljes név</mat-label>
-          <input matInput id="name" type="text" formControlName="name">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Felhasználónév</mat-label>
-          <input matInput id="userName" type="text" formControlName="userName">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>E-mail cím</mat-label>
-          <input matInput id="email" type="email" formControlName="email">
-        </mat-form-field>
-      </section>
-
-      <hr class="border-t border-gray-200 dark:border-gray-700">
-
-      <section class="flex flex-col gap-4">
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Naptár Szinkronizáció</h3>
-        
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Külső naptár URL (Importálás)</mat-label>
-          <input matInput id="externalCalendarUrl" type="url" formControlName="externalCalendarUrl" placeholder="https://pelda.com/naptar.ics">
-        </mat-form-field>
-
-        <div class="flex flex-col mb-4 w-full">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Saját iCal Feed URL (Exportálás)</label>
+        <section class="flex flex-col gap-2">
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Személyes Adatok</h3>
           
-          <div class="flex items-center w-full rounded p-1 border mx-auto transition-all duration-300"
-              [ngClass]="isCopied() ? 'bg-green-50 border-green-500 shadow-sm dark:bg-green-900/30 dark:border-green-500' : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-600'">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Teljes név</mat-label>
+            <input matInput id="name" type="text" formControlName="name">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Felhasználónév</mat-label>
+            <input matInput id="userName" type="text" formControlName="userName">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>E-mail cím</mat-label>
+            <input matInput id="email" type="email" formControlName="email">
+          </mat-form-field>
+        </section>
+
+        <hr class="border-t border-gray-200 dark:border-gray-700">
+
+        <section class="flex flex-col gap-4">
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Naptár Szinkronizáció</h3>
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Külső naptár URL (Importálás)</mat-label>
+            <input matInput id="externalCalendarUrl" type="url" formControlName="externalCalendarUrl" placeholder="https://pelda.com/naptar.ics">
+          </mat-form-field>
+
+          <div class="flex flex-col mb-4 w-full">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Saját iCal Feed URL (Exportálás)</label>
             
-            <span class="flex-1 text-sm font-mono truncate px-3 text-left select-all transition-colors duration-300"
-                  [ngClass]="isCopied() ? 'text-green-800 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'">
-              {{ profileForm.get('calendarFeedToken')?.value || 'Nincs még token generálva' }}
-            </span>
-            
-            <button mat-icon-button 
-                    type="button"
-                    (click)="copyToClipboard()" 
-                    title="Másolás" 
-                    class="shrink-0 transition-colors duration-300 flex items-center justify-center leading-none m-0 p-0"
-                    [color]="isCopied() ? '' : 'primary'"
-                    [ngClass]="{'!text-green-600 dark:!text-green-400': isCopied()}">
-              <div class="inline-grid place-items-center">
-                <mat-icon class="col-start-1 row-start-1 transition-all duration-300 transform"
-                          [ngClass]="isCopied() ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'">
-                  content_copy
-                </mat-icon>
-                <mat-icon class="col-start-1 row-start-1 transition-all duration-300 transform"
-                          [ngClass]="isCopied() ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'">
-                  check
-                </mat-icon>
-              </div>
-            </button>
+            <div class="flex items-center w-full rounded p-1 border mx-auto transition-all duration-300"
+                [ngClass]="isCopied() ? 'bg-green-50 border-green-500 shadow-sm dark:bg-green-900/30 dark:border-green-500' : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-600'">
+              
+              <span class="flex-1 text-sm font-mono truncate px-3 text-left select-all transition-colors duration-300"
+                    [ngClass]="isCopied() ? 'text-green-800 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'">
+                {{ profileForm.get('calendarFeedToken')?.value || 'Nincs még token generálva' }}
+              </span>
+              
+              <button mat-icon-button 
+                      type="button"
+                      (click)="copyToClipboard()" 
+                      title="Másolás" 
+                      class="shrink-0 transition-colors duration-300 flex items-center justify-center leading-none m-0 p-0"
+                      [color]="isCopied() ? '' : 'primary'"
+                      [ngClass]="{'!text-green-600 dark:!text-green-400': isCopied()}">
+                <div class="inline-grid place-items-center">
+                  <mat-icon class="col-start-1 row-start-1 transition-all duration-300 transform"
+                            [ngClass]="isCopied() ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'">
+                    content_copy
+                  </mat-icon>
+                  <mat-icon class="col-start-1 row-start-1 transition-all duration-300 transform"
+                            [ngClass]="isCopied() ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'">
+                    check
+                  </mat-icon>
+                </div>
+              </button>
+            </div>
+
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Ezt a linket másold be a Google Naptárba vagy Outlookba, hogy a saját eseményeidet ott is lásd.
+            </p>
+          </div>
+        </section>
+
+        <hr class="border-t border-gray-200 dark:border-gray-700">
+
+        <section class="flex flex-col gap-2" formGroupName="settings">
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Naptár Beállítások</h3>
+          <mat-form-field appearance="outline" class="w-full" color="primary">
+            <mat-label>Alapértelmezett nézet</mat-label>
+            <mat-select formControlName="defaultView" panelClass="dark:bg-gray-800 dark:text-white">
+              <mat-option value="month">Havi</mat-option>
+              <mat-option value="week">Heti</mat-option>
+              <mat-option value="day">Napi</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="flex flex-col sm:flex-row gap-4">
+            <mat-form-field appearance="outline" class="flex-1" color="primary">
+              <mat-label>Nap kezdete (óra)</mat-label>
+              <input matInput type="number" formControlName="dayStartHour" min="0" max="23" [errorStateMatcher]="timeRangeMatcher">
+              
+              <mat-error>
+                @if (profileForm.get('settings.dayStartHour')?.hasError('min') || profileForm.get('settings.dayStartHour')?.hasError('max')) {
+                  0 és 23 közötti érték kell!
+                } @else {
+                  A kezdés nem lehet később!
+                }
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="flex-1" color="primary">
+              <mat-label>Nap vége (óra)</mat-label>
+              <input matInput type="number" formControlName="dayEndHour" min="1" max="24" [errorStateMatcher]="timeRangeMatcher">
+              
+              <mat-error>
+                @if (profileForm.get('settings.dayEndHour')?.hasError('min') || profileForm.get('settings.dayEndHour')?.hasError('max')) {
+                  1 és 24 közötti érték kell!
+                } @else {
+                  A végének később kell lennie!
+                }
+              </mat-error>
+            </mat-form-field>
           </div>
 
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Ezt a linket másold be a Google Naptárba vagy Outlookba, hogy a saját eseményeidet ott is lásd.
-          </p>
-        </div>
-      </section>
+          <div class="mt-2 mb-4">
+            <mat-checkbox formControlName="hideWeekends" color="primary">
+              Hétvégék elrejtése
+            </mat-checkbox>
+          </div>
 
-      <hr class="border-t border-gray-200 dark:border-gray-700">
-
-      <section class="flex flex-col gap-2" formGroupName="settings">
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Naptár Beállítások</h3>
-        <mat-form-field appearance="outline" class="w-full" color="primary">
-          <mat-label>Alapértelmezett nézet</mat-label>
-          <mat-select formControlName="defaultView" panelClass="dark:bg-gray-800 dark:text-white">
-            <mat-option value="month">Havi</mat-option>
-            <mat-option value="week">Heti</mat-option>
-            <mat-option value="day">Napi</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <div class="flex flex-col sm:flex-row gap-4">
-          <mat-form-field appearance="outline" class="flex-1" color="primary">
-            <mat-label>Nap kezdete (óra)</mat-label>
-            <!-- MATCHER BEKÖTÉSE -->
-            <input matInput type="number" formControlName="dayStartHour" min="0" max="23" [errorStateMatcher]="timeRangeMatcher">
-            
-            <!-- HIBAÜZENET -->
-            <mat-error>
-              @if (profileForm.get('settings.dayStartHour')?.hasError('min') || profileForm.get('settings.dayStartHour')?.hasError('max')) {
-                0 és 23 közötti érték kell!
-              } @else {
-                A kezdés nem lehet később!
-              }
-            </mat-error>
+          <mat-form-field color="primary" appearance="outline" class="w-full">
+            <mat-label>Órák felbontása (rács)</mat-label>
+            <mat-select formControlName="hourSegments" panelClass="dark:bg-gray-800 dark:text-white">
+              <mat-option [value]="1">Óránként (60 perc)</mat-option>
+              <mat-option [value]="2">Félóránként (30 perc)</mat-option>
+              <mat-option [value]="4">Negyedóránként (15 perc)</mat-option>
+              <mat-option [value]="6">10 percenként</mat-option>
+            </mat-select>
           </mat-form-field>
+        </section>
 
-          <mat-form-field appearance="outline" class="flex-1" color="primary">
-            <mat-label>Nap vége (óra)</mat-label>
-            <!-- MATCHER BEKÖTÉSE -->
-            <input matInput type="number" formControlName="dayEndHour" min="1" max="24" [errorStateMatcher]="timeRangeMatcher">
-            
-            <!-- HIBAÜZENET -->
-            <mat-error>
-              @if (profileForm.get('settings.dayEndHour')?.hasError('min') || profileForm.get('settings.dayEndHour')?.hasError('max')) {
-                1 és 24 közötti érték kell!
-              } @else {
-                A végének később kell lennie!
-              }
-            </mat-error>
+        <hr class="border-t border-gray-200 dark:border-gray-700">
+
+        <section class="flex flex-col gap-2">
+          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Megjelenés (Helyi beállítás)</h3>
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Téma</mat-label>
+            <mat-select formControlName="localTheme" panelClass="dark:bg-gray-800 dark:text-white">
+              <mat-option value="Világos">Világos</mat-option>
+              <mat-option value="Sötét">Sötét</mat-option>
+              <mat-option value="Rendszer">Rendszer (Automatikus)</mat-option>
+            </mat-select>
           </mat-form-field>
+        </section>
+
+        <div class="flex self-end items-center gap-4 mt-2">
+          <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid" class="px-6 py-2.5">
+            Mentés
+          </button>
         </div>
-
-        <div class="mt-2 mb-4">
-          <mat-checkbox formControlName="hideWeekends" color="primary">
-            Hétvégék elrejtése
-          </mat-checkbox>
-        </div>
-
-        <mat-form-field color="primary" appearance="outline" class="w-full">
-          <mat-label>Órák felbontása (rács)</mat-label>
-          <mat-select formControlName="hourSegments" panelClass="dark:bg-gray-800 dark:text-white">
-            <mat-option [value]="1">Óránként (60 perc)</mat-option>
-            <mat-option [value]="2">Félóránként (30 perc)</mat-option>
-            <mat-option [value]="4">Negyedóránként (15 perc)</mat-option>
-            <mat-option [value]="6">10 percenként</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </section>
-
-      <hr class="border-t border-gray-200 dark:border-gray-700">
-
-      <section class="flex flex-col gap-2">
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Megjelenés (Helyi beállítás)</h3>
-        
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Téma</mat-label>
-          <mat-select formControlName="localTheme" panelClass="dark:bg-gray-800 dark:text-white">
-            <mat-option value="Világos">Világos</mat-option>
-            <mat-option value="Sötét">Sötét</mat-option>
-            <mat-option value="Rendszer">Rendszer (Automatikus)</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </section>
-
-      <div class="flex self-end items-center gap-4 mt-2">
-        <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid" class="px-6 py-2.5">
-          Mentés
-        </button>
-      </div>
-    </form>
-  }
+      </form>
+    }
+  </div>
 </div>

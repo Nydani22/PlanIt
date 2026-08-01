@@ -1,10 +1,10 @@
-<div class="find-time-container p-4">
-  <h2 class="text-xl font-bold mb-4">Szabad időpont keresése</h2>
+<div class="p-4">
 
-  <div class="search-form flex flex-col gap-4 mb-6">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 px-2 mt-2">Szabad időpont keresése</h2>
 
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
     <div class="flex flex-col mb-2">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Kinek keresel időpontot?</label>
+      <label class="font-semibold mb-2 text-gray-900 dark:text-gray-100">Kinek keresel időpontot?</label>
       <mat-button-toggle-group [(ngModel)]="searchMode" (ngModelChange)="onSearchModeChange($event)" hideSingleSelectionIndicator="true" class="w-full sm:w-auto">
         <mat-button-toggle value="self" class="flex-1 px-0 min-w-0 text-center">Magamnak</mat-button-toggle>
         <mat-button-toggle value="group" class="flex-1 px-0 min-w-0 text-center">Csoportnak</mat-button-toggle>
@@ -12,21 +12,26 @@
     </div>
 
     @if (searchMode === 'group') {
-      <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Melyik csoportnak keresel időpontot?</mat-label>
-        <mat-select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupSelected($event)">
-          <mat-option value="">-- Válassz egy csoportot --</mat-option>
-          @for (group of groups(); track group._id) {
-            <mat-option [value]="group._id">{{ group.groupName }}</mat-option>
-          }
-        </mat-select>
-        <mat-hint class="text-sm text-gray-500 dark:text-gray-400 mb-3">Válaszd ki, melyik csoport naptárait szeretnéd összefésülni a szabad időpontokhoz.</mat-hint>
-      </mat-form-field>
+      <div class="mt-6 border-t border-gray-100 dark:border-gray-700 pt-6">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Melyik csoportnak keresel időpontot?</mat-label>
+          <mat-select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupSelected($event)">
+            <mat-option value="">-- Válassz egy csoportot --</mat-option>
+            @for (group of groups(); track group._id) {
+              <mat-option [value]="group._id">{{ group.groupName }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint class="text-sm text-gray-500 dark:text-gray-400 mb-3">Válaszd ki, melyik csoport naptárait szeretnéd összefésülni a szabad időpontokhoz.</mat-hint>
+        </mat-form-field>
+      </div>
     }
+  </div>
 
-    <div class="flex flex-col mt-2">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Keresési időszak</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Add meg azt a dátumtartományt, amin belül a szabad időpontokat keressük.</p>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 flex flex-col gap-6">
+    
+    <div class="flex flex-col">
+      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Keresési időszak</label>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Add meg azt a dátumtartományt, amin belül a szabad időpontokat keressük.</p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <mat-form-field appearance="outline">
@@ -45,9 +50,12 @@
       </div>
     </div>
 
-    <div class="flex flex-col mt-2">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Napi aktív időszak</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Határozd meg, hogy egy napon belül mettől meddig tarthat az esemény (pl. munkaidő 9-től 17-ig).</p>
+    <hr class="border-t border-gray-100 dark:border-gray-700">
+
+    <div class="flex flex-col">
+      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Napi aktív időszak</label>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Határozd meg, hogy egy napon belül mettől meddig tarthat az esemény (pl. munkaidő 9-től 17-ig).</p>
+      
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <mat-form-field appearance="outline">
           <mat-label>Nap kezdete (óra)</mat-label>
@@ -58,20 +66,43 @@
           <mat-label>Nap vége (óra)</mat-label>
           <input matInput type="number" min="0" max="24" [(ngModel)]="searchParams.endHour">
         </mat-form-field>
-      </div>
+      </div>      
       @if (searchParams.endHour !== null && searchParams.startHour !== null && searchParams.endHour <= searchParams.startHour) {
-        <div class="text-sm text-amber-600 dark:text-amber-500 mt-1 flex items-center gap-1 font-medium">
+        <div class="text-sm text-amber-600 dark:text-amber-500 mt-1 flex items-center gap-1 font-medium bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
           <mat-icon>info</mat-icon>
           Mivel a nap vége kisebb vagy egyenlő a kezdetével, az aktív időszak másnapra nyúlik át!
         </div>
       }
     </div>
+
+    <hr class="border-t border-gray-100 dark:border-gray-700">
+
+    <div class="flex flex-col">
+      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Engedélyezett napok</label>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Jelöld ki a hét azon napjait, amikor a találkozó létrejöhet.</p>
+      <mat-button-toggle-group 
+        [(ngModel)]="searchParams.allowedDays" 
+        multiple 
+        hideMultipleSelectionIndicator="true">
+        
+        @for (day of weekDays; track day.value) { 
+          <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
+            <span class="hidden sm:inline">{{ day.label }}</span>
+            <span class="sm:hidden">{{ day.label | slice:0:2 }}</span>
+          </mat-button-toggle> 
+        }
+        
+      </mat-button-toggle-group>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 flex flex-col gap-6">
     
-    <div class="flex flex-col mt-2 mb-4">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Időtartam beállítása</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Milyen hosszú legyen maga a találkozó vagy esemény?</p>
+    <div class="flex flex-col">
+      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Időtartam beállítása</label>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Milyen hosszú legyen maga a találkozó vagy esemény?</p>
       
-      <mat-button-toggle-group [(ngModel)]="durationUnit" (ngModelChange)="onDurationUnitChange($event)" hideSingleSelectionIndicator="true" class="mb-4">
+      <mat-button-toggle-group [(ngModel)]="durationUnit" (ngModelChange)="onDurationUnitChange($event)" hideSingleSelectionIndicator="true" class="mb-5">
         <mat-button-toggle value="minutes" class="flex-1 px-0 min-w-0 text-center">Perc</mat-button-toggle>
         <mat-button-toggle value="hours" class="flex-1 px-0 min-w-0 text-center">Óra</mat-button-toggle>
         <mat-button-toggle value="days" class="flex-1 px-0 min-w-0 text-center">Nap</mat-button-toggle>
@@ -87,10 +118,14 @@
         }
       </mat-form-field>
     </div>
-    <div class="flex flex-col mt-2 mb-4">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Puffer idő beállítása</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Biztosíts extra szabadidőt a résztvevőknek az esemény előtt vagy után (pl. utazásra, felkészülésre).</p>
-      <mat-button-toggle-group [(ngModel)]="bufferType" hideSingleSelectionIndicator="true" class="mb-4">
+    
+    <hr class="border-t border-gray-100 dark:border-gray-700">
+
+    <div class="flex flex-col">
+      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Puffer idő beállítása</label>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Biztosíts extra szabadidőt a résztvevőknek az esemény előtt vagy után (pl. utazásra, felkészülésre).</p>
+      
+      <mat-button-toggle-group [(ngModel)]="bufferType" hideSingleSelectionIndicator="true" class="mb-5">
         <mat-button-toggle value="symmetric" class="flex-1 px-0 min-w-0 text-center">
           <span class="hidden sm:inline">Ugyanannyi előtte/utána</span>
           <span class="sm:hidden">Ugyanannyi</span>
@@ -119,77 +154,77 @@
         }
       </div>
     </div>
+  </div>
 
-
-    <div class="flex flex-col mt-2 mb-4">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Engedélyezett napok</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Jelöld ki a hét azon napjait, amikor a találkozó létrejöhet.</p>
-      <mat-button-toggle-group 
-        [(ngModel)]="searchParams.allowedDays" 
-        multiple 
-        hideMultipleSelectionIndicator="true">
-        
-        @for (day of weekDays; track day.value) { 
-          <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
-            <span class="hidden sm:inline">{{ day.label }}</span>
-            <span class="sm:hidden">{{ day.label | slice:0:2 }}</span>
-          </mat-button-toggle> 
+  @if (searchMode === 'group' && selectedGroupMembers().length > 0) {
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+      <label class="font-semibold mb-2 text-gray-900 dark:text-gray-100 text-lg block">
+        Résztvevők (pipáld be, akinek kötelező a részvétel)
+      </label>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        A be nem pipált személyeket a rendszer "opcionális" résztvevőként kezeli, így a szabad időpontjaik növelhetik a találat pontszámát, de ütközésük nem zárja ki az időpontot.
+      </p>
+      
+      <div class="flex flex-wrap gap-4">
+        @for (member of selectedGroupMembers(); track member.id) {
+          <mat-checkbox 
+            [checked]="searchParams.requiredAttendees.includes(member.id)"
+            (change)="toggleAttendeeRequirement(member.id, $event)"
+            color="primary">
+            {{ member.name !== 'Ismeretlen felhasználó' ? member.name : 'Felhasználó (' + (member.id | slice:0:6) + '...)' }}
+          </mat-checkbox>
         }
-        
-      </mat-button-toggle-group>
-    </div>
-
-    @if (searchMode === 'group' && selectedGroupMembers().length > 0) {
-      <div class="flex flex-col mt-4 p-4 rounded border bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600">
-        <label class="font-semibold mb-2 text-gray-900 dark:text-gray-100">
-          Résztvevők (pipáld be, akinek kötelező a részvétel)
-        </label>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          A be nem pipált személyeket a rendszer "opcionális" résztvevőként kezeli, így a szabad időpontjaik növelhetik a találat pontszámát, de ütközésük nem zárja ki az időpontot.
-        </p>
-        
-        <div class="flex flex-wrap gap-4">
-          @for (member of selectedGroupMembers(); track member.id) {
-            <mat-checkbox 
-              [checked]="searchParams.requiredAttendees.includes(member.id)"
-              (change)="toggleAttendeeRequirement(member.id, $event)"
-              color="primary">
-              {{ member.name !== 'Ismeretlen felhasználó' ? member.name : 'Felhasználó (' + (member.id | slice:0:6) + '...)' }}
-            </mat-checkbox>
-          }
-        </div>
       </div>
-    }
-  </div>
-
-  <div class="actions mb-4">
-    <button mat-flat-button color="primary"
-      (click)="searchTimeSlots()" 
-      [disabled]="isLoading()">
-      {{ isLoading() ? 'Keresés folyamatban...' : 'Szabad időpontok keresése' }}
-    </button>
-  </div>
-
-  @if (errorMessage()) {
-    <div class="error-alert text-red-600 bg-red-100 p-3 rounded mb-4">
-      {{ errorMessage() }}
     </div>
   }
 
+  <div class="flex flex-col md:flex-row justify-end items-center gap-4 mb-8">
+    @if (errorMessage()) {
+      <div class="flex-1 text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 p-3 rounded w-full md:w-auto">
+        <div class="flex items-center gap-2 font-medium">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      </div>
+    }
+
+    <button mat-flat-button color="primary"
+      (click)="searchTimeSlots()" 
+      [disabled]="isLoading()"
+      class="w-full md:w-auto !px-10 !py-6 text-lg tracking-wide rounded-full shadow-md">
+      <div class="flex items-center gap-2">
+        <mat-icon>search</mat-icon>
+        {{ isLoading() ? 'Keresés folyamatban...' : 'Szabad időpontok keresése' }}
+      </div>
+    </button>
+  </div>
+
   @if (!isLoading() && availableSlots().length > 0) {
-    <div class="results-container overflow-y-auto max-h-96">
-      <h3 class="font-bold mb-2">Talált időpontok ({{ availableSlots().length }} db)</h3>
-      <ul class="slot-list flex flex-col gap-2">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-green-500">
+      <h3 class="font-bold text-xl mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+        <mat-icon class="text-green-500 shrink-0">check_circle</mat-icon>
+        Talált időpontok ({{ availableSlots().length }} db)
+      </h3>
+      
+      <ul class="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
         @for (slot of availableSlots(); track $index) {
-          <li class="slot-item border p-3 rounded flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-700">
-            @if ((slot.start | date:'yyyyMMdd') === (slot.end | date:'yyyyMMdd')) {
-              <span>{{ slot.start | date:'yyyy. MM. dd. HH:mm' }} - {{ slot.end | date:'HH:mm' }}</span>
-            } @else {
-              <span>{{ slot.start | date:'yyyy. MM. dd. HH:mm' }} - {{ slot.end | date:'yyyy. MM. dd. HH:mm' }}</span>
-            }
+          <li class="border border-gray-200 dark:border-gray-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+            <div class="flex items-center gap-3 text-gray-800 dark:text-gray-200 font-medium">
+              
+              <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40 shrink-0">
+                <mat-icon class="text-green-600 dark:text-green-400">event_available</mat-icon>
+              </div>
+
+              @if ((slot.start | date:'yyyyMMdd') === (slot.end | date:'yyyyMMdd')) {
+                <span class="text-lg">{{ slot.start | date:'yyyy. MM. dd. HH:mm' }} - {{ slot.end | date:'HH:mm' }}</span>
+              } @else {
+                <span class="text-lg">{{ slot.start | date:'yyyy. MM. dd. HH:mm' }} - {{ slot.end | date:'yyyy. MM. dd. HH:mm' }}</span>
+              }
+            </div>
             
-            <button mat-flat-button color="primary"
-              (click)="selectSlot(slot)">
+            <button mat-stroked-button color="primary"
+              (click)="selectSlot(slot)"
+              class="w-full sm:w-auto">
               Kiválaszt
             </button>
           </li>
@@ -199,8 +234,17 @@
   }
 
   @if (!isLoading() && availableSlots().length === 0 && !errorMessage()) {
-    <div class="p-3 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded">
-      Nincs megfelelő szabad időpont a megadott feltételekkel.
+    <div class="p-6 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 border-dashed flex items-center gap-4">
+      
+      <div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 shrink-0">
+        <mat-icon class="text-gray-500 dark:text-gray-400">search_off</mat-icon>
+      </div>
+      
+      <div>
+        <h4 class="font-bold text-lg mb-1">Nincs találat</h4>
+        <p class="m-0 text-sm">Próbálj meg lazítani a feltételeken, vagy keress egy másik időszakban!</p>
+      </div>
     </div>
   }
+  
 </div>

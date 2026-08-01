@@ -41,7 +41,6 @@ export class Navbar implements OnInit {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
   }
 
   onNotificationClick(notificationId: string) {

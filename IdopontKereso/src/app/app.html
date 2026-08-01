@@ -9,7 +9,7 @@
       mode="side" 
       [opened]="isSidebarOpen()" 
       (openedChange)="isSidebarOpen.set($event)"
-      class="w-full lg:w-72 bg-[#1e293b] dark:bg-gray-900 border-none p-4">
+      class="w-full lg:w-72 bg-[#1e293b] dark:bg-gray-800 border-none p-4">
       
       <div class="flex flex-col gap-6 mt-2">
         <button
@@ -32,7 +32,7 @@
       </div>
     </mat-sidenav>
 
-    <mat-sidenav-content class="flex flex-col p-2 md:p-4 overflow-auto">
+    <mat-sidenav-content class="flex flex-col overflow-auto">
       <main class="flex-1 w-full h-full">
           <router-outlet />
       </main>

@@ -29,7 +29,6 @@ export class Join implements OnInit {
   isAlreadyMember = signal<boolean>(false);
   isCheckingStatus = signal<boolean>(true);
   
-
   ngOnInit() {
     this.token = this.route.snapshot.paramMap.get('id');
     const userId = this.authService.getCurrentUserId();

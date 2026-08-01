@@ -1,5 +1,5 @@
 import { CommonModule, registerLocaleData } from '@angular/common';
-import { Component, OnInit, inject, LOCALE_ID } from '@angular/core';
+import { Component, OnInit, inject, LOCALE_ID, signal } from '@angular/core';
 import localeHu from '@angular/common/locales/hu';
 import { CalendarModule, CalendarEvent, CalendarView, CalendarEventTimesChangedEvent, CalendarDateFormatter } from 'angular-calendar';
 import { MatDialog } from '@angular/material/dialog';
@@ -50,6 +50,7 @@ export class CalendarViewComponent implements OnInit {
   dayEndHour: number = 22;
   hourSegments: number = 2;
   excludeDays: number[] = [];
+  isLoading = signal(true);
 
   events: CalendarEvent[] = [];
 
@@ -79,11 +80,12 @@ export class CalendarViewComponent implements OnInit {
         this.hourSegments = settings.hourSegments;
         this.view = VIEW_MAP[settings.defaultView] ?? CalendarView.Week;
         this.excludeDays = settings.hideWeekends ? [0, 6] : [];
-
+        this.isLoading.set(false);
         this.refresh.next();
       },
       error: (err) => {
         console.error('Hiba történt a felhasználói beállítások betöltésekor:', err);
+        this.isLoading.set(false);
       }
     });
   }

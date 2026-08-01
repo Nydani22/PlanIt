@@ -2,17 +2,27 @@
   <h2 class="text-xl font-bold mb-4">Szabad időpont keresése</h2>
 
   <div class="search-form flex flex-col gap-4 mb-6">
-    
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Melyik csoportnak keresel időpontot?</mat-label>
-      <mat-select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupSelected($event)">
-        <mat-option value="">-- Válassz egy csoportot --</mat-option>
-        @for (group of groups(); track group._id) {
-          <mat-option [value]="group._id">{{ group.groupName }}</mat-option>
-        }
-      </mat-select>
-      <mat-hint class="text-sm text-gray-500 dark:text-gray-400 mb-3">Válaszd ki, melyik csoport naptárait szeretnéd összefésülni a szabad időpontokhoz.</mat-hint>
-    </mat-form-field>
+
+    <div class="flex flex-col mb-2">
+      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Kinek keresel időpontot?</label>
+      <mat-button-toggle-group [(ngModel)]="searchMode" (ngModelChange)="onSearchModeChange($event)" hideSingleSelectionIndicator="true" class="w-full sm:w-auto">
+        <mat-button-toggle value="self" class="flex-1 px-0 min-w-0 text-center">Magamnak</mat-button-toggle>
+        <mat-button-toggle value="group" class="flex-1 px-0 min-w-0 text-center">Csoportnak</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    @if (searchMode === 'group') {
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Melyik csoportnak keresel időpontot?</mat-label>
+        <mat-select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupSelected($event)">
+          <mat-option value="">-- Válassz egy csoportot --</mat-option>
+          @for (group of groups(); track group._id) {
+            <mat-option [value]="group._id">{{ group.groupName }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint class="text-sm text-gray-500 dark:text-gray-400 mb-3">Válaszd ki, melyik csoport naptárait szeretnéd összefésülni a szabad időpontokhoz.</mat-hint>
+      </mat-form-field>
+    }
 
     <div class="flex flex-col mt-2">
       <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100">Keresési időszak</label>
@@ -123,7 +133,7 @@
       </mat-button-toggle-group>
     </div>
 
-    @if (selectedGroupMembers().length > 0) {
+    @if (searchMode === 'group' && selectedGroupMembers().length > 0) {
       <div class="flex flex-col mt-4 p-4 rounded border bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600">
         <label class="font-semibold mb-2 text-gray-900 dark:text-gray-100">
           Résztvevők (pipáld be, akinek kötelező a részvétel)

@@ -36,6 +36,7 @@ export class FindTime implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   errorMessage = signal<string>('');
   currentUserId: string = '';
+  searchMode: 'self' | 'group' = 'self';
   
   weekDays = [
     { value: 1, label: 'Hétfő' },
@@ -71,6 +72,9 @@ export class FindTime implements OnInit, OnDestroy {
     this.currentUserId = this.authService.getCurrentUserId(); 
     this.loadSavedState();
     this.loadUserGroups();
+    if (this.searchMode === 'self' && this.currentUserId) {
+      this.searchParams.requiredAttendees = [this.currentUserId];
+    }
   }
 
   ngOnDestroy() {
@@ -106,13 +110,13 @@ export class FindTime implements OnInit, OnDestroy {
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
-        
         this.searchParams = {
           ...this.searchParams, 
           ...parsed.searchParams,
           searchStart: new Date(parsed.searchParams.searchStart),
           searchEnd: new Date(parsed.searchParams.searchEnd)
         };
+        if (parsed.searchMode) this.searchMode = parsed.searchMode;
 
         if (parsed.selectedGroupId) {
           this.selectedGroupId.set(parsed.selectedGroupId);
@@ -132,6 +136,7 @@ export class FindTime implements OnInit, OnDestroy {
 
   saveState() {
     const stateToSave = {
+      searchMode: this.searchMode,
       searchParams: this.searchParams,
       selectedGroupId: this.selectedGroupId(),
       bufferType: this.bufferType,
@@ -140,6 +145,23 @@ export class FindTime implements OnInit, OnDestroy {
       durationValue: this.durationValue
     };
     sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(stateToSave));
+  }
+
+  onSearchModeChange(mode: 'self' | 'group') {
+    this.searchMode = mode;
+    
+    if (mode === 'self') {
+      this.searchParams.requiredAttendees = [this.currentUserId];
+      this.searchParams.optionalAttendees = [];
+    } else {
+      if (this.selectedGroupId()) {
+        this.onGroupSelected(this.selectedGroupId());
+      } else {
+        this.searchParams.requiredAttendees = [];
+        this.searchParams.optionalAttendees = [];
+      }
+    }
+    this.saveState();
   }
 
   onGroupSelected(groupId: string) {
@@ -223,9 +245,14 @@ export class FindTime implements OnInit, OnDestroy {
 
     this.saveState();
 
-    if (this.searchParams.requiredAttendees.length === 0) {
+    if (this.searchMode === 'group' && this.searchParams.requiredAttendees.length === 0) {
       this.errorMessage.set('Kérlek, válassz ki egy csoportot!');
       return;
+    }
+
+    if (this.searchMode === 'self') {
+      this.searchParams.requiredAttendees = [this.currentUserId];
+      this.searchParams.optionalAttendees = [];
     }
 
     this.isLoading.set(true);

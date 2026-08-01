@@ -1,7 +1,7 @@
 @use 'tailwindcss';
 @use '@angular/material' as mat;
 
-@import url("../node_modules/angular-calendar/css/angular-calendar.css");
+@import "../node_modules/angular-calendar/css/angular-calendar.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @include mat.core();

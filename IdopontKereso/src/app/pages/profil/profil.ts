@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { UserService } from '../../services/user/user.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { ThemeService, ThemeMode } from '../../services/theme/theme.service';
@@ -12,6 +12,17 @@ import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../../environments/environment';
+import { ErrorStateMatcher } from '@angular/material/core';
+
+export class TimeRangeErrorMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const isSubmitted = form && form.submitted;
+    const isControlInvalid = control?.invalid;
+    const parentHasError = control?.parent?.hasError('timeRangeInvalid');
+    
+    return !!((isControlInvalid || parentHasError) && (control?.dirty || control?.touched || isSubmitted));
+  }
+}
 
 @Component({
   selector: 'app-profil',
@@ -20,13 +31,15 @@ import { environment } from '../../../environments/environment';
   templateUrl: './profil.html',
   styleUrl: './profil.scss',
 })
+
+
 export class Profil implements OnInit {
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
   private snackbarService = inject(SnackbarService);
-
+  timeRangeMatcher = new TimeRangeErrorMatcher();
   profileForm!: FormGroup;
   
   isLoading = signal(true);
@@ -51,10 +64,21 @@ export class Profil implements OnInit {
         dayEndHour: [20, [Validators.min(1), Validators.max(24)]],
         hideWeekends: [false],
         hourSegments: [2]
-      }),
+      }, { validators: this.timeRangeValidator }),
       localTheme: [this.themeService.currentTheme()] 
     });
   }
+
+  private timeRangeValidator(group: AbstractControl): ValidationErrors | null {
+    const start = group.get('dayStartHour')?.value;
+    const end = group.get('dayEndHour')?.value;
+
+    if (start !== null && end !== null && start >= end) {
+      return { timeRangeInvalid: true };
+    }
+    return null;
+  }
+
   copyToClipboard(): void {
     const feedUrl = this.profileForm.get('calendarFeedToken')?.value;
     

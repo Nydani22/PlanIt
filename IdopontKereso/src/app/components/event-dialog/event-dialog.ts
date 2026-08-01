@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog'; 
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,6 +23,39 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 export interface EventDialogData {
   event?: AppEvent;
 }
+
+export const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const startDate = control.get('startDate')?.value;
+  const endDate = control.get('endDate')?.value;
+  const startTime = control.get('startTime')?.value;
+  const endTime = control.get('endTime')?.value;
+  const isAllDay = control.get('isAllDay')?.value;
+
+  if (!startDate) return null;
+
+  const start = new Date(startDate);
+  const end = endDate ? new Date(endDate) : new Date(startDate);
+
+  if (!isAllDay) {
+    if (startTime) {
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      start.setHours(startHour, startMinute, 0, 0);
+    }
+    if (endTime) {
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      end.setHours(endHour, endMinute, 0, 0);
+    }
+  } else {
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+  }
+
+  if (start.getTime() > end.getTime()) {
+    return { dateRangeInvalid: true };
+  }
+  
+  return null;
+};
 
 @Component({
   selector: 'app-event-dialog',
@@ -91,7 +124,7 @@ export class EventDialogComponent implements OnInit {
         startTime: ['08:00'],
         endDate: ['', Validators.required],
         endTime: ['09:00']
-      }),
+      }, { validators: dateRangeValidator }), 
       recurrenceDetails: this.fb.group({
         isRecurring: [false],
         frequency: ['none'],

@@ -237,7 +237,6 @@ export class CalendarViewComponent implements OnInit {
       maxWidth: '95vw',
       restoreFocus: false,
       autoFocus: false,
-      disableClose: true,
       data: { event: originalAppEvent }
     });
 
@@ -272,12 +271,36 @@ export class CalendarViewComponent implements OnInit {
     
     this.refresh.next();
 
-    const targetEnd = newEnd ? newEnd : newStart;
+    const originalStartDate = new Date(originalEvent.fromDate);
+    const occurrenceOldStart = new Date(event.start);
     
+    const isFirstOccurrence = 
+      originalStartDate.getFullYear() === occurrenceOldStart.getFullYear() &&
+      originalStartDate.getMonth() === occurrenceOldStart.getMonth() &&
+      originalStartDate.getDate() === occurrenceOldStart.getDate();
+
+    let updatedFromDate = new Date(originalEvent.fromDate);
+    let updatedToDate = new Date(originalEvent.toDate);
+    
+    const durationMs = updatedToDate.getTime() - updatedFromDate.getTime();
+
+    if (isFirstOccurrence) {
+      updatedFromDate = new Date(newStart);
+      updatedToDate = newEnd ? new Date(newEnd) : new Date(newStart.getTime() + durationMs);
+    } else {
+      updatedFromDate.setHours(newStart.getHours(), newStart.getMinutes(), 0, 0);
+      
+      if (newEnd) {
+        updatedToDate.setHours(newEnd.getHours(), newEnd.getMinutes(), 0, 0);
+      } else {
+        updatedToDate = new Date(updatedFromDate.getTime() + durationMs);
+      }
+    }
+
     const payload: AppEvent = {
       ...originalEvent,
-      fromDate: newStart,
-      toDate: targetEnd
+      fromDate: updatedFromDate,
+      toDate: updatedToDate
     };
 
     this.eventService.updateEvent(originalEvent._id, payload).subscribe({

@@ -12,4 +12,13 @@
       selected-state-background-color: transparent
     ));
   }
+
+  @include mat.dialog-overrides((
+    headline-padding: 24px 24px 9px 24px, 
+  ));
+}
+
+.mat-mdc-dialog-title {
+  display: flex;
+  align-items: center;
 }

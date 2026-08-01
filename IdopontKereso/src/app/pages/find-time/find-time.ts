@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { AuthService } from '../../services/auth/auth.service';
+import { MatIconModule } from '@angular/material/icon';
 
 
 @Component({
@@ -21,7 +22,7 @@ import { AuthService } from '../../services/auth/auth.service';
   standalone: true,
   imports: [DatePipe, SlicePipe, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatDatepickerModule, MatNativeDateModule,
-    MatCheckboxModule, MatButtonModule, MatButtonToggleModule],
+    MatCheckboxModule, MatButtonModule, MatButtonToggleModule, MatIconModule],
   templateUrl: './find-time.html',
   styleUrls: ['./find-time.scss']
 })

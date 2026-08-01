@@ -64,7 +64,7 @@ exports.findAvailableTimeSlots = (params, events) => {
       const stepMs = 30 * 60000; 
 
       
-      while (slotStart.getTime() <= activeEnd.getTime() && (slotStart.getTime() + durationMs) <= endDay.getTime()) {
+      while ((slotStart.getTime() + durationMs) <= activeEnd.getTime() && (slotStart.getTime() + durationMs) <= endDay.getTime()) {
         const slotEnd = new Date(slotStart.getTime() + durationMs);
         
         let isAllDaysAllowed = true;

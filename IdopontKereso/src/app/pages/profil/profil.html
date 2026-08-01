@@ -88,12 +88,32 @@
         <div class="flex flex-col sm:flex-row gap-4">
           <mat-form-field appearance="outline" class="flex-1" color="primary">
             <mat-label>Nap kezdete (óra)</mat-label>
-            <input matInput type="number" formControlName="dayStartHour" min="0" max="23">
+            <!-- MATCHER BEKÖTÉSE -->
+            <input matInput type="number" formControlName="dayStartHour" min="0" max="23" [errorStateMatcher]="timeRangeMatcher">
+            
+            <!-- HIBAÜZENET -->
+            <mat-error>
+              @if (profileForm.get('settings.dayStartHour')?.hasError('min') || profileForm.get('settings.dayStartHour')?.hasError('max')) {
+                0 és 23 közötti érték kell!
+              } @else {
+                A kezdés nem lehet később!
+              }
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="flex-1" color="primary">
             <mat-label>Nap vége (óra)</mat-label>
-            <input matInput type="number" formControlName="dayEndHour" min="1" max="24">
+            <!-- MATCHER BEKÖTÉSE -->
+            <input matInput type="number" formControlName="dayEndHour" min="1" max="24" [errorStateMatcher]="timeRangeMatcher">
+            
+            <!-- HIBAÜZENET -->
+            <mat-error>
+              @if (profileForm.get('settings.dayEndHour')?.hasError('min') || profileForm.get('settings.dayEndHour')?.hasError('max')) {
+                1 és 24 közötti érték kell!
+              } @else {
+                A végének később kell lennie!
+              }
+            </mat-error>
           </mat-form-field>
         </div>
 

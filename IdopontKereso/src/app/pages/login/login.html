@@ -52,10 +52,19 @@
             }
 
             <button
-                class="w-full mt-2 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                class="w-full mt-2 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-all duration-300 shadow-sm flex items-center justify-center"
+                [class.animate-pulse]="isLoading()"
+                [class.opacity-50]="isLoading()"
+                [class.opacity-50]="loginForm.invalid && !isLoading()"
+                [class.cursor-not-allowed]="loginForm.invalid || isLoading()"
                 type="submit" 
-                [disabled]="loginForm.invalid">
-                Bejelentkezés
+                [disabled]="loginForm.invalid || isLoading()">
+                
+                @if (isLoading()) {
+                    Bejelentkezés...
+                } @else {
+                    Bejelentkezés
+                }
             </button>
 
             <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">

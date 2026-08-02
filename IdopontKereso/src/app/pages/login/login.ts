@@ -8,17 +8,19 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { NotificationService } from '../../services/notification/notification.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-login',
-  imports: [MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, ReactiveFormsModule, RouterLink],
+  imports: [MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, ReactiveFormsModule, RouterLink, MatProgressSpinnerModule],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrl: './login.scss',
 })
 export class Login implements OnInit {
   loginForm: FormGroup;
   errorMessage = signal('');
   hide = signal(true);
+  isLoading = signal(false);
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
@@ -52,11 +54,13 @@ export class Login implements OnInit {
 
   login() {
     if (this.loginForm.invalid) return;
+    this.isLoading.set(true);
 
     this.authService.login(this.loginForm.value)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response: any) => {
+          this.isLoading.set(false);
           this.authService.setToken(response.token);
           this.notificationService.initNotifications();
           
@@ -70,6 +74,7 @@ export class Login implements OnInit {
           }
         },
         error: (err) => {
+          this.isLoading.set(false);
           console.error('Login hiba:', err);
           this.errorMessage.set(err.error?.message || 'Sikertelen bejelentkezés.');
         }

@@ -134,16 +134,17 @@ export class AuthService {
   }
 
   logout(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('token');
-      this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
-        next: () => {
-          window.location.href = '/login';
-        },
-        error: () => {
-          window.location.href = '/login';
-        }
-      });
-    }
+  if (isPlatformBrowser(this.platformId)) {
+    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      },
+      error: () => {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    });
   }
+}
 }

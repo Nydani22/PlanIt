@@ -323,6 +323,67 @@ export class CalendarViewComponent implements OnInit {
     });
   }
 
+
+  onHourSegmentClicked(date: Date): void {
+    const endDate = new Date(date.getTime() + 60 * 60 * 1000); 
+    this.createDefaultEvent(date, endDate);
+  }
+
+  onDayClicked(date: Date): void {
+    const startDate = new Date(date);
+    startDate.setHours(8, 0, 0, 0);
+    
+    const endDate = new Date(startDate);
+    endDate.setHours(9, 0, 0, 0);
+    
+    this.createDefaultEvent(startDate, endDate);
+  }
+
+  private createDefaultEvent(start: Date, end: Date): void {
+    
+    const tempEventId = 'temp-' + Date.now();
+    const tempEvent: CalendarEvent = {
+      id: tempEventId,
+      title: 'Létrehozás folyamatban...',
+      start: start,
+      end: end,
+      color: {
+        primary: '#3b82f6',
+        secondary: 'color-mix(in srgb, #3b82f6 20%, white)',
+        secondaryText: '#3b82f6'
+      },
+      cssClass: 'animate-pulse pointer-events-none opacity-80' 
+    };
+
+    this.events = [...this.events, tempEvent];
+    this.refresh.next();
+
+    const newEventPayload: Partial<AppEvent> = {
+      eventName: 'Új esemény',
+      description: '',
+      category: 'OTHER',
+      isAllDay: false,
+      fromDate: start,               
+      toDate: end,             
+      recurrence: {
+        frequency: 'NONE',
+        daysOfWeek: []
+      },
+      color: "#3b82f6"
+    };
+
+    this.eventService.createEvent(newEventPayload as AppEvent).subscribe({
+      next: () => {
+        this.loadEvents();
+      },
+      error: (err) => {
+        this.events = this.events.filter(e => e.id !== tempEventId);
+        this.refresh.next();
+        this.snackbarService.showError('Hiba az esemény létrehozásakor.');
+      }
+    });
+  }
+
   setView(view: CalendarView) {
     this.view = view;
   }

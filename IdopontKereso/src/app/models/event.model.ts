@@ -24,7 +24,7 @@ export interface AppEvent {
   timezone?: string;
   category: string;
   
-  color?: CategoryColor; 
+  color?: CategoryColor | string; 
   
   organizerId?: string;
   groupId?: string;

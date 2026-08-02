@@ -59,13 +59,47 @@
                 <div class="min-w-[700px] lg:min-w-0 overflow-auto h-full pb-2 md:pb-4 flex flex-col">
                     @switch (view) { 
                         @case (CalendarView.Month) {
-                            <mwl-calendar-month-view class="flex-1 flex flex-col month-view-stretch" [headerTemplate]="monthHeaderTemplate" [viewDate]="viewDate" [events]="events" [refresh]="refresh" [weekStartsOn]="1" locale="hu" (eventClicked)="onEventClick($event.event)" />
+                            <mwl-calendar-month-view 
+                                [headerTemplate]="monthHeaderTemplate" 
+                                [viewDate]="viewDate" 
+                                [events]="events" 
+                                [refresh]="refresh" 
+                                [weekStartsOn]="1" 
+                                locale="hu"
+                                (dayClicked)="onDayClicked($event.day.date)"
+                                (eventClicked)="onEventClick($event.event)" 
+                            />
                         }
                         @case (CalendarView.Week) {
-                            <mwl-calendar-week-view [headerTemplate]="customHeaderTemplate" [viewDate]="viewDate" [events]="events" [refresh]="refresh" [weekStartsOn]="1" locale="hu" [dayStartHour]="dayStartHour" [dayEndHour]="dayEndHour" [hourSegments]="hourSegments" [excludeDays]="excludeDays" (eventTimesChanged)="eventTimesChanged($event)" (eventClicked)="onEventClick($event.event)" />
+                            <mwl-calendar-week-view 
+                                [headerTemplate]="customHeaderTemplate" 
+                                [viewDate]="viewDate" 
+                                [events]="events" 
+                                [refresh]="refresh" 
+                                [weekStartsOn]="1" 
+                                locale="hu" 
+                                [dayStartHour]="dayStartHour" 
+                                [dayEndHour]="dayEndHour" 
+                                [hourSegments]="hourSegments" 
+                                [excludeDays]="excludeDays"
+                                (hourSegmentClicked)="onHourSegmentClicked($event.date)"
+                                (eventTimesChanged)="eventTimesChanged($event)" 
+                                (eventClicked)="onEventClick($event.event)" 
+                            />
                         } 
                         @case (CalendarView.Day) {
-                            <mwl-calendar-day-view [viewDate]="viewDate" [events]="events" [refresh]="refresh" (eventTimesChanged)="eventTimesChanged($event)" locale="hu" [dayStartHour]="dayStartHour" [dayEndHour]="dayEndHour" [hourSegments]="hourSegments" (eventClicked)="onEventClick($event.event)" />
+                            <mwl-calendar-day-view 
+                                [viewDate]="viewDate" 
+                                [events]="events" 
+                                [refresh]="refresh"
+                                locale="hu" 
+                                [dayStartHour]="dayStartHour" 
+                                [dayEndHour]="dayEndHour" 
+                                [hourSegments]="hourSegments"
+                                (hourSegmentClicked)="onHourSegmentClicked($event.date)"
+                                (eventTimesChanged)="eventTimesChanged($event)" 
+                                (eventClicked)="onEventClick($event.event)" 
+                            />
                         }
                     }
                 </div>

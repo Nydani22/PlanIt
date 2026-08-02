@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Group } from '../../models/group.model';
 import { environment } from '../../../environments/environment';
 
@@ -49,5 +49,18 @@ export class GroupService {
 
   joinWithInvite(token: string) {
     return this.http.post(`${this.apiUrl}/invites/${token}/join`, {}, { withCredentials: true });
+  }
+
+  hasAdminRights(group: Group, userId: string): boolean {
+    if (!group || !group.members) return false;
+    
+    const member = group.members.find(m => m.userId._id === userId);
+    return member ? (member.role === 'ADMIN' || member.role === 'OWNER') : false;
+  }
+
+  isUserAdminOfGroup(groupId: string, userId: string): Observable<boolean> {
+    return this.getGroupById(groupId).pipe(
+      map(group => this.hasAdminRights(group, userId))
+    );
   }
 }

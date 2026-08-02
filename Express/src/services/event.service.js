@@ -1,12 +1,40 @@
 const Event = require('../models/Event.model');
 const ical = require('ical-generator').default;
 const User = require('../models/User.model');
+const Group = require('../models/Group.model');
 const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
 const { expandEventInWindow } = require('../utils/event.util');
 
 exports.createEvent = async (eventData, userId) => {
-    const { eventName, fromDate, toDate, description, location, isAllDay, recurrence, category, color, timezone } = eventData;
+    const { 
+        eventName, fromDate, toDate, description, location, 
+        isAllDay, recurrence, category, color, timezone, attendees,
+        groupId
+    } = eventData;
+
+    let finalAttendees = [];
+    
+    if (attendees && Array.isArray(attendees) && attendees.length > 0) {
+        finalAttendees = attendees;
+        const organizerIndex = finalAttendees.findIndex(a => a.userId.toString() === userId.toString());
+        
+        if (organizerIndex !== -1) {
+            finalAttendees[organizerIndex].status = 'ACCEPTED';
+        } else {
+            finalAttendees.push({
+                userId: userId,
+                status: 'ACCEPTED',
+                attendanceType: 'REQUIRED'
+            });
+        }
+    } else {
+        finalAttendees = [{
+            userId: userId,
+            status: 'ACCEPTED',
+            attendanceType: 'REQUIRED'
+        }];
+    }
 
     const newEvent = new Event({
         eventName,
@@ -16,15 +44,12 @@ exports.createEvent = async (eventData, userId) => {
         location,
         isAllDay,
         organizerId: userId,
+        groupId,
         category,
         color,
         timezone,
         recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
-        attendees: [{
-            userId: userId,
-            status: 'ACCEPTED',
-            attendanceType: 'REQUIRED'
-        }]
+        attendees: finalAttendees
     });
 
     return await newEvent.save();
@@ -60,18 +85,61 @@ exports.getEventById = async (eventId, userId) => {
 };
 
 exports.updateEvent = async (eventId, userId, updateData) => {
-    return await Event.findOneAndUpdate(
-        { _id: eventId, organizerId: userId },
+    const event = await Event.findById(eventId);
+    if (!event) {
+        throw new Error('Esemény nem található');
+    }
+
+    let hasPermission = event.organizerId.toString() === userId.toString();
+
+    if (!hasPermission && event.groupId) {
+        const group = await Group.findById(event.groupId);
+        if (group) {
+            const member = group.members.find(m => m.userId.toString() === userId.toString());
+            if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
+                hasPermission = true;
+            }
+        }
+    }
+
+    if (!hasPermission) {
+        const error = new Error('Nincs jogosultságod az esemény módosításához.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    return await Event.findByIdAndUpdate(
+        eventId,
         updateData,
         { returnDocument: 'after', runValidators: true }
     );
 };
 
 exports.deleteEvent = async (eventId, userId) => {
-    return await Event.findOneAndDelete({ 
-        _id: eventId, 
-        organizerId: userId 
-    });
+    const event = await Event.findById(eventId);
+    if (!event) {
+        throw new Error('Esemény nem található');
+    }
+
+    let hasPermission = event.organizerId.toString() === userId.toString();
+
+    if (!hasPermission && event.groupId) {
+        const group = await Group.findById(event.groupId);
+        if (group) {
+            const member = group.members.find(m => m.userId.toString() === userId.toString());
+            if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
+                hasPermission = true;
+            }
+        }
+    }
+
+    if (!hasPermission) {
+        const error = new Error('Nincs jogosultságod az esemény törléséhez.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    return await Event.findByIdAndDelete(eventId);
 };
 
 exports.updateAttendeeStatus = async (eventId, userId, newStatus) => {

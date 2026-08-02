@@ -27,6 +27,7 @@ export interface AppEvent {
   color?: CategoryColor; 
   
   organizerId?: string;
+  groupId?: string;
   recurrence?: Recurrence | null;
   attendees?: Attendee[];
   

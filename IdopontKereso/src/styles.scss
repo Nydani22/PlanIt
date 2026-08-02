@@ -103,10 +103,14 @@ $my-dark-theme: mat.m2-define-dark-theme((
 
   @include mat.dialog-overrides((
     container-color: var(--cal-bg),
+    container-shape: 16px,
+    container-elevation-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25)
   ));
 
   @include mat.stepper-overrides((
     container-color: var(--cal-bg),
+    header-hover-state-layer-shape: 16px,
+    header-focus-state-layer-shape: 16px,
     header-label-text-color: #ffffff,
     header-selected-state-label-text-color: #ffffff,
     line-color: #4b5563

@@ -8,7 +8,7 @@ const eventSchema = new mongoose.Schema({
   toDate: { type: Date, },
   isAllDay: { type: Boolean, default: false },
   organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-
+  groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', required: false },
   category: { 
     type: String, 
     required: true 

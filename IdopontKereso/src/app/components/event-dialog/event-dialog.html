@@ -1,7 +1,7 @@
 <div mat-dialog-title class="m-0 font-bold w-full">
-  <span>{{ isEditMode() ? 'Esemény Módosítása' : 'Új Esemény Létrehozása' }}</span>
+  <span>{{ isEditMode() ? (canEdit() ? 'Esemény Módosítása' : 'Esemény Részletei') : 'Új Esemény Létrehozása' }}</span>
   
-  @if (isEditMode()) {
+  @if (isEditMode() && canEdit()) {
     <button mat-button color="warn" type="button" (click)="onDelete()" class="ml-auto">
       <mat-icon>delete</mat-icon>
       Törlés
@@ -9,10 +9,10 @@
   }
 </div>
 
-<mat-dialog-content class="mat-typography p-0 sm:p-6">
+<mat-dialog-content class="mat-typography p-0 sm:px-6 sm:py-2">
   <form [formGroup]="eventForm">
     
-    <mat-stepper [orientation]="isMobile() ? 'vertical' : 'horizontal'" [linear]="!isUpdateMode" #stepper>
+    <mat-stepper [labelPosition]="'bottom'" [orientation]="isMobile() ? 'vertical' : 'horizontal'" [linear]="!isUpdateMode" #stepper>
       <mat-step formGroupName="basicDetails" [stepControl]="eventForm.get('basicDetails')!">
       <ng-template matStepLabel>Alapadatok</ng-template>
   
@@ -32,9 +32,9 @@
             </mat-form-field>
             
             <div class="flex justify-between mt-4">
-              <button mat-button type="button" mat-dialog-close class="h-10">Mégsem</button>
+              <button mat-button type="button" mat-dialog-close class="h-10">{{ canEdit() ? 'Mégsem' : 'Bezárás' }}</button>
               <div class="flex gap-2 items-center">
-                @if (isEditMode()) {
+                @if (isEditMode() && canEdit()) {
                   <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
                     <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
                   </button>
@@ -51,31 +51,31 @@
       <mat-step formGroupName="categoryDetails" [stepControl]="eventForm.get('categoryDetails')!">
         <ng-template matStepLabel>Kategória</ng-template>
         
-        <div class="flex flex-col gap-4 max-w-lg mx-auto w-full">
+        <div class="flex flex-col gap-3 max-w-lg mx-auto w-full mt-2">
           <h3 class="text-center font-medium m-0 text-gray-600">Milyen típusú esemény ez?</h3>
           
           <mat-button-toggle-group 
             formControlName="categoryId" 
             hideSingleSelectionIndicator="true"
-            class="category-transparent-theme flex flex-wrap gap-3 !border-none shadow-none justify-center mt-2 category-toggle-group bg-transparent">
+            class="category-transparent-theme flex flex-wrap gap-2 !border-none shadow-none justify-center category-toggle-group bg-transparent">
             
             @for (cat of categoriesList; track cat.id) {
               <mat-button-toggle 
                 #toggle="matButtonToggle"
                 [value]="cat.id" 
-                class="rounded-xl border min-w-[110px] transition-all duration-300"
+                class="rounded-xl border w-24 transition-all duration-300"
                 [style.borderColor]="toggle.checked ? cat.defaultColor : '#4b5563'"
                 [style.boxShadow]="toggle.checked ? '0 0 10px ' + cat.defaultColor + '60' : 'none'"
               >
-                <div class="flex flex-col items-center justify-center p-3 gap-1">
+                <div class="flex flex-col items-center justify-center p-2 gap-0.5">
                   <mat-icon 
                     [style.color]="toggle.checked ? cat.defaultColor : '#9ca3af'" 
                     [style.filter]="toggle.checked ? 'drop-shadow(0 0 6px ' + cat.defaultColor + ')' : 'none'"
-                    style="height: 32px; width: 32px; font-size: 32px; transition: all 0.3s ease;">
+                    style="height: 28px; width: 28px; font-size: 28px; transition: all 0.3s ease;">
                     {{ cat.icon }}
                   </mat-icon>
                   
-                  <span class="text-sm font-medium mt-1" [style.color]="toggle.checked ? cat.defaultColor : '#9ca3af'" style="transition: color 0.3s ease;">
+                  <span class="text-xs font-medium mt-1" [style.color]="toggle.checked ? cat.defaultColor : '#9ca3af'" style="transition: color 0.3s ease;">
                     {{ cat.name }}
                   </span>
                 </div>
@@ -84,14 +84,14 @@
           </mat-button-toggle-group>
           
           @if (eventForm.get('categoryDetails.categoryId')?.hasError('required') && eventForm.get('categoryDetails.categoryId')?.touched) {
-            <mat-error class="text-center mt-2">Kérlek, válassz egy kategóriát!</mat-error>
+            <mat-error class="text-center mt-1">Kérlek, válassz egy kategóriát!</mat-error>
           }
 
-          <div class="flex justify-between mt-4">
+          <div class="flex justify-between mt-2">
             <button mat-button type="button" matStepperPrevious class="h-10">Vissza</button>
             <div class="flex gap-2 items-center">
               
-              @if (isEditMode()) {
+              @if (isEditMode() && canEdit()) {
                 <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
                   <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
                 </button>
@@ -104,140 +104,140 @@
           </div>
         </div>
       </mat-step>
-
-      <mat-step formGroupName="recurrenceDetails" [stepControl]="eventForm.get('recurrenceDetails')!">
-        <ng-template matStepLabel>Ismétlődés</ng-template> 
-        
-        <div class="flex flex-col gap-5 mt-6"> 
-          <mat-checkbox formControlName="isRecurring" color="primary">Ez egy ismétlődő esemény</mat-checkbox> 
+      @if (!hideTimeSteps()) {
+        <mat-step formGroupName="recurrenceDetails" [stepControl]="eventForm.get('recurrenceDetails')!">
+          <ng-template matStepLabel>Ismétlődés</ng-template> 
           
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium transition-colors" [class.text-gray-400]="eventForm.get('recurrenceDetails.frequency')?.disabled">
-                Gyakoriság
-            </label>
-            <mat-button-toggle-group formControlName="frequency" hideSingleSelectionIndicator="true" class="w-full">
-                <mat-button-toggle value="DAILY" class="flex-1">Napi</mat-button-toggle>
-                <mat-button-toggle value="WEEKLY" class="flex-1">Heti</mat-button-toggle>
-            </mat-button-toggle-group>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium transition-colors" [class.text-gray-400]="eventForm.get('recurrenceDetails.daysOfWeek')?.disabled">
-              Mely napokon?
-            </label>
-            <mat-button-toggle-group formControlName="daysOfWeek" multiple hideMultipleSelectionIndicator="true" class="w-full">
-              @for (day of daysOfWeekList; track day.value) { 
-                <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
-                  <span class="hidden sm:inline">{{ day.name }}</span>
-                  <span class="sm:hidden">{{ day.name | slice:0:2 }}</span>
-                </mat-button-toggle> 
-              }
-            </mat-button-toggle-group>
-          </div>
-          <mat-form-field appearance="outline" class="w-full mt-2" subscriptSizing="dynamic"> 
-            <mat-label>Ismétlődés vége (Opcionális)</mat-label> 
-            <input matInput [matDatepicker]="picker3" formControlName="untilDate"> 
-            <mat-datepicker-toggle matIconSuffix [for]="picker3"></mat-datepicker-toggle> 
-            <mat-datepicker #picker3></mat-datepicker> 
-          </mat-form-field>
-          
-          <div class="flex justify-between mt-4"> 
-            <button mat-button type="button" matStepperPrevious class="h-10">Vissza</button> 
-            <div class="flex gap-2 items-center">
-              
-              @if (isEditMode()) {
-                <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
-                  <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
-                </button>
-              }
-
-              <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('recurrenceDetails')?.invalid" class="h-10 min-w-[120px]">
-                  Tovább
-              </button>
+          <div class="flex flex-col gap-5 mt-6"> 
+            <mat-checkbox formControlName="isRecurring" color="primary">Ez egy ismétlődő esemény</mat-checkbox> 
+            
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium transition-colors" [class.text-gray-400]="eventForm.get('recurrenceDetails.frequency')?.disabled">
+                  Gyakoriság
+              </label>
+              <mat-button-toggle-group formControlName="frequency" hideSingleSelectionIndicator="true" class="w-full">
+                  <mat-button-toggle value="DAILY" class="flex-1">Napi</mat-button-toggle>
+                  <mat-button-toggle value="WEEKLY" class="flex-1">Heti</mat-button-toggle>
+              </mat-button-toggle-group>
             </div>
-          </div> 
-        </div> 
-      </mat-step>
-      
-      <mat-step formGroupName="timeDetails" [stepControl]="eventForm.get('timeDetails')!">
-        <ng-template matStepLabel>Időpontok</ng-template>
-        <div class="flex flex-col gap-4 max-w-lg mx-auto w-full">
-            <div class="flex flex-col gap-4 mt-6">
-            
-            <mat-checkbox formControlName="isAllDay" color="primary">Egész napos esemény</mat-checkbox>
 
-            @if (eventForm.get('recurrenceDetails.isRecurring')?.value) {
-                <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-                    <mat-label>Első alkalom dátuma</mat-label>
-                    <input matInput [matDatepicker]="picker1" formControlName="startDate" required>
-                    <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
-                    <mat-datepicker #picker1></mat-datepicker>
-                </mat-form-field>
-
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <mat-form-field appearance="outline" class="w-full sm:w-1/2" subscriptSizing="dynamic">
-                        <mat-label>Kezdés ideje</mat-label>
-                        <input matInput type="time" formControlName="startTime">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="w-full sm:w-1/2" subscriptSizing="dynamic">
-                        <mat-label>Befejezés ideje</mat-label>
-                        <input matInput type="time" formControlName="endTime" required>
-                    </mat-form-field>
-                </div>
-            } @else {
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <mat-form-field appearance="outline" class="w-full sm:w-2/3" subscriptSizing="dynamic">
-                        <mat-label>Kezdés dátuma</mat-label>
-                        <input matInput [matDatepicker]="pickerStart" formControlName="startDate" required>
-                        <mat-datepicker-toggle matIconSuffix [for]="pickerStart"></mat-datepicker-toggle>
-                        <mat-datepicker #pickerStart></mat-datepicker>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="w-full sm:w-1/3" subscriptSizing="dynamic">
-                        <mat-label>Kezdés ideje</mat-label>
-                        <input matInput type="time" formControlName="startTime">
-                    </mat-form-field>
-                </div>
-
-            
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <mat-form-field appearance="outline" class="w-full sm:w-2/3" subscriptSizing="dynamic">
-                        <mat-label>Befejezés dátuma</mat-label>
-                        <input matInput [matDatepicker]="pickerEnd" formControlName="endDate" required>
-                        <mat-datepicker-toggle matIconSuffix [for]="pickerEnd"></mat-datepicker-toggle>
-                        <mat-datepicker #pickerEnd></mat-datepicker>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="w-full sm:w-1/3" subscriptSizing="dynamic">
-                        <mat-label>Befejezés ideje</mat-label>
-                        <input matInput type="time" formControlName="endTime" required>
-                    </mat-form-field>
-                </div>
-                @if (eventForm.get('timeDetails')?.hasError('dateRangeInvalid')) {
-                  <mat-error class="text-center font-medium mt-2">
-                    A befejezés időpontja nem lehet korábban, mint a kezdés!
-                  </mat-error>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium transition-colors" [class.text-gray-400]="eventForm.get('recurrenceDetails.daysOfWeek')?.disabled">
+                Mely napokon?
+              </label>
+              <mat-button-toggle-group formControlName="daysOfWeek" multiple hideMultipleSelectionIndicator="true" class="w-full">
+                @for (day of daysOfWeekList; track day.value) { 
+                  <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
+                    <span class="hidden sm:inline">{{ day.name }}</span>
+                    <span class="sm:hidden">{{ day.name | slice:0:2 }}</span>
+                  </mat-button-toggle> 
                 }
-            }
+              </mat-button-toggle-group>
+            </div>
+            <mat-form-field appearance="outline" class="w-full mt-2" subscriptSizing="dynamic"> 
+              <mat-label>Ismétlődés vége (Opcionális)</mat-label> 
+              <input matInput [matDatepicker]="picker3" formControlName="untilDate"> 
+              <mat-datepicker-toggle matIconSuffix [for]="picker3"></mat-datepicker-toggle> 
+              <mat-datepicker #picker3></mat-datepicker> 
+            </mat-form-field>
             
-              <div class="flex justify-between mt-4">
-                <button mat-button type="button" matStepperPrevious class="h-10">Vissza</button>
-                <div class="flex gap-2 items-center">
-                  
-                  @if (isEditMode()) {
-                    <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
-                      <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
-                    </button>
-                  }
+            <div class="flex justify-between mt-4"> 
+              <button mat-button type="button" matStepperPrevious class="h-10">Vissza</button> 
+              <div class="flex gap-2 items-center">
+                
+                @if (isEditMode() && canEdit()) {
+                  <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
+                    <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
+                  </button>
+                }
 
-                  <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('timeDetails')?.invalid" class="h-10 min-w-[120px]">Tovább</button>
+                <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('recurrenceDetails')?.invalid" class="h-10 min-w-[120px]">
+                    Tovább
+                </button>
+              </div>
+            </div> 
+          </div> 
+        </mat-step>
+        
+        <mat-step formGroupName="timeDetails" [stepControl]="eventForm.get('timeDetails')!">
+          <ng-template matStepLabel>Időpontok</ng-template>
+          <div class="flex flex-col gap-4 max-w-lg mx-auto w-full">
+              <div class="flex flex-col gap-4 mt-6">
+              
+              <mat-checkbox formControlName="isAllDay" color="primary">Egész napos esemény</mat-checkbox>
+
+              @if (eventForm.get('recurrenceDetails.isRecurring')?.value) {
+                  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                      <mat-label>Első alkalom dátuma</mat-label>
+                      <input matInput [matDatepicker]="picker1" formControlName="startDate" required>
+                      <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+                      <mat-datepicker #picker1></mat-datepicker>
+                  </mat-form-field>
+
+                  <div class="flex flex-col sm:flex-row gap-4">
+                      <mat-form-field appearance="outline" class="w-full sm:w-1/2" subscriptSizing="dynamic">
+                          <mat-label>Kezdés ideje</mat-label>
+                          <input matInput type="time" formControlName="startTime">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="w-full sm:w-1/2" subscriptSizing="dynamic">
+                          <mat-label>Befejezés ideje</mat-label>
+                          <input matInput type="time" formControlName="endTime" required>
+                      </mat-form-field>
+                  </div>
+              } @else {
+                  <div class="flex flex-col sm:flex-row gap-4">
+                      <mat-form-field appearance="outline" class="w-full sm:w-2/3" subscriptSizing="dynamic">
+                          <mat-label>Kezdés dátuma</mat-label>
+                          <input matInput [matDatepicker]="pickerStart" formControlName="startDate" required>
+                          <mat-datepicker-toggle matIconSuffix [for]="pickerStart"></mat-datepicker-toggle>
+                          <mat-datepicker #pickerStart></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="w-full sm:w-1/3" subscriptSizing="dynamic">
+                          <mat-label>Kezdés ideje</mat-label>
+                          <input matInput type="time" formControlName="startTime">
+                      </mat-form-field>
+                  </div>
+
+              
+                  <div class="flex flex-col sm:flex-row gap-4">
+                      <mat-form-field appearance="outline" class="w-full sm:w-2/3" subscriptSizing="dynamic">
+                          <mat-label>Befejezés dátuma</mat-label>
+                          <input matInput [matDatepicker]="pickerEnd" formControlName="endDate" required>
+                          <mat-datepicker-toggle matIconSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+                          <mat-datepicker #pickerEnd></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="w-full sm:w-1/3" subscriptSizing="dynamic">
+                          <mat-label>Befejezés ideje</mat-label>
+                          <input matInput type="time" formControlName="endTime" required>
+                      </mat-form-field>
+                  </div>
+                  @if (eventForm.get('timeDetails')?.hasError('dateRangeInvalid')) {
+                    <mat-error class="text-center font-medium mt-2">
+                      A befejezés időpontja nem lehet korábban, mint a kezdés!
+                    </mat-error>
+                  }
+              }
+              
+                <div class="flex justify-between mt-4">
+                  <button mat-button type="button" matStepperPrevious class="h-10">Vissza</button>
+                  <div class="flex gap-2 items-center">
+                    
+                    @if (isEditMode() && canEdit()) {
+                      <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
+                        <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
+                      </button>
+                    }
+
+                    <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('timeDetails')?.invalid" class="h-10 min-w-[120px]">Tovább</button>
+                  </div>
                 </div>
               </div>
-            </div>
-        </div>
-      </mat-step>
-
+          </div>
+        </mat-step>
+      }
       <mat-step formGroupName="settingsDetails" [stepControl]="eventForm.get('settingsDetails')!">
         <ng-template matStepLabel>Beállítások</ng-template>
         
@@ -272,20 +272,18 @@
           
           <div class="flex justify-between mt-4">
             <button mat-button type="button" matStepperPrevious class="h-10">Vissza</button>
-            <div class="flex gap-2 items-center">
-              
-              @if (isEditMode()) {
-                <button mat-stroked-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
-                  <mat-icon>save</mat-icon> <span class="hidden sm:inline">Mentés</span>
-                </button>
-              }
-
-              <button mat-flat-button color="primary" matStepperNext type="button" class="h-10 min-w-[120px]">Tovább</button>
-            </div>
+            @if (canEdit()) {
+              <button mat-flat-button color="primary" type="button" (click)="onSubmit()" [disabled]="eventForm.invalid" class="h-10">
+                <div class="flex items-center gap-2">
+                  <mat-icon>{{ isEditMode() ? 'save' : 'event_add' }}</mat-icon>
+                  <span>{{ isEditMode() ? 'Mentés' : 'Esemény Létrehozása' }}</span>
+                </div>
+              </button>
+            }
           </div>
         </div>
       </mat-step>
-
+      <!--
       <mat-step>
         <ng-template matStepLabel>Kész</ng-template>
         
@@ -314,7 +312,7 @@
           </div>
         </div>
       </mat-step>
-
+      -->
     </mat-stepper>
   </form>
 </mat-dialog-content>

@@ -15,6 +15,10 @@ import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { AuthService } from '../../services/auth/auth.service';
 import { MatIconModule } from '@angular/material/icon';
+import { EventDialogComponent } from '../../components/event-dialog/event-dialog';
+import { AppEvent, Attendee } from '../../models/event.model';
+import { MatDialog } from '@angular/material/dialog';
+import { SnackbarService } from '../../services/snackbar/snackbar.service';
 
 
 @Component({
@@ -30,11 +34,13 @@ export class FindTime implements OnInit, OnDestroy {
   private eventService = inject(EventService);
   private groupService = inject(GroupService);
   private readonly STORAGE_KEY = 'findTime_savedParams';
+  private dialog = inject(MatDialog);
+  private authService = inject(AuthService);
+  private snackbarService = inject(SnackbarService);
   availableSlots = signal<TimeSlot[]>([]);
   groups = signal<Group[]>([]);
   selectedGroupId = signal<string>('');
   isLoading = signal<boolean>(false);
-  private authService = inject(AuthService);
   errorMessage = signal<string>('');
   currentUserId: string = '';
   searchMode: 'self' | 'group' = 'self';
@@ -291,7 +297,7 @@ export class FindTime implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Keresési hiba:', err);
-        this.errorMessage.set('Hiba történt a szerverrel való kommunikáció során.');
+        this.snackbarService.showError('Valami hiba történt.');
         this.isLoading.set(false);
       }
     });
@@ -299,5 +305,42 @@ export class FindTime implements OnInit, OnDestroy {
 
   selectSlot(slot: TimeSlot) {
     console.log('Kiválasztott időpont:', slot);
+
+    const requiredUsers: Attendee[] = this.searchParams.requiredAttendees.map(userId => ({
+      userId: userId,
+      status: 'PENDING',               
+      attendanceType: 'REQUIRED'       
+    }));
+
+    const optionalUsers: Attendee[] = (this.searchParams.optionalAttendees || []).map(userId => ({
+      userId: userId,
+      status: 'PENDING',
+      attendanceType: 'OPTIONAL'
+    }));
+
+    const allAttendees: Attendee[] = [...requiredUsers, ...optionalUsers];
+
+    const preFilledEvent: Partial<AppEvent> = {
+      eventName: '',
+      isAllDay: false,
+      fromDate: new Date(slot.start),
+      toDate: new Date(slot.end),
+      attendees: allAttendees
+    };
+
+    const dialogRef = this.dialog.open(EventDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: {
+        event: preFilledEvent
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackbarService.showSuccess('Esemény sikeresen létrehozva!');
+      }
+    });
   }
 }

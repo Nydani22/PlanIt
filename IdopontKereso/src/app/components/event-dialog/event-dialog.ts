@@ -19,9 +19,12 @@ import { FIXED_CATEGORIES, CategoryDefinition } from '../../constants/category-i
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDividerModule } from '@angular/material/divider';
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { AuthService } from '../../services/auth/auth.service';
+import { GroupService } from '../../services/group/group.service';
 
 export interface EventDialogData {
   event?: AppEvent;
+  isGroupAdmin?: boolean;
 }
 
 export const dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -88,10 +91,13 @@ export class EventDialogComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
   private breakpointObserver = inject(BreakpointObserver);
-
+  private authService = inject(AuthService);
+  private groupService = inject(GroupService);
+  canEdit = signal<boolean>(true);
   eventForm: FormGroup;
   isEditMode = signal<boolean>(false);
   isUpdateMode: boolean = false;
+  hideTimeSteps = signal<boolean>(false);
   categoriesList: CategoryDefinition[] = FIXED_CATEGORIES;
   isMobile = signal<boolean>(false);
 
@@ -110,19 +116,23 @@ export class EventDialogComponent implements OnInit {
       this.isMobile.set(result.matches);
     });
 
+    const today = new Date();
+    const otherCategory = this.categoriesList.find(cat => cat.id === 'OTHER');
+    const defaultColor = otherCategory?.defaultColor || '#3b82f6';
+
     this.eventForm = this.fb.group({
       basicDetails: this.fb.group({
         eventName: ['', Validators.required],
         description: ['']
       }),
       categoryDetails: this.fb.group({
-        categoryId: ['', Validators.required]
+        categoryId: [otherCategory?.id, Validators.required]
       }),
       timeDetails: this.fb.group({
         isAllDay: [false],
-        startDate: ['', Validators.required],
+        startDate: [today, Validators.required],
         startTime: ['08:00'],
-        endDate: ['', Validators.required],
+        endDate: [today, Validators.required],
         endTime: ['09:00']
       }, { validators: dateRangeValidator }), 
       recurrenceDetails: this.fb.group({
@@ -132,7 +142,7 @@ export class EventDialogComponent implements OnInit {
         untilDate: ['']
       }),
       settingsDetails: this.fb.group({
-        color: ['#3b82f6'],
+        color: [defaultColor],
         sendNotification: [false],
         allowOverlap: [false]
       })
@@ -140,10 +150,53 @@ export class EventDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+    const ev = this.data?.event;
 
-    if (this.data && this.data.event?._id) {
-      this.isUpdateMode = true;
+    this.setupModeAndVisibility(ev);
+
+    this.setupFormSubscriptions();
+
+    if (ev) {
+      this.patchEventData(ev);
     }
+    
+    this.cdr.detectChanges();
+  }
+
+
+  private setupModeAndVisibility(ev?: AppEvent) {
+    if (!ev) return;
+
+    if (ev._id) {
+      this.isUpdateMode = true;
+      this.isEditMode.set(true);
+
+      const currentUserId = this.authService.getCurrentUserId();
+      const isOrganizer = ev.organizerId === currentUserId;
+      
+      if (ev.groupId) {
+        this.groupService.isUserAdminOfGroup(ev.groupId, currentUserId).subscribe(isAdmin => {
+          if (!isOrganizer && !isAdmin) {
+            this.canEdit.set(false);
+            this.eventForm.disable();
+          }
+        });
+      } else {
+        if (!isOrganizer) {
+          this.canEdit.set(false);
+          this.eventForm.disable();
+        }
+      }
+
+      if (ev.attendees && ev.attendees.length > 1) {
+        this.hideTimeSteps.set(true);
+      }
+    } else if (!ev._id && ev.attendees && ev.attendees.length > 0) {
+      this.hideTimeSteps.set(true);
+    }
+  }
+
+  private setupFormSubscriptions() {
     this.eventForm.get('recurrenceDetails.frequency')?.disable();
     this.eventForm.get('recurrenceDetails.daysOfWeek')?.disable();
     this.eventForm.get('recurrenceDetails.untilDate')?.disable();
@@ -209,62 +262,58 @@ export class EventDialogComponent implements OnInit {
         this.eventForm.get('settingsDetails.color')?.setValue(selectedCategory.defaultColor);
       }
     });
+  }
 
-    if (this.data && this.data.event) {
-      this.isEditMode.set(true);
-      const ev = this.data.event;
-
-      this.eventForm.get('basicDetails')?.patchValue({
-        eventName: ev.eventName,
-        description: ev.description
-      });
-      
+  private patchEventData(ev: AppEvent) {
+    this.eventForm.get('basicDetails')?.patchValue({
+      eventName: ev.eventName || '',
+      description: ev.description || ''
+    });
+    
+    if (ev.category) {
       this.eventForm.get('categoryDetails')?.patchValue({
         categoryId: ev.category
       });
+    }
 
-      let fromDate: Date;
-      let toDate: Date;
+    let fromDate: Date;
+    let toDate: Date;
 
-      if (ev.isAllDay) {
-        const utcFrom = new Date(ev.fromDate);
-        const utcTo = new Date(ev.toDate);
-        fromDate = new Date(utcFrom.getUTCFullYear(), utcFrom.getUTCMonth(), utcFrom.getUTCDate());
-        toDate = new Date(utcTo.getUTCFullYear(), utcTo.getUTCMonth(), utcTo.getUTCDate());
-      } else {
-        fromDate = new Date(ev.fromDate);
-        toDate = new Date(ev.toDate);
-      }
+    if (ev.isAllDay) {
+      const utcFrom = new Date(ev.fromDate);
+      const utcTo = new Date(ev.toDate);
+      fromDate = new Date(utcFrom.getUTCFullYear(), utcFrom.getUTCMonth(), utcFrom.getUTCDate());
+      toDate = new Date(utcTo.getUTCFullYear(), utcTo.getUTCMonth(), utcTo.getUTCDate());
+    } else {
+      fromDate = new Date(ev.fromDate);
+      toDate = new Date(ev.toDate);
+    }
 
-      const startTime = this.extractTime(fromDate);
-      const endTime = this.extractTime(toDate);
+    const startTime = this.extractTime(fromDate);
+    const endTime = this.extractTime(toDate);
 
-      this.eventForm.get('timeDetails')?.patchValue({
-        isAllDay: ev.isAllDay,
-        startDate: fromDate,
-        startTime: startTime,
-        endDate: toDate,
-        endTime: endTime
-      });
+    this.eventForm.get('timeDetails')?.patchValue({
+      isAllDay: ev.isAllDay,
+      startDate: fromDate,
+      startTime: startTime,
+      endDate: toDate,
+      endTime: endTime
+    });
 
-      if (ev.recurrence) {
-        const isReallyRecurring = ev.recurrence.frequency !== 'NONE' && ev.recurrence.frequency !== 'none';
+    if (ev.recurrence) {
+      const isReallyRecurring = ev.recurrence.frequency !== 'NONE' && ev.recurrence.frequency !== 'none';
 
-        this.eventForm.get('recurrenceDetails')?.patchValue({
-          isRecurring: isReallyRecurring,
-          frequency: isReallyRecurring ? ev.recurrence.frequency : 'none',
-          daysOfWeek: ev.recurrence.daysOfWeek || [],
-          untilDate: ev.recurrence.untilDate ? new Date(ev.recurrence.untilDate) : ''
-        });
-      }
-
-      this.eventForm.get('settingsDetails')?.patchValue({
-        color: ev.color || '#3b82f6',
-        //sendNotification: ev.sendNotification || false,
-        //allowOverlap: ev.allowOverlap || false
+      this.eventForm.get('recurrenceDetails')?.patchValue({
+        isRecurring: isReallyRecurring,
+        frequency: isReallyRecurring ? ev.recurrence.frequency : 'none',
+        daysOfWeek: ev.recurrence.daysOfWeek || [],
+        untilDate: ev.recurrence.untilDate ? new Date(ev.recurrence.untilDate) : ''
       });
     }
-    this.cdr.detectChanges();
+
+    this.eventForm.get('settingsDetails')?.patchValue({
+      color: ev.color || '#3b82f6',
+    });
   }
 
   private extractTime(date: Date): string {
@@ -297,6 +346,14 @@ export class EventDialogComponent implements OnInit {
         //sendNotification: settings.sendNotification,
         //allowOverlap: settings.allowOverlap
       };
+
+      if (this.data?.event?.attendees) {
+        payload.attendees = this.data.event.attendees;
+      }
+
+      if (this.data?.event?.groupId) {
+        payload.groupId = this.data.event.groupId;
+      }
 
       if (rec.isRecurring && rec.frequency !== 'none') {
         payload.recurrence = {

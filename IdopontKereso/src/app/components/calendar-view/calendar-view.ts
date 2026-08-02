@@ -12,6 +12,7 @@ import { AppEvent } from '../../models/event.model';
 import { UserSettings } from '../../models/user.model';
 import { CustomDateFormatter } from './custom-date-formatter.provider';
 import { EventDialogComponent } from '../event-dialog/event-dialog';
+import { SnackbarService } from '../../services/snackbar/snackbar.service';
 
 registerLocaleData(localeHu);
 
@@ -40,7 +41,7 @@ export class CalendarViewComponent implements OnInit {
   private authService = inject(AuthService);
   private userService = inject(UserService);
   private dialog = inject(MatDialog);
-
+  private snackbarService = inject(SnackbarService);
   view: CalendarView = CalendarView.Week;
   viewDate: Date = new Date();
   refresh = new Subject<void>();
@@ -84,7 +85,7 @@ export class CalendarViewComponent implements OnInit {
         this.refresh.next();
       },
       error: (err) => {
-        console.error('Hiba történt a felhasználói beállítások betöltésekor:', err);
+        this.snackbarService.showError('Hiba történt a felhasználói beállítások betöltésekor.');
         this.isLoading.set(false);
       }
     });
@@ -100,7 +101,7 @@ export class CalendarViewComponent implements OnInit {
         this.refresh.next();
       },
       error: (err) => {
-        console.error('Hiba történt az események betöltésekor:', err);
+        this.snackbarService.showError('Hiba történt az események betöltésekor.');
       }
     });
   }
@@ -134,6 +135,8 @@ export class CalendarViewComponent implements OnInit {
         displayTitle = `${startTimeStr} - ${endTimeStr} | ${item.eventName}`;
       }
 
+      const isGroupEvent = item.attendees && item.attendees.length > 1;
+
       const baseEvent: CalendarEvent = {
         id: item._id,
         title: displayTitle,
@@ -145,8 +148,8 @@ export class CalendarViewComponent implements OnInit {
           secondary: `color-mix(in srgb, ${item.color} 20%, white)`,
           secondaryText: `${item.color}`
         } : undefined,
-        draggable: true, 
-        resizable: {
+        draggable: !isGroupEvent, 
+        resizable: isGroupEvent ? undefined : {
           beforeStart: true,
           afterEnd: true,
         },
@@ -258,6 +261,12 @@ export class CalendarViewComponent implements OnInit {
       return;
     }
 
+    if (originalEvent.attendees && originalEvent.attendees.length > 1) {
+      this.snackbarService.showWarning('Csoportos esemény időpontja nem módosítható húzással!');
+      this.loadEvents();
+      return;
+    }
+
     this.events = this.events.map((iEvent) => {
       if (iEvent === event) {
         return {
@@ -308,7 +317,7 @@ export class CalendarViewComponent implements OnInit {
         this.loadEvents();
       },
       error: (err) => {
-        console.error('Hiba az esemény mozgatásakor:', err);
+        this.snackbarService.showError('Hiba az esemény mozgatásakor.');
         this.loadEvents(); 
       }
     });

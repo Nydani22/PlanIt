@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { AuthService } from '../../services/auth/auth.service';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,6 +19,7 @@ import { EventDialogComponent } from '../../components/event-dialog/event-dialog
 import { AppEvent, Attendee } from '../../models/event.model';
 import { MatDialog } from '@angular/material/dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 
 @Component({
@@ -26,7 +27,7 @@ import { SnackbarService } from '../../services/snackbar/snackbar.service';
   standalone: true,
   imports: [DatePipe, SlicePipe, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatDatepickerModule, MatNativeDateModule,
-    MatCheckboxModule, MatButtonModule, MatButtonToggleModule, MatIconModule],
+    MatCheckboxModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatSlideToggleModule],
   templateUrl: './find-time.html',
   styleUrls: ['./find-time.scss']
 })
@@ -44,7 +45,9 @@ export class FindTime implements OnInit, OnDestroy {
   errorMessage = signal<string>('');
   currentUserId: string = '';
   searchMode: 'self' | 'group' = 'self';
-  
+  attendeeSearchTerm: string = '';
+  hideFromOptional: boolean = false;
+
   weekDays = [
     { value: 1, label: 'Hétfő' },
     { value: 2, label: 'Kedd' },
@@ -104,6 +107,26 @@ export class FindTime implements OnInit, OnDestroy {
         });
 
         this.groups.set(filteredGroups);
+        const currentGroupId = this.selectedGroupId();
+        if (this.searchMode === 'group' && currentGroupId) {
+          const selectedGroup = filteredGroups.find(g => g._id === currentGroupId);
+          
+          if (selectedGroup && selectedGroup.members) {
+            const membersList = selectedGroup.members.map((member: any) => {
+              const id = typeof member.userId === 'object' && member.userId !== null 
+                ? member.userId._id 
+                : member.userId;
+              
+              const name = typeof member.userId === 'object' && member.userId !== null 
+                ? (member.userId.fullName || member.userId.userName || 'Ismeretlen felhasználó') 
+                : 'Ismeretlen felhasználó';
+                
+              return { id, name };
+            });
+
+            this.selectedGroupMembers.set(membersList);
+          }
+        }
       },
       error: (err) => {
         console.error('Hiba a csoportok betöltésekor', err);
@@ -123,6 +146,7 @@ export class FindTime implements OnInit, OnDestroy {
           searchStart: new Date(parsed.searchParams.searchStart),
           searchEnd: new Date(parsed.searchParams.searchEnd)
         };
+        if (parsed.hideFromOptional !== undefined) this.hideFromOptional = parsed.hideFromOptional;
         if (parsed.searchMode) this.searchMode = parsed.searchMode;
 
         if (parsed.selectedGroupId) {
@@ -149,7 +173,8 @@ export class FindTime implements OnInit, OnDestroy {
       bufferType: this.bufferType,
       sharedBufferMinutes: this.sharedBufferMinutes,
       durationUnit: this.durationUnit,
-      durationValue: this.durationValue
+      durationValue: this.durationValue,
+      hideFromOptional: this.hideFromOptional
     };
     sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(stateToSave));
   }
@@ -199,13 +224,11 @@ export class FindTime implements OnInit, OnDestroy {
     }
   }
 
-  toggleAttendeeRequirement(memberId: string, event: MatCheckboxChange) {
-    const isChecked = event.checked;
+  toggleCardRequirement(memberId: string) {
+    const isCurrentlyRequired = this.searchParams.requiredAttendees.includes(memberId);
     
-    if (isChecked) {
-      if (!this.searchParams.requiredAttendees.includes(memberId)) {
-         this.searchParams.requiredAttendees.push(memberId);
-      }
+    if (!isCurrentlyRequired) {
+      this.searchParams.requiredAttendees.push(memberId);
       this.searchParams.optionalAttendees = this.searchParams.optionalAttendees?.filter(id => id !== memberId) || [];
     } else {
       this.searchParams.requiredAttendees = this.searchParams.requiredAttendees.filter(id => id !== memberId);
@@ -213,6 +236,16 @@ export class FindTime implements OnInit, OnDestroy {
          this.searchParams.optionalAttendees?.push(memberId);
       }
     }
+  }
+
+  
+  get filteredGroupMembers() {
+    const term = this.attendeeSearchTerm.toLowerCase();
+    if (!term) return this.selectedGroupMembers();
+    
+    return this.selectedGroupMembers().filter(member => 
+      member.name.toLowerCase().includes(term)
+    );
   }
 
   onDurationUnitChange(unit: 'minutes' | 'hours' | 'days') {
@@ -318,7 +351,10 @@ export class FindTime implements OnInit, OnDestroy {
       attendanceType: 'OPTIONAL'
     }));
 
-    const allAttendees: Attendee[] = [...requiredUsers, ...optionalUsers];
+    const allAttendees: Attendee[] = [...requiredUsers];
+    if (!this.hideFromOptional) {
+      allAttendees.push(...optionalUsers);
+    }
 
     const preFilledEvent: Partial<AppEvent> = {
       eventName: '',

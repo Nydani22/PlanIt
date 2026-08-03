@@ -1,5 +1,5 @@
 import { CommonModule, registerLocaleData } from '@angular/common';
-import { Component, OnInit, inject, LOCALE_ID, signal } from '@angular/core';
+import { Component, OnInit, inject, LOCALE_ID, signal, effect } from '@angular/core';
 import localeHu from '@angular/common/locales/hu';
 import { CalendarModule, CalendarEvent, CalendarView, CalendarEventTimesChangedEvent, CalendarDateFormatter } from 'angular-calendar';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,6 +13,7 @@ import { UserSettings } from '../../models/user.model';
 import { CustomDateFormatter } from './custom-date-formatter.provider';
 import { EventDialogComponent } from '../event-dialog/event-dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
+import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-refresh.service';
 
 registerLocaleData(localeHu);
 
@@ -42,6 +43,7 @@ export class CalendarViewComponent implements OnInit {
   private userService = inject(UserService);
   private dialog = inject(MatDialog);
   private snackbarService = inject(SnackbarService);
+  private calendarRefreshService = inject(CalendarRefreshService);
   view: CalendarView = CalendarView.Week;
   viewDate: Date = new Date();
   refresh = new Subject<void>();
@@ -54,6 +56,41 @@ export class CalendarViewComponent implements OnInit {
   isLoading = signal(true);
 
   events: CalendarEvent[] = [];
+
+  private clickTimeout: any;
+  private lastClickTime: number = 0;
+  private lastClickedDate: Date | null = null;
+  private lastClickedEventId: string | number | undefined = undefined;
+
+
+  constructor() {
+    effect(() => {
+      const newDate = this.calendarRefreshService.selectedDate();
+      if (this.viewDate.getTime() !== newDate.getTime()) {
+        this.viewDate = newDate;
+        this.loadEvents();
+      }
+    }, { allowSignalWrites: true });
+
+    effect(() => {
+      const interactionsOn = this.calendarRefreshService.interactionsEnabled();
+      
+      this.events = this.events.map(event => {
+        const isGroupEvent = event.meta?.originalEvent?.attendees?.length > 1;
+        
+        return {
+          ...event,
+          draggable: interactionsOn && !isGroupEvent,
+          resizable: (!interactionsOn || isGroupEvent) ? undefined : {
+            beforeStart: true,
+            afterEnd: true,
+          }
+        };
+      });
+      
+      this.refresh.next();
+    });
+  }
 
   ngOnInit(): void {
     if (this.authService.getToken()) {
@@ -136,6 +173,7 @@ export class CalendarViewComponent implements OnInit {
       }
 
       const isGroupEvent = item.attendees && item.attendees.length > 1;
+      const interactionsOn = this.calendarRefreshService.interactionsEnabled();
 
       const baseEvent: CalendarEvent = {
         id: item._id,
@@ -148,8 +186,9 @@ export class CalendarViewComponent implements OnInit {
           secondary: `color-mix(in srgb, ${item.color} 20%, white)`,
           secondaryText: `${item.color}`
         } : undefined,
-        draggable: !isGroupEvent, 
-        resizable: isGroupEvent ? undefined : {
+        cssClass: 'select-none',
+        draggable: interactionsOn && !isGroupEvent,
+        resizable: (!interactionsOn || isGroupEvent) ? undefined : {
           beforeStart: true,
           afterEnd: true,
         },
@@ -231,23 +270,42 @@ export class CalendarViewComponent implements OnInit {
   }
 
   onEventClick(calendarEvent: CalendarEvent): void {
-    const originalAppEvent = calendarEvent.meta?.originalEvent;
-    
-    if (!originalAppEvent) return;
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - this.lastClickTime;
 
-    const dialogRef = this.dialog.open(EventDialogComponent, {
-      width: '800px',
-      maxWidth: '95vw',
-      restoreFocus: false,
-      autoFocus: false,
-      data: { event: originalAppEvent }
-    });
+    if (timeDiff < 300 && this.lastClickedEventId === calendarEvent.id) {
+      clearTimeout(this.clickTimeout);
+      
+      const originalAppEvent = calendarEvent.meta?.originalEvent;
+      
+      if (!originalAppEvent) return;
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadEvents();
-      }
-    });
+      const dialogRef = this.dialog.open(EventDialogComponent, {
+        width: '800px',
+        maxWidth: '95vw',
+        restoreFocus: false,
+        autoFocus: false,
+        data: { event: originalAppEvent }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          this.loadEvents();
+        }
+      });
+
+      this.lastClickTime = 0;
+      this.lastClickedEventId = undefined;
+      
+    } else {
+      this.lastClickTime = currentTime;
+      this.lastClickedEventId = calendarEvent.id;
+      
+      this.clickTimeout = setTimeout(() => {
+        this.lastClickTime = 0;
+        this.lastClickedEventId = undefined;
+      }, 300);
+    }
   }
 
   eventTimesChanged({
@@ -325,20 +383,56 @@ export class CalendarViewComponent implements OnInit {
 
 
   onHourSegmentClicked(date: Date): void {
-    const endDate = new Date(date.getTime() + 60 * 60 * 1000); 
-    this.createDefaultEvent(date, endDate);
+    if (!this.calendarRefreshService.interactionsEnabled()) return;
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - this.lastClickTime;
+
+    if (timeDiff < 300 && this.lastClickedDate?.getTime() === date.getTime()) {
+      clearTimeout(this.clickTimeout);
+      
+      const endDate = new Date(date.getTime() + 60 * 60 * 1000); 
+      this.createDefaultEvent(date, endDate);
+      
+      this.lastClickTime = 0;
+      this.lastClickedDate = null;
+    } else {
+      this.lastClickTime = currentTime;
+      this.lastClickedDate = date;
+      
+      this.clickTimeout = setTimeout(() => {
+        this.lastClickTime = 0;
+        this.lastClickedDate = null;
+      }, 300);
+    }
   }
 
   onDayClicked(date: Date): void {
-    const startDate = new Date(date);
-    startDate.setHours(8, 0, 0, 0);
-    
-    const endDate = new Date(startDate);
-    endDate.setHours(9, 0, 0, 0);
-    
-    this.createDefaultEvent(startDate, endDate);
-  }
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - this.lastClickTime;
 
+    if (timeDiff < 300 && this.lastClickedDate?.getTime() === date.getTime()) {
+      clearTimeout(this.clickTimeout);
+      
+      const startDate = new Date(date);
+      startDate.setHours(8, 0, 0, 0);
+      
+      const endDate = new Date(startDate);
+      endDate.setHours(9, 0, 0, 0);
+      
+      this.createDefaultEvent(startDate, endDate);
+      
+      this.lastClickTime = 0;
+      this.lastClickedDate = null;
+    } else {
+      this.lastClickTime = currentTime;
+      this.lastClickedDate = date;
+      
+      this.clickTimeout = setTimeout(() => {
+        this.lastClickTime = 0;
+        this.lastClickedDate = null;
+      }, 300);
+    }
+  }
   private createDefaultEvent(start: Date, end: Date): void {
     
     const tempEventId = 'temp-' + Date.now();

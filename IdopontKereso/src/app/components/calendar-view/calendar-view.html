@@ -55,8 +55,9 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 pt-2 md:pt-4 px-2 md:px-4 rounded-lg shadow-sm w-full flex flex-col flex-1 max-h-full min-h-0">
-                <div class="min-w-[700px] lg:min-w-0 overflow-auto h-full pb-2 md:pb-4 flex flex-col">
+            <div class="bg-white dark:bg-gray-800 pt-2 md:pt-4 px-2 md:px-4 rounded-lg shadow-sm w-full flex flex-col flex-1 max-h-full min-h-0 min-w-0">
+                <div class="w-full h-full overflow-auto pb-2 md:pb-4">
+                    <div class="min-w-[700px] lg:min-w-0 flex flex-col h-full">
                     @switch (view) { 
                         @case (CalendarView.Month) {
                             <mwl-calendar-month-view 
@@ -102,6 +103,7 @@
                             />
                         }
                     }
+                    </div>
                 </div>
             </div>
         }

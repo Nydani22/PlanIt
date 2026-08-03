@@ -67,10 +67,58 @@ $my-dark-theme: mat.m2-define-dark-theme((
   )
 ));
 
+body .cal-week-view .cal-drag-over .cal-hour-segment,
+body .cal-day-view .cal-drag-over .cal-hour-segment {
+  background-color: transparent;
+}
+
+:root {
+  @include mat.tooltip-overrides((
+    container-color: #374151,
+    supporting-text-color: #f9fafb,
+    container-shape: 8px,
+    supporting-text-size: 13px,
+    supporting-text-weight: 500,
+    supporting-text-line-height: 1.5
+  ));
+
+  @include mat.sidenav-overrides((
+    container-width: 290px,
+    container-elevation-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    container-divider-color: transparent,
+    content-background-color:transparent,
+    scrim-color: none,
+  ));
+
+  @include mat.slide-toggle-overrides((
+    selected-track-color: #7a6215,
+    selected-hover-track-color: #7a6215,
+    selected-focus-track-color: #7a6215,
+    selected-pressed-track-color: #7a6215,
+    unselected-track-color: rgba(255, 255, 255, 0.2),
+    unselected-hover-track-color: rgba(255, 255, 255, 0.2),
+    unselected-focus-track-color: rgba(255, 255, 255, 0.2),
+    unselected-pressed-track-color: rgba(255, 255, 255, 0.2)
+  ));
+}
+
+.instant-toggle {
+  @include mat.slide-toggle-overrides((
+    hidden-track-transition: none
+  ));
+}
+
+
+
 .dark {
   color-scheme: dark;
 
   @include mat.all-component-colors($my-dark-theme);
+
+  @include mat.tooltip-overrides((
+    container-color: #111827,
+    supporting-text-color: #e5e7eb,
+  ));
   
   @include mat.form-field-overrides((
     outlined-label-text-color: #9ca3af,
@@ -103,14 +151,14 @@ $my-dark-theme: mat.m2-define-dark-theme((
 
   @include mat.dialog-overrides((
     container-color: var(--cal-bg),
-    container-shape: 16px,
+    container-shape: 8px,
     container-elevation-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25)
   ));
 
   @include mat.stepper-overrides((
     container-color: var(--cal-bg),
-    header-hover-state-layer-shape: 16px,
-    header-focus-state-layer-shape: 16px,
+    header-hover-state-layer-shape: 8px,
+    header-focus-state-layer-shape: 8px,
     header-label-text-color: #ffffff,
     header-selected-state-label-text-color: #ffffff,
     line-color: #4b5563
@@ -118,24 +166,28 @@ $my-dark-theme: mat.m2-define-dark-theme((
 
   @include mat.card-overrides((
     elevated-container-color: var(--cal-bg),
+    elevated-container-shape: 8px,
   ));
 
   @include mat.menu-overrides((
-    container-shape: 12px,
+    container-shape: 8px,
     container-color: var(--cal-bg),
   ));
 
   @include mat.snack-bar-overrides((
-    container-shape: 12px,
+    container-shape: 8px,
     container-color: var(--cal-bg),
   ));
 
   @include mat.sidenav-overrides((
     container-background-color: var(--cal-bg),
-    container-divider-color: var(--cal-border-color),
+    container-width: 290px,
+    container-elevation-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    container-divider-color: transparent,
     content-background-color:transparent,
     scrim-color: none,
   ));
+  
 
 
   --cal-bg: #1f2937;

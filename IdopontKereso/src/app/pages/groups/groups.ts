@@ -48,13 +48,22 @@ export class Groups implements OnInit {
   isAdmin = signal<boolean>(false);
   isLoading = signal<boolean>(true);
   searchQuery = signal<string>('');
-
+  groupSearchQuery = signal<string>('');
   currentUserId: string = ''; 
 
   ngOnInit(): void {
     this.currentUserId = this.authService.getCurrentUserId(); 
     this.loadAllGroups();
   }
+
+  filteredGroups = computed(() => {
+    const query = this.groupSearchQuery().toLowerCase().trim();
+    if (!query) return this.myGroups();
+    
+    return this.myGroups().filter(g => 
+      g.groupName.toLowerCase().includes(query)
+    );
+  });
 
   filteredMembers = computed(() => {
     const currentGroup = this.group();

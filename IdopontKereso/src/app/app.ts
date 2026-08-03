@@ -10,6 +10,11 @@ import { SnackbarService } from './services/snackbar/snackbar.service';
 import { EventDialogComponent } from './components/event-dialog/event-dialog';
 import { CalendarRefreshService } from './services/calendarRefresh/calendar-refresh.service';
 import { MatIcon } from '@angular/material/icon';
+import { FormsModule } from '@angular/forms';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +24,12 @@ import { MatIcon } from '@angular/material/icon';
     Navbar, 
     MatSidenavModule, 
     MatDialogModule,
-    MatIcon
+    MatIcon,
+    FormsModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatSlideToggleModule,
+    MatTooltipModule  
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'
@@ -30,8 +40,7 @@ export class App implements OnInit {
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snackbarService = inject(SnackbarService);
-  private calendarRefreshService = inject(CalendarRefreshService);
-
+  calendarRefreshService = inject(CalendarRefreshService);
   isSidebarOpen = signal<boolean>(this.getInitialSidebarState());
   private previousUrl: string = '';
 
@@ -72,6 +81,15 @@ export class App implements OnInit {
       localStorage.setItem('sidebarOpen', 'true');
     } else {
       this.isSidebarOpen.set(this.getInitialSidebarState(url));
+    }
+  }
+
+  onDateSelected(date: Date | null) {
+    if (date) {
+      this.calendarRefreshService.selectedDate.set(date);
+      if (this.router.url !== '/') {
+        this.router.navigate(['/']);
+      }
     }
   }
 

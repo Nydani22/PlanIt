@@ -156,25 +156,86 @@
     </div>
   </div>
 
-  @if (searchMode === 'group' && selectedGroupMembers().length > 0) {
+ @if (searchMode === 'group' && selectedGroupMembers().length > 0) {
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-      <label class="font-semibold mb-2 text-gray-900 dark:text-gray-100 text-lg block">
-        Résztvevők (pipáld be, akinek kötelező a részvétel)
-      </label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        A be nem pipált személyeket a rendszer "opcionális" résztvevőként kezeli, így a szabad időpontjaik növelhetik a találat pontszámát, de ütközésük nem zárja ki az időpontot.
-      </p>
       
-      <div class="flex flex-wrap gap-4">
-        @for (member of selectedGroupMembers(); track member.id) {
-          <mat-checkbox 
-            [checked]="searchParams.requiredAttendees.includes(member.id)"
-            (change)="toggleAttendeeRequirement(member.id, $event)"
-            color="primary">
-            {{ member.name !== 'Ismeretlen felhasználó' ? member.name : 'Felhasználó (' + (member.id | slice:0:6) + '...)' }}
-          </mat-checkbox>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <label class="font-semibold text-gray-900 dark:text-gray-100 text-lg m-0">
+          Résztvevők (jelöld meg azokat, akinek kötelező a részvétel)
+        </label>
+        
+        <div class="relative w-full sm:w-64 shrink-0">
+          <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 scale-90">search</mat-icon>
+          <input type="text" 
+                 [(ngModel)]="attendeeSearchTerm" 
+                 placeholder="Keresés név alapján..." 
+                 class="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all">
+        </div>
+      </div>
+
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        A ki nem választott személyeket a rendszer "opcionális" résztvevőként kezeli, így a szabad időpontjaik növelhetik a találat pontszámát, de ütközésük nem zárja ki az időpontot.
+      </p>
+
+      <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg mb-6 border border-gray-200 dark:border-gray-700">
+        <div class="pr-4">
+          <div class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Opcionális résztvevők kihagyása a meghívóból</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Ha bekapcsolod, az esemény létrehozásakor az opcionális személyek nem kerülnek be a listába. A rendszer továbbra is keresi a velük közös szabad időt, de az esemény rejtve marad előlük.
+          </div>
+        </div>
+        <mat-slide-toggle [(ngModel)]="hideFromOptional" color="primary" class="shrink-0"></mat-slide-toggle>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        @for (member of filteredGroupMembers; track member.id) {
+          
+          <div 
+            (click)="toggleCardRequirement(member.id)"
+            class="cursor-pointer rounded-lg border py-2 px-3 flex items-center gap-2 transition-all duration-200 select-none"
+            [class.border-green-500]="searchParams.requiredAttendees.includes(member.id)"
+            [class.bg-green-50]="searchParams.requiredAttendees.includes(member.id)"
+            [class.dark:bg-green-900]="searchParams.requiredAttendees.includes(member.id)"
+            [class.dark:bg-opacity-20]="searchParams.requiredAttendees.includes(member.id)"
+            
+            [class.border-gray-200]="!searchParams.requiredAttendees.includes(member.id)"
+            [class.dark:border-gray-700]="!searchParams.requiredAttendees.includes(member.id)"
+            [class.bg-white]="!searchParams.requiredAttendees.includes(member.id)"
+            [class.dark:bg-gray-800]="!searchParams.requiredAttendees.includes(member.id)"
+            [class.hover:bg-gray-50]="!searchParams.requiredAttendees.includes(member.id)"
+            [class.dark:hover:bg-slate-700]="!searchParams.requiredAttendees.includes(member.id)">
+            
+            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+              <mat-icon class="text-amber-500 scale-75">person</mat-icon>
+            </div>
+  
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm text-gray-900 dark:text-gray-100 truncate leading-none">
+                {{ member.name !== 'Ismeretlen felhasználó' ? member.name : 'Felhasználó (' + (member.id | slice:0:6) + '...)' }}
+              </div>
+              <div class="text-[11px] mt-1"
+                 [class.text-green-600]="searchParams.requiredAttendees.includes(member.id)"
+                 [class.dark:text-green-400]="searchParams.requiredAttendees.includes(member.id)"
+                 [class.text-gray-500]="!searchParams.requiredAttendees.includes(member.id)">
+                {{ searchParams.requiredAttendees.includes(member.id) ? 'Kötelező' : 'Opcionális' }}
+              </div>
+            </div>
+  
+            @if (searchParams.requiredAttendees.includes(member.id)) {
+              <mat-icon class="text-green-500 shrink-0 scale-90">check_circle</mat-icon>
+            } @else {
+              <mat-icon class="text-gray-300 dark:text-gray-600 shrink-0 scale-90">radio_button_unchecked</mat-icon>
+            }
+          </div>
+          
         }
       </div>
+
+      @if (filteredGroupMembers.length === 0 && attendeeSearchTerm) {
+        <div class="text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
+          Nincs a keresésnek (<span class="font-bold">"{{ attendeeSearchTerm }}"</span>) megfelelő résztvevő.
+        </div>
+      }
     </div>
   }
 

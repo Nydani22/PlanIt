@@ -1,4 +1,5 @@
 const ical = require('node-ical');
+const mongoose = require('mongoose'); 
 const Event = require('../models/Event.model');
 const User = require('../models/User.model');
 
@@ -14,7 +15,6 @@ async function syncExternalCalendar(userId, calendarUrl) {
                 allIncomingUids.push(events[key].uid);
             }
         }
-
         const potentialInternalIds = allIncomingUids.filter(uid => mongoose.Types.ObjectId.isValid(uid));
         
         const existingInternalEvents = await Event.find({
@@ -28,7 +28,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
             const event = events[key];
             
             if (event.type === 'VEVENT') {
-                const uid = event.uid;
+                const uid = event.uid;                
                 if (internalEventIdSet.has(uid)) {
                     continue;
                 }
@@ -53,7 +53,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
                 const eventData = {
                     organizerId: userId,
-                    externalUid: uid,
+                    uid: uid,
                     eventName: event.summary || 'Névtelen esemény',
                     fromDate: fromDate,
                     toDate: adjustedToDate,
@@ -77,7 +77,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
                 bulkOps.push({
                     updateOne: {
-                        filter: { organizerId: userId, externalUid: uid },
+                        filter: { organizerId: userId, uid: uid },
                         update: { $set: eventData },
                         upsert: true
                     }
@@ -91,7 +91,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
                     filter: {
                         organizerId: userId,
                         isExternal: true,
-                        externalUid: { $nin: incomingUids }
+                        uid: { $nin: incomingUids }
                     }
                 }
             });

@@ -33,15 +33,31 @@ export class Signup {
   errorMessage = signal('');
 
   constructor() {
-    this.registerForm = this.fb.group({
-      userName: ['', Validators.required],
-      fullName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      password2: ['', [Validators.required, Validators.minLength(6)]],
-      role: ['user', Validators.required]
-    }, { validators: passwordMatchValidator });
-  }
+  this.registerForm = this.fb.group({
+    userName: ['', [
+      Validators.required,
+      Validators.pattern('^[a-zA-Z0-9_-]{3,20}$')
+    ]],
+    fullName: ['', [
+      Validators.required, 
+      Validators.pattern('^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+(?:\\s+[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+)+$')
+    ]],
+    email: ['', [
+      Validators.required, 
+      Validators.pattern('^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$')
+    ]],
+    password: ['', [
+      Validators.required, 
+      Validators.minLength(6),
+      Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$')
+    ]],
+    password2: ['', [
+      Validators.required, 
+      Validators.minLength(6)
+    ]],
+    role: ['user', Validators.required]
+  }, { validators: passwordMatchValidator });
+}
 
   hide = signal(true);
   clickEvent(event: MouseEvent) {

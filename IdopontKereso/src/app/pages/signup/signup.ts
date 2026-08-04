@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
+import { NotificationService } from '../../services/notification/notification.service';
 
 
 const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -20,13 +21,14 @@ const passwordMatchValidator: ValidatorFn = (control: AbstractControl): Validati
   selector: 'app-signup',
   imports: [MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, FormsModule, ReactiveFormsModule, RouterLink],
   templateUrl: './signup.html',
-  styleUrl: './signup.css',
+  styleUrl: './signup.scss',
 })
 export class Signup {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private snackbarService = inject(SnackbarService);
+  private notificationService = inject(NotificationService);
   registerForm: FormGroup;
   errorMessage = signal('');
 
@@ -57,10 +59,24 @@ export class Signup {
     if (this.registerForm.valid) {
       const { password2, ...userData } = this.registerForm.value;
       this.errorMessage.set('');
+      
       this.authService.register(userData).subscribe({
-        next: (response) => {
+        next: (response: any) => {
           this.snackbarService.showSuccess('Sikeres regisztráció!');
-          this.router.navigate(['/login']); 
+          
+          if (response.token) {
+            this.authService.setToken(response.token);
+          }
+          this.notificationService.initNotifications();
+          
+          const redirectUrl = localStorage.getItem('redirectAfterLogin');
+          
+          if (redirectUrl) {
+            localStorage.removeItem('redirectAfterLogin');
+            this.router.navigateByUrl(redirectUrl);
+          } else {
+            this.router.navigate(['/']); 
+          }
         },
         error: (err) => {
           console.error('Hiba történt:', err);

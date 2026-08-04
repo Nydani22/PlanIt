@@ -76,11 +76,13 @@ export class CalendarViewComponent implements OnInit {
       const interactionsOn = this.calendarRefreshService.interactionsEnabled();
       
       this.events = this.events.map(event => {
+        const originalEvent = event.meta?.originalEvent;
         const isGroupEvent = event.meta?.originalEvent?.attendees?.length > 1;
-        
+        const isExternalEvent = originalEvent?.isExternal;
+
         return {
           ...event,
-          draggable: interactionsOn && !isGroupEvent,
+          draggable: interactionsOn && !isGroupEvent && !isExternalEvent,
           resizable: (!interactionsOn || isGroupEvent) ? undefined : {
             beforeStart: true,
             afterEnd: true,
@@ -174,7 +176,7 @@ export class CalendarViewComponent implements OnInit {
 
       const isGroupEvent = item.attendees && item.attendees.length > 1;
       const interactionsOn = this.calendarRefreshService.interactionsEnabled();
-
+      const isExternalEvent = item.isExternal
       const baseEvent: CalendarEvent = {
         id: item._id,
         title: displayTitle,
@@ -187,7 +189,7 @@ export class CalendarViewComponent implements OnInit {
           secondaryText: `${item.color}`
         } : undefined,
         cssClass: 'select-none',
-        draggable: interactionsOn && !isGroupEvent,
+        draggable: interactionsOn && !isGroupEvent && !isExternalEvent,
         resizable: (!interactionsOn || isGroupEvent) ? undefined : {
           beforeStart: true,
           afterEnd: true,
@@ -321,6 +323,12 @@ export class CalendarViewComponent implements OnInit {
 
     if (originalEvent.attendees && originalEvent.attendees.length > 1) {
       this.snackbarService.showWarning('Csoportos esemény időpontja nem módosítható húzással!');
+      this.loadEvents();
+      return;
+    }
+
+    if (originalEvent.isExternal) {
+      this.snackbarService.showWarning('Külső (importált) esemény időpontja nem módosítható!');
       this.loadEvents();
       return;
     }

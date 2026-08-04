@@ -174,7 +174,10 @@ export class EventDialogComponent implements OnInit {
       const currentUserId = this.authService.getCurrentUserId();
       const isOrganizer = ev.organizerId === currentUserId;
       
-      if (ev.groupId) {
+      if (ev.isExternal) {
+        this.canEdit.set(false);
+        this.eventForm.disable();
+      } else if (ev.groupId) {
         this.groupService.isUserAdminOfGroup(ev.groupId, currentUserId).subscribe(isAdmin => {
           if (!isOrganizer && !isAdmin) {
             this.canEdit.set(false);
@@ -250,8 +253,10 @@ export class EventDialogComponent implements OnInit {
         startTimeCtrl?.disable();
         endTimeCtrl?.disable();
       } else {
-        startTimeCtrl?.enable();
-        endTimeCtrl?.enable();
+        if (this.canEdit()) {
+          startTimeCtrl?.enable();
+          endTimeCtrl?.enable();
+        }
       }
     });
 

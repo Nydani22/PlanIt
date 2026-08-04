@@ -168,10 +168,12 @@ exports.generateICalStringByToken = async (token) => {
         return null;
     }
 
+    /*
     const events = await Event.find({ 
         organizerId: user._id, 
         isExternal: false 
     });
+    */
 
     const calendar = ical({ 
         name: `${user.fullName} Naptára`,
@@ -179,14 +181,17 @@ exports.generateICalStringByToken = async (token) => {
     });
 
     events.forEach(item => {
+        const eventUid = item.isExternal && item.externalUid ? item.externalUid : item._id.toString();
+
         const calEvent = calendar.createEvent({
-            id: item._id.toString(),
+            id: eventUid,
             start: item.fromDate,
             end: item.toDate,
             summary: item.eventName,
             description: item.description,
             location: item.location,
-            allDay: item.isAllDay
+            allDay: item.isAllDay,
+            lastModified: item.updatedAt
         });
 
         if (item.recurrence && item.recurrence.frequency !== 'NONE') {

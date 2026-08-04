@@ -25,7 +25,7 @@ export interface AppEvent {
   category: string;
   
   color?: CategoryColor | string; 
-  
+  isExternal?: boolean;
   organizerId?: string;
   groupId?: string;
   recurrence?: Recurrence | null;

@@ -49,7 +49,7 @@ export class Signup {
     password: ['', [
       Validators.required, 
       Validators.minLength(6),
-      Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$')
+      Validators.pattern('^(?=.*[a-z])(?=.*\\d).+$')
     ]],
     password2: ['', [
       Validators.required, 

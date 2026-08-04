@@ -168,7 +168,10 @@ exports.generateICalStringByToken = async (token) => {
         return null;
     }
 
-    const events = await Event.find({ 'attendees.userId': user._id });
+    const events = await Event.find({ 
+        organizerId: user._id, 
+        isExternal: false 
+    });
 
     const calendar = ical({ 
         name: `${user.fullName} Naptára`,

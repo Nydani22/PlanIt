@@ -180,7 +180,7 @@ exports.generateICalStringByToken = async (token) => {
     });
 
     events.forEach(item => {
-        const eventUid = item.isExternal && item.externalUid ? item.externalUid : item._id.toString();
+        const eventUid = item.isExternal && item.uid ? item.uid : item._id.toString();
 
         const calEvent = calendar.createEvent({
             id: eventUid,

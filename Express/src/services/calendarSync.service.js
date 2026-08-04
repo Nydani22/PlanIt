@@ -8,11 +8,31 @@ async function syncExternalCalendar(userId, calendarUrl) {
         const incomingUids = [];
         const bulkOps = [];
 
+        const allIncomingUids = [];
+        for (const key in events) {
+            if (events[key].type === 'VEVENT') {
+                allIncomingUids.push(events[key].uid);
+            }
+        }
+
+        const potentialInternalIds = allIncomingUids.filter(uid => mongoose.Types.ObjectId.isValid(uid));
+        
+        const existingInternalEvents = await Event.find({
+            _id: { $in: potentialInternalIds },
+            isExternal: false
+        }).select('_id');
+        
+        const internalEventIdSet = new Set(existingInternalEvents.map(e => e._id.toString()));
+
         for (const key in events) {
             const event = events[key];
             
             if (event.type === 'VEVENT') {
                 const uid = event.uid;
+                if (internalEventIdSet.has(uid)) {
+                    continue;
+                }
+
                 incomingUids.push(uid);
 
                 const isAllDay = event.datetype === 'date';
@@ -33,7 +53,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
                 const eventData = {
                     organizerId: userId,
-                    uid: uid,
+                    externalUid: uid,
                     eventName: event.summary || 'Névtelen esemény',
                     fromDate: fromDate,
                     toDate: adjustedToDate,
@@ -57,7 +77,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
                 bulkOps.push({
                     updateOne: {
-                        filter: { organizerId: userId, uid: uid },
+                        filter: { organizerId: userId, externalUid: uid },
                         update: { $set: eventData },
                         upsert: true
                     }
@@ -71,7 +91,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
                     filter: {
                         organizerId: userId,
                         isExternal: true,
-                        uid: { $nin: incomingUids }
+                        externalUid: { $nin: incomingUids }
                     }
                 }
             });

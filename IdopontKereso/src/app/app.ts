@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, HostListener } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Navbar } from './components/navbar/navbar';
@@ -15,13 +15,19 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { GroupStateService } from './services/groupstate/groupstate.service';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
+    CommonModule,
     RouterOutlet, 
-    Navbar, 
+    Navbar,
     MatSidenavModule, 
     MatDialogModule,
     MatIcon,
@@ -29,7 +35,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatDatepickerModule,
     MatNativeDateModule,
     MatSlideToggleModule,
-    MatTooltipModule  
+    MatTooltipModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'
@@ -42,6 +51,9 @@ export class App implements OnInit {
   private snackbarService = inject(SnackbarService);
   calendarRefreshService = inject(CalendarRefreshService);
   isSidebarOpen = signal<boolean>(this.getInitialSidebarState());
+  isGroupsRoute = signal<boolean>(false);
+  isMobile = signal<boolean>(false);
+  groupState = inject(GroupStateService);
   private previousUrl: string = '';
 
   constructor() {
@@ -59,14 +71,26 @@ export class App implements OnInit {
     });
   }
 
+  
+
   ngOnInit() {
+    this.checkScreenSize();
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       const currentUrl = event.urlAfterRedirects || event.url;
       this.checkRoute(currentUrl);
       this.previousUrl = currentUrl; 
+      
+      this.isGroupsRoute.set(currentUrl.includes('/groups'));
     });
+  }
+
+  @HostListener('window:resize')
+  checkScreenSize() {
+    if (typeof window !== 'undefined') {
+      this.isMobile.set(window.innerWidth < 768); 
+    }
   }
 
   private checkRoute(url: string) {

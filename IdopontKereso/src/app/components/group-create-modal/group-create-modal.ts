@@ -41,11 +41,8 @@ export class GroupCreateModalComponent implements OnInit {
   
   public data = inject<GroupDialogData>(MAT_DIALOG_DATA, { optional: true });
 
-  basicFormGroup: FormGroup = this.fb.group({
-    groupName: ['', [Validators.required, Validators.minLength(3)]]
-  });
-
-  detailsFormGroup: FormGroup = this.fb.group({
+  groupForm: FormGroup = this.fb.group({
+    groupName: ['', [Validators.required, Validators.minLength(3)]],
     description: ['']
   });
 
@@ -55,23 +52,21 @@ export class GroupCreateModalComponent implements OnInit {
   ngOnInit() {
     if (this.data && this.data.group) {
       this.isEditMode.set(true);
-      this.basicFormGroup.patchValue({
-        groupName: this.data.group.groupName
-      });
-      this.detailsFormGroup.patchValue({
+      this.groupForm.patchValue({
+        groupName: this.data.group.groupName,
         description: this.data.group.description || ''
       });
     }
   }
 
   onSubmit() {
-    if (this.basicFormGroup.invalid) return;
+    if (this.groupForm.invalid) return;
 
     this.isSubmitting.set(true); 
     
     const groupData: Partial<Group> = {
-      groupName: this.basicFormGroup.value.groupName,
-      description: this.detailsFormGroup.value.description
+      groupName: this.groupForm.value.groupName,
+      description: this.groupForm.value.description
     };
 
     if (this.isEditMode() && this.data?.group?._id) {

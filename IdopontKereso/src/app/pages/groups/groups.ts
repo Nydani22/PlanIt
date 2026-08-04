@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dialog';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { GroupStateService } from '../../services/groupstate/groupstate.service';
 
 @Component({
   selector: 'app-groups',
@@ -41,29 +43,34 @@ export class Groups implements OnInit {
   private authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private snackbarService = inject(SnackbarService);
+  groupState = inject(GroupStateService);
+  private destroyRef = inject(DestroyRef);
 
-  myGroups = signal<Group[]>([]);
-  selectedGroupId = signal<string>('');
   group = signal<Group | null>(null);
   isAdmin = signal<boolean>(false);
-  isLoading = signal<boolean>(true);
   searchQuery = signal<string>('');
-  groupSearchQuery = signal<string>('');
   currentUserId: string = ''; 
+
+  constructor() {
+    effect(() => {
+      const id = this.groupState.selectedGroupId();
+      if (id) {
+        this.loadGroupDetails(id);
+      } else {
+        this.group.set(null);
+      }
+    });
+
+    this.groupState.openCreateModal$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.openCreateModal());
+  }
 
   ngOnInit(): void {
     this.currentUserId = this.authService.getCurrentUserId(); 
-    this.loadAllGroups();
+    this.groupState.loadGroups();
   }
 
-  filteredGroups = computed(() => {
-    const query = this.groupSearchQuery().toLowerCase().trim();
-    if (!query) return this.myGroups();
-    
-    return this.myGroups().filter(g => 
-      g.groupName.toLowerCase().includes(query)
-    );
-  });
 
   filteredMembers = computed(() => {
     const currentGroup = this.group();
@@ -78,25 +85,6 @@ export class Groups implements OnInit {
     });
   });
 
-  loadAllGroups() {
-    this.isLoading.set(true);
-    this.groupService.getGroups().subscribe({
-      next: (data) => {
-        this.myGroups.set(data);
-        this.isLoading.set(false);
-        
-        if (this.myGroups().length > 0) {
-          this.onGroupSelect(this.myGroups()[0]._id);
-        }
-      },
-      error: (err) => {
-        console.error('Hiba a csoportok lekérésekor', err);
-        this.isLoading.set(false);
-        this.snackbarService.showError('Nem sikerült betölteni a csoportokat.');
-      }
-    });
-  }
-
   isOwner(): boolean {
     const currentGroup = this.group();
     if (!currentGroup || !this.currentUserId) return false;
@@ -105,10 +93,6 @@ export class Groups implements OnInit {
     return me?.role === 'OWNER';
   }
 
-  onGroupSelect(groupId: string) {
-    this.selectedGroupId.set(groupId);
-    this.loadGroupDetails(groupId);
-  }
 
   editGroup() {
     const currentGroup = this.group();
@@ -125,7 +109,7 @@ export class Groups implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.loadAllGroups(); 
+        this.groupState.loadGroups();
         this.loadGroupDetails(currentGroup._id);
         this.snackbarService.showSuccess('A csoport sikeresen frissítve!');
       }
@@ -133,7 +117,7 @@ export class Groups implements OnInit {
   }
 
   copyInviteLink() {
-    const groupId = this.selectedGroupId();
+    const groupId = this.groupState.selectedGroupId();
     if (!groupId) return;
 
     this.groupService.generateInvite(groupId).subscribe({
@@ -169,7 +153,7 @@ export class Groups implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.loadAllGroups();
+        this.groupState.loadGroups();
       }
     });
   }
@@ -179,9 +163,7 @@ export class Groups implements OnInit {
     this.groupService.getGroupById(groupId).subscribe({
       next: (data) => {
         this.group.set(data);
-        const currentUserMember = this.group()?.members.find(
-          (m: GroupMember) => m.userId._id === this.currentUserId
-        );
+        const currentUserMember = this.group()?.members.find(m => m.userId._id === this.currentUserId);
         this.isAdmin.set(currentUserMember?.role === 'ADMIN');
       },
       error: (err) => {
@@ -194,7 +176,7 @@ export class Groups implements OnInit {
   updateRole(memberId: string, newRole: string) {
     if (!this.isOwner()) return; 
     
-    this.groupService.updateMemberRole(this.selectedGroupId(), memberId, newRole).subscribe({
+    this.groupService.updateMemberRole(this.groupState.selectedGroupId(), memberId, newRole).subscribe({
       next: () => {
         this.snackbarService.showSuccess('Jogosultság sikeresen módosítva!');
       },
@@ -224,9 +206,9 @@ export class Groups implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
-        this.groupService.removeMember(this.selectedGroupId(), memberId).subscribe({
+        this.groupService.removeMember(this.groupState.selectedGroupId(), memberId).subscribe({
           next: () => {
-            this.loadGroupDetails(this.selectedGroupId());
+            this.groupState.loadGroups();
             this.snackbarService.showSuccess('Tag sikeresen eltávolítva!');
           }, 
           error: (err) => {
@@ -255,10 +237,10 @@ export class Groups implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
-        this.groupService.removeMember(this.selectedGroupId(), this.currentUserId).subscribe({
+        this.groupService.removeMember(this.groupState.selectedGroupId(), this.currentUserId).subscribe({
           next: () => {
             this.group.set(null);
-            this.loadAllGroups();
+            this.groupState.loadGroups();
             this.snackbarService.showSuccess('Sikeresen kiléptél a csoportból!');
           },
           error: (err) => {
@@ -293,10 +275,10 @@ export class Groups implements OnInit {
       if (result === null) return;
 
       if (result === currentGroup.groupName) {
-        this.groupService.deleteGroup(this.selectedGroupId()).subscribe({
+        this.groupService.deleteGroup(this.groupState.selectedGroupId()).subscribe({
           next: () => {
             this.group.set(null);
-            this.loadAllGroups();
+            this.groupState.loadGroups();
             this.snackbarService.showSuccess('Csoport sikeresen törölve!');
           },
           error: (err) => {

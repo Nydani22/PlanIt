@@ -6,56 +6,85 @@
     
     <mat-sidenav 
       #sidenav 
-      mode="side" 
+      [mode]="isMobile() ? 'over' : 'side'" 
       [opened]="isSidebarOpen()" 
       (openedChange)="isSidebarOpen.set($event)">
       
-      <div class="flex flex-col h-full p-4">
+      <div class="flex flex-col h-full p-4 overflow-hidden">
         
-        <div class="flex flex-col gap-4">
-          <button
-            (click)="openEventDialog()"
-            class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
-            <mat-icon>add</mat-icon>
-            <span class="flex-1 text-center px-2">Hozzáadás</span>
-          </button>
-          
-          <button
-            (click)="navigateToFindTime()"
-            class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
-            <mat-icon>search</mat-icon>
-            <span class="flex-1 text-center px-2">Keresés</span>
-          </button>
-        </div>
+        @if (!isGroupsRoute()) {
+          <div class="flex flex-col gap-4">
+            <button (click)="openEventDialog()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
+              <mat-icon>add</mat-icon>
+              <span class="flex-1 text-center px-2">Hozzáadás</span>
+            </button>
+            
+            <button (click)="navigateToFindTime()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
+              <mat-icon>search</mat-icon>
+              <span class="flex-1 text-center px-2">Keresés</span>
+            </button>
+          </div>
 
-        <div class="my-auto mb-auto bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-none rounded-xl overflow-hidden p-1 shadow-inner transform origin-top -mb-4">
-          <mat-calendar 
-            class="text-gray-800 dark:text-gray-100"
-            [selected]="calendarRefreshService.selectedDate()" 
-            (selectedChange)="onDateSelected($event)">
-          </mat-calendar>
-        </div>
-        
-        <div class="pt-4 border-t border-gray-300 dark:border-gray-600/50 mt-4 shrink-0 flex items-center gap-1.5">
-
-          <mat-slide-toggle 
-              class="instant-toggle"
-              [checked]="calendarRefreshService.interactionsEnabled()" 
-              (change)="calendarRefreshService.interactionsEnabled.set($event.checked)"
-              color="primary" class="preload-transitions">
-            <span class="text-gray-800 dark:text-gray-200 text-sm font-medium">Naptár interakciók</span>
-          </mat-slide-toggle>
+          <div class="my-auto mb-auto bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-none rounded-xl overflow-hidden p-1 shadow-inner transform origin-top -mb-4">
+            <mat-calendar 
+              class="text-gray-800 dark:text-gray-100"
+              [selected]="calendarRefreshService.selectedDate()" 
+              (selectedChange)="onDateSelected($event)">
+            </mat-calendar>
+          </div>
           
-          <mat-icon 
-            class="text-gray-500 dark:text-gray-400 text-[18px] w-[18px] h-[18px] cursor-pointer"
-            matTooltip="Kikapcsolva megakadályozza a véletlen esemény létrehozást és áthelyezést.">
-            info
-          </mat-icon>
-        </div>
+          <div class="pt-4 border-t border-gray-300 dark:border-gray-600/50 mt-4 shrink-0 flex items-center gap-1.5">
+            <mat-slide-toggle 
+                class="instant-toggle preload-transitions"
+                [checked]="calendarRefreshService.interactionsEnabled()" 
+                (change)="calendarRefreshService.interactionsEnabled.set($event.checked)"
+                color="primary">
+              <span class="text-gray-800 dark:text-gray-200 text-sm font-medium">Naptár interakciók</span>
+            </mat-slide-toggle>
+            <mat-icon class="text-gray-500 dark:text-gray-400 text-[18px] w-[18px] h-[18px] cursor-pointer" matTooltip="Kikapcsolva megakadályozza a véletlen esemény létrehozást és áthelyezést.">info</mat-icon>
+          </div>
+        } @else {
+          <div class="flex flex-col h-full">
+            
+            <div class="flex justify-between items-center mb-4 shrink-0">
+              <h2 class="text-lg font-bold m-0 text-gray-800 dark:text-gray-100">Csoportjaim</h2>
+              <button mat-icon-button color="primary" (click)="groupState.triggerCreateModal()" class="w-8 h-8 flex items-center justify-center leading-none" title="Új csoport">
+                <mat-icon>add_circle</mat-icon>
+              </button>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-full mb-2 shrink-0" subscriptSizing="dynamic">
+              <mat-icon matPrefix class="text-gray-400 dark:text-gray-500 mr-2">search</mat-icon>
+              <input matInput placeholder="Csoport keresése..." 
+                     [ngModel]="groupState.searchQuery()" 
+                     (ngModelChange)="groupState.searchQuery.set($event)">
+              @if (groupState.searchQuery()) {
+                <button mat-icon-button matSuffix (click)="groupState.searchQuery.set('')">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </mat-form-field>
+
+            <div class="flex flex-col gap-2 overflow-y-auto pr-1 flex-1 pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+              @for (g of groupState.filteredGroups(); track g._id) {
+                <div class="p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 shrink-0"
+                     (click)="groupState.selectedGroupId.set(g._id)"
+                     [ngClass]="{
+                       'border-[var(--app-primary-color)] text-[var(--app-primary-color)] bg-gray-50 dark:bg-gray-800/50': groupState.selectedGroupId() === g._id,
+                       'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': groupState.selectedGroupId() !== g._id
+                     }">
+                  <p class="font-bold m-0 text-sm truncate">{{ g.groupName }}</p>
+                </div>
+              }
+            </div>
+
+          </div>
+        }
+
       </div>
     </mat-sidenav>
 
-    <mat-sidenav-content class="flex flex-col overflow-auto">
+    <mat-sidenav-content class="flex flex-col overflow-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
       <main class="flex-1 w-full h-full">
           <router-outlet />
       </main>

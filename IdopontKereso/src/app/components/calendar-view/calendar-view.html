@@ -121,7 +121,7 @@
         [class.cal-weekend]="day.isWeekend"
         mwlDroppable
         dragOverClass="cal-drag-over"
-        (drop)="eventDropped.emit({event: $event.dropData?.event, newStart: day.date, dropData: $event.dropData})"
+        (drop)="eventDropped.emit({event: $safeNavigationMigration($event.dropData?.event), newStart: day.date, dropData: $event.dropData})"
         (click)="dayClicked.emit({date: day.date})">
         
         <b class="hidden md:block uppercase">{{ day.date | date:'EEEE':'':'hu' }}</b>

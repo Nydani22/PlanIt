@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { UserService } from '../../services/user/user.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -31,6 +31,7 @@ export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   standalone: true,
   imports: [ReactiveFormsModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, CommonModule],
   templateUrl: './profil.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './profil.scss',
 })
 

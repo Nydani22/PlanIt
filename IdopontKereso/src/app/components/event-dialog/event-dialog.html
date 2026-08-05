@@ -40,7 +40,7 @@
                   </button>
                 }
 
-                <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('basicDetails')?.invalid" class="h-10 min-w-[120px]">
+                <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="$safeNavigationMigration(eventForm.get('basicDetails')?.invalid)" class="h-10 min-w-[120px]">
                   Tovább
                 </button>
               </div>
@@ -97,7 +97,7 @@
                 </button>
               }
 
-              <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('categoryDetails')?.invalid" class="h-10 min-w-[120px]">
+              <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="$safeNavigationMigration(eventForm.get('categoryDetails')?.invalid)" class="h-10 min-w-[120px]">
                 Tovább
               </button>
             </div>
@@ -151,7 +151,7 @@
                   </button>
                 }
 
-                <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('recurrenceDetails')?.invalid" class="h-10 min-w-[120px]">
+                <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="$safeNavigationMigration(eventForm.get('recurrenceDetails')?.invalid)" class="h-10 min-w-[120px]">
                     Tovább
                 </button>
               </div>
@@ -231,7 +231,7 @@
                       </button>
                     }
 
-                    <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="eventForm.get('timeDetails')?.invalid" class="h-10 min-w-[120px]">Tovább</button>
+                    <button mat-flat-button color="primary" matStepperNext type="button" [disabled]="$safeNavigationMigration(eventForm.get('timeDetails')?.invalid)" class="h-10 min-w-[120px]">Tovább</button>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../../services/event/event.service';
@@ -29,6 +29,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatDatepickerModule, MatNativeDateModule,
     MatCheckboxModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatSlideToggleModule],
   templateUrl: './find-time.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./find-time.scss']
 })
 export class FindTime implements OnInit, OnDestroy {

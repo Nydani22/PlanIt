@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, ViewChild, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CalendarViewComponent } from "../../components/calendar-view/calendar-view";
 import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-refresh.service';
 import { Subscription } from 'rxjs';
@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [CalendarViewComponent],
   templateUrl: './home.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
 })
 export class Home implements OnInit, OnDestroy {

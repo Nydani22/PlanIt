@@ -1,5 +1,5 @@
 import { CommonModule, registerLocaleData } from '@angular/common';
-import { Component, OnInit, inject, LOCALE_ID, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, LOCALE_ID, signal, effect, ChangeDetectionStrategy } from '@angular/core';
 import localeHu from '@angular/common/locales/hu';
 import { CalendarModule, CalendarEvent, CalendarView, CalendarEventTimesChangedEvent, CalendarDateFormatter } from 'angular-calendar';
 import { MatDialog } from '@angular/material/dialog';
@@ -35,6 +35,7 @@ const VIEW_MAP: Record<UserSettings['defaultView'], CalendarView> = {
     }
   ],
   templateUrl: './calendar-view.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './calendar-view.scss'
 })
 export class CalendarViewComponent implements OnInit {

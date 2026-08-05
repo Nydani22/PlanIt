@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog'; 
 import { MatStepperModule } from '@angular/material/stepper';
@@ -81,6 +81,7 @@ export const dateRangeValidator: ValidatorFn = (control: AbstractControl): Valid
 ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './event-dialog.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./event-dialog.scss']
 })
 export class EventDialogComponent implements OnInit {

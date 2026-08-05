@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { AuthInterceptor } from './services/auth/auth.interceptor';
 import { AuthService } from './services/auth/auth.service';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
@@ -15,7 +15,7 @@ function initializeApp(authService: AuthService) {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(withInterceptors([AuthInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([AuthInterceptor])),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,

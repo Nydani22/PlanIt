@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, effect, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,6 +36,7 @@ import { GroupStateService } from '../../services/groupstate/groupstate.service'
     MatFormFieldModule
   ],
   templateUrl: './groups.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './groups.scss',
 })
 export class Groups implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { GroupService } from '../../services/group/group.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,7 @@ import { SnackbarService } from '../../services/snackbar/snackbar.service';
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, RouterLink],
   templateUrl: './join.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './join.scss',
 })
 export class Join implements OnInit {

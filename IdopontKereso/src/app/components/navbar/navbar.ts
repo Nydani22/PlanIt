@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ import { NotificationService } from '../../services/notification/notification.se
     MatBadgeModule
   ],
   templateUrl: './navbar.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './navbar.scss',
 })
 export class Navbar implements OnInit {

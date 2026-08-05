@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -30,6 +30,7 @@ export interface GroupDialogData {
     MatIconModule
   ],
   templateUrl: './group-create-modal.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './group-create-modal.scss'
 })
 export class GroupCreateModalComponent implements OnInit {

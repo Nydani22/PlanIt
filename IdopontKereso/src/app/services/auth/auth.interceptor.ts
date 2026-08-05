@@ -2,6 +2,7 @@ import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { catchError, EMPTY, switchMap, throwError } from 'rxjs';
+import { AuthResponse } from '../../models/auth.model';
 
 
 export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
@@ -24,13 +25,12 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
     if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
       
       return authService.refreshToken().pipe(
-        switchMap((res: any) => {
+        switchMap((res: AuthResponse) => {
           
           if (res && res.accessToken) {
             const retryReq = req.clone({
               setHeaders: { Authorization: `Bearer ${res.accessToken}` }
-            });
-          
+            });            
             return next(retryReq);
           }
           

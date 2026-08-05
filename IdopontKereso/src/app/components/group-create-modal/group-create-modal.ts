@@ -72,7 +72,7 @@ export class GroupCreateModalComponent implements OnInit {
 
     if (this.isEditMode() && this.data?.group?._id) {
       this.groupService.updateGroup(this.data.group._id, groupData).subscribe({
-        next: (updatedGroup) => {
+        next: () => {
           this.isSubmitting.set(false);
           this.dialogRef.close(true);
         },
@@ -83,7 +83,7 @@ export class GroupCreateModalComponent implements OnInit {
       });
     } else {
       this.groupService.createGroup(groupData).subscribe({
-        next: (createdGroup) => {
+        next: (createdGroup: Group) => {
           this.groupService.generateInvite(createdGroup._id!).subscribe({
             next: (response) => {
               this.isSubmitting.set(false);

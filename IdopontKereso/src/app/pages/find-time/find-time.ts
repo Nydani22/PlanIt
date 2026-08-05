@@ -3,8 +3,8 @@ import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../../services/event/event.service';
 import { GroupService } from '../../services/group/group.service'; 
-import { TimeSearchParams, TimeSlot } from '../../models/findtime.model';
-import { Group } from '../../models/group.model';
+import { TimeSearchParams, TimeSearchResponse, TimeSlot } from '../../models/findtime.model';
+import { Group, GroupMember } from '../../models/group.model';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,7 +20,12 @@ import { AppEvent, Attendee } from '../../models/event.model';
 import { MatDialog } from '@angular/material/dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { HttpErrorResponse } from '@angular/common/http';
 
+export interface GroupMemberViewItem {
+  id: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-find-time',
@@ -73,7 +78,7 @@ export class FindTime implements OnInit, OnDestroy {
     allowedDays: [1, 2, 3, 4, 5]
   };
 
-  selectedGroupMembers = signal<any[]>([]);
+  selectedGroupMembers = signal<GroupMemberViewItem[]>([]);
   bufferType: 'symmetric' | 'before' | 'after' | 'custom' = 'symmetric';
   sharedBufferMinutes: number = 0;
   durationUnit: 'minutes' | 'hours' | 'days' = 'minutes';
@@ -94,9 +99,9 @@ export class FindTime implements OnInit, OnDestroy {
 
   loadUserGroups() {
     this.groupService.getGroups().subscribe({
-      next: (groupsData) => {
+      next: (groupsData: Group[]) => {
         const filteredGroups = groupsData.filter(group => {
-          const currentUserInGroup = group.members.find((member: any) => {
+          const currentUserInGroup = group.members.find((member: GroupMember) => {
             const memberId = typeof member.userId === 'object' && member.userId !== null 
               ? member.userId._id 
               : member.userId;
@@ -113,10 +118,9 @@ export class FindTime implements OnInit, OnDestroy {
           const selectedGroup = filteredGroups.find(g => g._id === currentGroupId);
           
           if (selectedGroup && selectedGroup.members) {
-            const membersList = selectedGroup.members.map((member: any) => {
+            const membersList = selectedGroup.members.map((member: GroupMember) => {
               const id = typeof member.userId === 'object' && member.userId !== null 
-                ? member.userId._id 
-                : member.userId;
+                ? member.userId._id : (member.userId as unknown as string);
               
               const name = typeof member.userId === 'object' && member.userId !== null 
                 ? (member.userId.fullName || member.userId.userName || 'Ismeretlen felhasználó') 
@@ -129,7 +133,7 @@ export class FindTime implements OnInit, OnDestroy {
           }
         }
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Hiba a csoportok betöltésekor', err);
         this.errorMessage.set('Hiba történt a csoportok betöltésekor.');
       }
@@ -203,7 +207,7 @@ export class FindTime implements OnInit, OnDestroy {
     const selectedGroup = this.groups().find(g => g._id === groupId);
     
     if (selectedGroup && selectedGroup.members) {
-      const membersList = selectedGroup.members.map((member: any) => {
+      const membersList = selectedGroup.members.map((member: GroupMember) => {
         const id = typeof member.userId === 'object' && member.userId !== null 
           ? member.userId._id 
           : member.userId;
@@ -216,7 +220,7 @@ export class FindTime implements OnInit, OnDestroy {
       });
 
       this.selectedGroupMembers.set(membersList);
-      this.searchParams.requiredAttendees = membersList.map((m: any) => m.id);
+      this.searchParams.requiredAttendees = membersList.map((m: GroupMemberViewItem) => m.id);
       this.searchParams.optionalAttendees = []; 
     } else {
       this.selectedGroupMembers.set([]);
@@ -321,7 +325,7 @@ export class FindTime implements OnInit, OnDestroy {
     };
 
     this.eventService.findAvailableTimeSlots(paramsToSubmit).subscribe({
-      next: (response) => {
+      next: (response: TimeSearchResponse) => {
         if (response.success) {
           this.availableSlots.set(response.data); 
         } else {

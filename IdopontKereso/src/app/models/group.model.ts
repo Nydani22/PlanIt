@@ -21,3 +21,10 @@ export interface Group {
   createdAt?: string; 
   updatedAt?: string;
 }
+
+
+export interface GroupInviteInfo {
+  _id: string;
+  groupName: string;
+  description: string;
+}

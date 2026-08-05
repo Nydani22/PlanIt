@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { tap, catchError, filter, take } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
+import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,7 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/api/auth`;
   private http = inject(HttpClient);
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private refreshTokenSubject = new BehaviorSubject<AuthResponse | null>(null);
   
   private platformId = inject(PLATFORM_ID);
 
@@ -31,7 +32,7 @@ export class AuthService {
     }
   }
   
-  initAuth(): Promise<any> {
+  initAuth(): Promise<boolean> {
     return new Promise((resolve) => {
       const token = this.getToken();
       
@@ -57,9 +58,9 @@ export class AuthService {
     });
   }
 
-  register(userData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, userData).pipe(
-      tap((res: any) => {
+  register(userData: RegisterData): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData).pipe(
+      tap((res: AuthResponse) => {
         if (res && res.accessToken) {
           this.setToken(res.accessToken);
         }
@@ -67,27 +68,27 @@ export class AuthService {
     );
   }
 
-  login(credentials: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credentials, { withCredentials: true }).pipe(
-      tap((res: any) => {
+  login(credentials: LoginCredentials): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials, { withCredentials: true }).pipe(
+      tap((res: AuthResponse) => {
         this.setToken(res.accessToken);
       })
     );
   }
 
-  refreshToken(): Observable<any> {
+  refreshToken(): Observable<AuthResponse> {
     if (this.isRefreshing) {
       return this.refreshTokenSubject.pipe(
         filter(token => token !== null),
         take(1)
-      );
+      ) as Observable<AuthResponse>;
     }
 
     this.isRefreshing = true;
     this.refreshTokenSubject.next(null);
 
-    return this.http.post(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
-      tap((res: any) => {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
+      tap((res: AuthResponse) => {
         this.isRefreshing = false;
         this.setToken(res.accessToken);
         this.refreshTokenSubject.next(res);
@@ -134,17 +135,17 @@ export class AuthService {
   }
 
   logout(): void {
-  if (isPlatformBrowser(this.platformId)) {
-    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
-      next: () => {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      },
-      error: () => {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      }
-    });
+    if (isPlatformBrowser(this.platformId)) {
+      this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
+        next: () => {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        },
+        error: () => {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+      });
+    }
   }
-}
 }

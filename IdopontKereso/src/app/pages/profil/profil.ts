@@ -15,6 +15,7 @@ import { environment } from '../../../environments/environment';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
 import { MatDialog } from '@angular/material/dialog';
+import { TokenResponse, User } from '../../models/user.model';
 
 export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -102,7 +103,7 @@ export class Profil implements OnInit {
     dialogRef.afterClosed().subscribe((isConfirmed: boolean) => {
       if (isConfirmed) {
         this.userService.regenerateCalendarToken().subscribe({
-          next: (response) => {
+          next: (response: TokenResponse) => {
             if (response.success) {
               const newFeedUrl = `${environment.apiUrl}/api/events/feed/${response.token}`;
               
@@ -153,7 +154,7 @@ export class Profil implements OnInit {
     }
 
     this.userService.getCurrentUser().subscribe({
-      next: (user) => {
+      next: (user: User) => {
         
         const feedUrl = user.calendarFeedToken 
           ? `${environment.apiUrl}/api/events/feed/${user.calendarFeedToken}` 

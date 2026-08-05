@@ -8,6 +8,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { NotificationService } from '../../services/notification/notification.service';
+import { AuthResponse } from '../../models/auth.model';
 
 
 const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -78,11 +79,11 @@ export class Signup {
       this.errorMessage.set('');
       
       this.authService.register(userData).subscribe({
-        next: (response: any) => {
+        next: (response: AuthResponse) => {
           this.snackbarService.showSuccess('Sikeres regisztráció!');
           
-          if (response.token) {
-            this.authService.setToken(response.token);
+          if (response.accessToken) {
+            this.authService.setToken(response.accessToken);
           }
           this.notificationService.initNotifications();
           

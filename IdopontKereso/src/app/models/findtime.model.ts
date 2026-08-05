@@ -15,7 +15,7 @@ export interface TimeSearchParams {
 export interface TimeSlot {
   start: string | Date;
   end: string | Date;
-  score?: number;
+  availableOptionalCount?: number;
 }
 
 export interface TimeSearchResponse {

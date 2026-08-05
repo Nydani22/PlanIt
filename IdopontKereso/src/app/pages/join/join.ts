@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth/auth.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { GroupInviteInfo, Group, GroupMember} from '../../models/group.model';
 
 @Component({
   selector: 'app-join',
@@ -45,13 +47,18 @@ export class Join implements OnInit {
     }
 
     this.groupService.getInviteInfo(this.token).subscribe({
-      next: (groupInfo: any) => {
+      next: (groupInfo: GroupInviteInfo) => {
         if (userId && groupInfo && groupInfo._id) {
+          
           this.groupService.getGroupById(groupInfo._id).subscribe({
-            next: (group: any) => {
-              const isMember = group.members.some((m: any) => 
-                (m.userId._id || m.userId) === userId
-              );
+            next: (group: Group) => {
+              
+              const isMember = group.members.some((m: GroupMember) => {
+                const memberUserId = typeof m.userId === 'string' ? m.userId : m.userId?._id;
+                return memberUserId === userId;
+                
+              });
+              
               this.isAlreadyMember.set(isMember);
               this.isCheckingStatus.set(false);
             },
@@ -60,11 +67,12 @@ export class Join implements OnInit {
               this.isCheckingStatus.set(false);
             }
           });
+          
         } else {
           this.isCheckingStatus.set(false);
         }
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         if (err.status === 404) {
           this.errorMessage = 'Sajnos a meghívó érvénytelen, lejárt, vagy már felhasználták.';
         } else {

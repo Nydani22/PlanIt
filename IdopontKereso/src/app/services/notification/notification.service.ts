@@ -1,8 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { io, Socket } from 'socket.io-client';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../../environments/environment';
+import { Notification } from '../../models/notification.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,7 @@ export class NotificationService {
   private socket: Socket | null = null;
   private apiUrl = `${environment.apiUrl}/api/notifications`;
   
-  notifications = signal<any[]>([]);
+  notifications = signal<Notification[]>([]);
   unreadCount = signal<number>(0);
 
   
@@ -30,7 +31,7 @@ export class NotificationService {
         this.socket?.emit('authenticate', userId);
       });
 
-      this.socket.on('newNotification', (newNotif: any) => {
+      this.socket.on('newNotification', (newNotif: Notification) => {
         this.notifications.update(current => [newNotif, ...current]);
         this.unreadCount.update(count => count + 1);
       });
@@ -38,12 +39,12 @@ export class NotificationService {
   }
 
   private loadInitialNotifications() {
-    this.http.get<any[]>(this.apiUrl, { withCredentials: true }).subscribe({
-      next: (data) => {
+    this.http.get<Notification[]>(this.apiUrl, { withCredentials: true }).subscribe({
+      next: (data: Notification[]) => {
         this.notifications.set(data);
         this.unreadCount.set(data.filter(n => !n.isRead).length);
       },
-      error: (err) => console.error('Hiba az értesítések lekérésekor', err)
+      error: (err: HttpErrorResponse) => console.error('Hiba az értesítések lekérésekor', err)
     });
   }
 

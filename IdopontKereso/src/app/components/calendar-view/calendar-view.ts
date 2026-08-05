@@ -9,7 +9,7 @@ import { EventService } from '../../services/event/event.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { UserService } from '../../services/user/user.service';
 import { AppEvent } from '../../models/event.model';
-import { UserSettings } from '../../models/user.model';
+import { User, UserSettings } from '../../models/user.model';
 import { CustomDateFormatter } from './custom-date-formatter.provider';
 import { EventDialogComponent } from '../event-dialog/event-dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
@@ -110,7 +110,7 @@ export class CalendarViewComponent implements OnInit {
     }
 
     this.userService.getCurrentUser().subscribe({
-      next: (user) => {
+      next: (user: User) => {
         const settings = user.settings;
         if (!settings) {
           return;

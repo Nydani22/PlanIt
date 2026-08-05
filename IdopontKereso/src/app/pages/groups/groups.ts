@@ -19,6 +19,7 @@ import { PromptDialogComponent } from '../../components/prompt-dialog/prompt-dia
 import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GroupStateService } from '../../services/groupstate/groupstate.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-groups',
@@ -162,12 +163,12 @@ export class Groups implements OnInit {
   loadGroupDetails(groupId: string) {
     this.searchQuery.set('');
     this.groupService.getGroupById(groupId).subscribe({
-      next: (data) => {
+      next: (data: Group) => {
         this.group.set(data);
         const currentUserMember = this.group()?.members.find(m => m.userId._id === this.currentUserId);
         this.isAdmin.set(currentUserMember?.role === 'ADMIN');
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Hiba a csoport betöltésekor', err);
         this.snackbarService.showError('Hiba történt a csoport adatainak lekérésekor.');
       }

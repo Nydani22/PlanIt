@@ -1,5 +1,4 @@
 export interface UserSettings {
-  // timezone: string;
   defaultView: 'month' | 'week' | 'day';
   dayStartHour: number;
   dayEndHour: number;
@@ -18,4 +17,10 @@ export interface User {
   settings: UserSettings;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface TokenResponse {
+  success: boolean;
+  message: string;
+  token: string;
 }

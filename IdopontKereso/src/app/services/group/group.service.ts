@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Group } from '../../models/group.model';
+import { Group, GroupInviteInfo } from '../../models/group.model';
 import { environment } from '../../../environments/environment';
+
 
 @Injectable({
   providedIn: 'root'
@@ -43,8 +44,8 @@ export class GroupService {
     return this.http.post<{ token: string }>(`${this.apiUrl}/${groupId}/invites`, {});
   }
 
-  getInviteInfo(token: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/invites/${token}`);
+  getInviteInfo(token: string): Observable<GroupInviteInfo> {
+    return this.http.get<GroupInviteInfo>(`${this.apiUrl}/invites/${token}`);
   }
 
   joinWithInvite(token: string) {

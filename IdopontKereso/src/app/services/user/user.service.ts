@@ -1,14 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User } from '../../models/user.model';
+import { User, TokenResponse } from '../../models/user.model';
 import { environment } from '../../../environments/environment';
 
-export interface TokenResponse {
-  success: boolean;
-  message: string;
-  token: string;
-}
 
 @Injectable({
   providedIn: 'root',

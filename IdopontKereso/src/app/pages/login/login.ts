@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { NotificationService } from '../../services/notification/notification.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import { AuthResponse } from '../../models/auth.model';
 
 @Component({
   selector: 'app-login',
@@ -65,28 +66,30 @@ export class Login implements OnInit {
     this.isLoading.set(true);
 
     this.authService.login(this.loginForm.value)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response: any) => {
-          this.isLoading.set(false);
-          this.authService.setToken(response.token);
-          this.notificationService.initNotifications();
-          
-          const redirectUrl = localStorage.getItem('redirectAfterLogin');
-          
-          if (redirectUrl) {
-            localStorage.removeItem('redirectAfterLogin');
-            this.router.navigateByUrl(redirectUrl);
-          } else {
-            this.router.navigate(['/']);
-          }
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          console.error('Login hiba:', err);
-          this.errorMessage.set(err.error?.message || 'Sikertelen bejelentkezés.');
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe({
+      next: (response: AuthResponse) => {
+        this.isLoading.set(false);
+        
+        this.authService.setToken(response.accessToken);
+        
+        this.notificationService.initNotifications();
+        
+        const redirectUrl = localStorage.getItem('redirectAfterLogin');
+        
+        if (redirectUrl) {
+          localStorage.removeItem('redirectAfterLogin');
+          this.router.navigateByUrl(redirectUrl);
+        } else {
+          this.router.navigate(['/']);
         }
-      });
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        console.error('Login hiba:', err);
+        this.errorMessage.set(err.error?.message || 'Sikertelen bejelentkezés.');
+      }
+    });
   }
 
   

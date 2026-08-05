@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Group } from '../../models/group.model';
 import { GroupService } from '../group/group.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +30,7 @@ export class GroupStateService {
   loadGroups() {
     this.isLoading.set(true);
     this.groupService.getGroups().subscribe({
-      next: (data) => {
+      next: (data: Group[]) => {
         this.myGroups.set(data);
         this.isLoading.set(false);
         
@@ -43,7 +44,7 @@ export class GroupStateService {
           this.selectedGroupId.set('');
         }
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Hiba a csoportok lekérésekor', err);
         this.isLoading.set(false);
       }

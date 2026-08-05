@@ -21,13 +21,19 @@ async function syncExternalCalendar(userId, calendarUrl) {
             const event = events[key];
             
             if (event.type === 'VEVENT') {
-                const uid = event.uid;                
+                let uid = event.uid;
+                const APP_DOMAIN = 'useplanit.netlify.app';
+
+                if (uid && uid.includes(`@${APP_DOMAIN}`)) {
+                    uid = uid.split('@')[0]; 
+                }
+
                 incomingUids.push(uid);
 
                 if (internalIdSet.has(uid) || internalUidSet.has(uid)) {
                     continue;
                 }
-
+                
                 const isAllDay = event.datetype === 'date';
                 let fromDate = event.start;
                 let adjustedToDate = event.end || event.start;

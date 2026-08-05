@@ -179,8 +179,10 @@ exports.generateICalStringByToken = async (token) => {
         timezone: 'UTC'
     });
 
+    const APP_DOMAIN = 'useplanit.netlify.app';
+
     events.forEach(item => {
-        const eventUid = item.uid ? item.uid : item._id.toString();
+        const eventUid = item.uid ? item.uid : `${item._id.toString()}@${APP_DOMAIN}`;
 
         const calEvent = calendar.createEvent({
             id: eventUid,

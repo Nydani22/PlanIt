@@ -9,34 +9,26 @@ async function syncExternalCalendar(userId, calendarUrl) {
         const incomingUids = [];
         const bulkOps = [];
 
-        const allIncomingUids = [];
-        for (const key in events) {
-            if (events[key].type === 'VEVENT') {
-                allIncomingUids.push(events[key].uid);
-            }
-        }
-        const potentialInternalIds = allIncomingUids.filter(uid => mongoose.Types.ObjectId.isValid(uid));
-        
         const existingInternalEvents = await Event.find({
-            _id: { $in: potentialInternalIds },
+            organizerId: userId,
             isExternal: false
-        }).select('_id');
+        });
         
-        const internalEventIdSet = new Set(existingInternalEvents.map(e => e._id.toString()));
+        const internalIdSet = new Set(existingInternalEvents.map(e => e._id.toString()));
+        const internalUidSet = new Set(existingInternalEvents.filter(e => e.uid).map(e => e.uid));
 
         for (const key in events) {
             const event = events[key];
             
             if (event.type === 'VEVENT') {
                 const uid = event.uid;                
-                if (internalEventIdSet.has(uid)) {
+                incomingUids.push(uid);
+
+                if (internalIdSet.has(uid) || internalUidSet.has(uid)) {
                     continue;
                 }
 
-                incomingUids.push(uid);
-
                 const isAllDay = event.datetype === 'date';
-
                 let fromDate = event.start;
                 let adjustedToDate = event.end || event.start;
 
@@ -51,10 +43,29 @@ async function syncExternalCalendar(userId, calendarUrl) {
                     }
                 }
 
+                const eventSummary = event.summary || 'Névtelen esemény';
+
+                const matchingInternalEvent = existingInternalEvents.find(internal => {
+                    const nameMatches = internal.eventName.trim().toLowerCase() === eventSummary.trim().toLowerCase();
+                    const timeMatches = internal.fromDate.getTime() === fromDate.getTime();
+                    return nameMatches && timeMatches;
+                });
+
+                if (matchingInternalEvent) {
+                    bulkOps.push({
+                        updateOne: {
+                            filter: { _id: matchingInternalEvent._id },
+                            update: { $set: { uid: uid } }
+                        }
+                    });
+                    internalUidSet.add(uid);
+                    continue;
+                }
+
                 const eventData = {
                     organizerId: userId,
                     uid: uid,
-                    eventName: event.summary || 'Névtelen esemény',
+                    eventName: eventSummary,
                     fromDate: fromDate,
                     toDate: adjustedToDate,
                     description: event.description || '',
@@ -77,7 +88,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
 
                 bulkOps.push({
                     updateOne: {
-                        filter: { organizerId: userId, uid: uid },
+                        filter: { organizerId: userId, uid: uid, isExternal: true },
                         update: { $set: eventData },
                         upsert: true
                     }
@@ -98,7 +109,7 @@ async function syncExternalCalendar(userId, calendarUrl) {
         }
 
         if (bulkOps.length > 0) {
-            const result = await Event.bulkWrite(bulkOps);
+            await Event.bulkWrite(bulkOps);
         }
 
     } catch (error) {

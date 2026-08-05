@@ -190,7 +190,7 @@ export class CalendarViewComponent implements OnInit {
         } : undefined,
         cssClass: 'select-none',
         draggable: interactionsOn && !isGroupEvent && !isExternalEvent,
-        resizable: (!interactionsOn || isGroupEvent) ? undefined : {
+        resizable: (!interactionsOn || isGroupEvent || isExternalEvent) ? undefined : {
           beforeStart: true,
           afterEnd: true,
         },

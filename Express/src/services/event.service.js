@@ -171,7 +171,7 @@ exports.generateICalStringByToken = async (token) => {
     
     const events = await Event.find({ 
         organizerId: user._id, 
-        /*isExternal: false */
+        isExternal: false 
     });
 
     const calendar = ical({ 

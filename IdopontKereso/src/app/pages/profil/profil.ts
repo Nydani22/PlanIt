@@ -13,6 +13,8 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../../environments/environment';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
+import { MatDialog } from '@angular/material/dialog';
 
 export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -39,6 +41,8 @@ export class Profil implements OnInit {
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
   private snackbarService = inject(SnackbarService);
+  private dialog = inject(MatDialog);
+  calendarFeedUrl = signal<string>('Nincs még token generálva');
   timeRangeMatcher = new TimeRangeErrorMatcher();
   profileForm!: FormGroup;
   
@@ -79,8 +83,44 @@ export class Profil implements OnInit {
     return null;
   }
 
+  regenerateToken() {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: {
+        title: 'Naptár link újragenerálása',
+        message: 'Biztosan új linket szeretnél generálni? A régi linket használó naptárak azonnal leállnak!',
+        confirmText: 'Újragenerálás',
+        cancelText: 'Mégsem',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((isConfirmed: boolean) => {
+      if (isConfirmed) {
+        this.userService.regenerateCalendarToken().subscribe({
+          next: (response) => {
+            if (response.success) {
+              const newFeedUrl = `${environment.apiUrl}/api/events/feed/${response.token}`;
+              
+              this.calendarFeedUrl.set(newFeedUrl);
+
+              this.snackbarService.showSuccess('A naptár link sikeresen megújítva!');
+            }
+          },
+          error: (err) => {
+            this.snackbarService.showError('Nem sikerült új linket generálni.');
+            console.error(err);
+          }
+        });
+      }
+    });
+  }
+
   copyToClipboard(): void {
-    const feedUrl = this.profileForm.get('calendarFeedToken')?.value;
+    const feedUrl = this.calendarFeedUrl();
     
     if (!feedUrl || feedUrl === 'Nincs még token generálva') {
       return;
@@ -118,12 +158,13 @@ export class Profil implements OnInit {
           ? `${environment.apiUrl}/api/events/feed/${user.calendarFeedToken}` 
           : 'Nincs még token generálva';
 
+        this.calendarFeedUrl.set(feedUrl);
+
         this.profileForm.patchValue({
           name: user.fullName,
           userName: user.userName,
           email: user.email,
           externalCalendarUrl: user.externalCalendarUrl || '',
-          calendarFeedToken: feedUrl,
           settings: user.settings
         });
         

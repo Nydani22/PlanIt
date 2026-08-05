@@ -4,6 +4,12 @@ import { Observable } from 'rxjs';
 import { User } from '../../models/user.model';
 import { environment } from '../../../environments/environment';
 
+export interface TokenResponse {
+  success: boolean;
+  message: string;
+  token: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -28,5 +34,9 @@ export class UserService {
 
   deleteUser(id: string): Observable<User> {
     return this.http.delete<User>(`${this.API_URL}/${id}`);
+  }
+
+  regenerateCalendarToken(): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${this.API_URL}/regenerate-feed-token`, {});
   }
 }

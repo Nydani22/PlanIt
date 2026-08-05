@@ -8,7 +8,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { GroupService } from '../../services/group/group.service';
 import { AuthService } from '../../services/auth/auth.service';
-import { Group, GroupMember } from '../../models/group.model';
+import { Group } from '../../models/group.model';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { GroupCreateModalComponent } from '../../components/group-create-modal/group-create-modal';
 import { InviteDialogComponent } from '../../components/invite-dialog/invite-dialog';

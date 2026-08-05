@@ -1,5 +1,7 @@
 const User = require('../models/User.model');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const { encryptToken } = require('../utils/encryption.util');
 
 exports.getUserById = async (id) => {
   return await User.findById(id).select('-password');
@@ -16,4 +18,21 @@ exports.updateUser = async (id, updateData) => {
 
 exports.deleteUser = async (id) => {
   return await User.findByIdAndDelete(id);
+};
+
+exports.regenerateCalendarToken = async (id) => {
+  const rawToken = crypto.randomBytes(16).toString('hex');
+  const encryptedToken = encryptToken(rawToken);
+  
+  const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { calendarFeedToken: encryptedToken },
+      { returnDocument: 'after' }
+  );
+
+  if (!updatedUser) {
+      throw new Error('Felhasználó nem található.');
+  }
+
+  return rawToken;
 };

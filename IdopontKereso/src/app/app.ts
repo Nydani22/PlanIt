@@ -171,9 +171,25 @@ export class App implements OnInit {
       let updatedList = [...this.userExternalCalendars()];
 
       if (result.action === 'add') {
+        const isDuplicate = updatedList.some(c => c.url === result.calendar.url);
+        
+        if (isDuplicate) {
+          this.snackbarService.showWarning('Ez a naptár link már hozzá van adva!');
+          dialogRef.componentInstance.isSaving.set(false);
+          return;
+        }
+        
         updatedList.push(result.calendar);
       } 
       else if (result.action === 'update') {
+        const isDuplicate = updatedList.some(c => c.url === result.calendar.url && c._id !== result.calendar._id);
+        
+        if (isDuplicate) {
+          this.snackbarService.showWarning('Ez a naptár link már szerepel egy másik naptárnál!');
+          dialogRef.componentInstance.isSaving.set(false);
+          return;
+        }
+
         const index = updatedList.findIndex(c => c._id === result.calendar._id);
         if (index > -1) updatedList[index] = result.calendar;
       } 

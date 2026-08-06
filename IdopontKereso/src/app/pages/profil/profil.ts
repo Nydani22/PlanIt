@@ -58,8 +58,14 @@ export class Profil implements OnInit {
 
   private initForm(): void {
     this.profileForm = this.fb.group({
-      name: ['', Validators.required],
-      userName: ['', Validators.required],
+      name: ['', [
+        Validators.required, 
+        Validators.pattern('^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+(?:\\s+[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+)+$')
+      ]],
+      userName: ['', [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z0-9_-]{3,20}$')
+      ]],
       email: [{ value: '', disabled: true }],
       calendarFeedToken: [{ value: '', disabled: true }],
       settings: this.fb.group({

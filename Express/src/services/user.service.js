@@ -2,6 +2,7 @@ const User = require('../models/User.model');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
+const Event = require('../models/Event.model');
 
 exports.getUserById = async (id) => {
   return await User.findById(id).select('-password');
@@ -13,7 +14,24 @@ exports.updateUser = async (id, updateData) => {
     updateData.password = await bcrypt.hash(updateData.password, salt);
   }
 
-  return await User.findByIdAndUpdate(id, updateData, { returnDocument: 'after' }).select('-password');
+  const updatedUser = await User.findByIdAndUpdate(id, updateData, { returnDocument: 'after' }).select('-password');
+
+  if (updateData.externalCalendars && updatedUser.externalCalendars) {
+    for (const calendar of updatedUser.externalCalendars) {
+      await Event.updateMany(
+        { 
+          organizerId: id, 
+          isExternal: true, 
+          externalCalendarUrl: calendar.url
+        },
+        { 
+          $set: { color: calendar.color } 
+        }
+      );
+    }
+  }
+
+  return updatedUser;
 };
 
 exports.deleteUser = async (id) => {

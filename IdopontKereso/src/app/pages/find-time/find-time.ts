@@ -373,6 +373,7 @@ export class FindTime implements OnInit, OnDestroy {
       width: '800px',
       maxWidth: '95vw',
       maxHeight: '90vh',
+      restoreFocus: false,
       data: {
         event: preFilledEvent
       }

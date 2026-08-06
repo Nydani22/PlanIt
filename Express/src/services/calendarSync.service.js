@@ -85,6 +85,8 @@ async function syncExternalCalendars(userId, externalCalendars) {
                             isAllDay: isAllDay,
                             category: 'OTHER',
                             color: calendarColor,
+                            externalCalendarUrl: calendar.url, 
+
                             isExternal: true,
                             attendees: [{
                                 userId: userId,

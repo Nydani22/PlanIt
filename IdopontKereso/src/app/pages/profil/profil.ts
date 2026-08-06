@@ -16,6 +16,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { TokenResponse, User } from '../../models/user.model';
+import { MatCardModule } from '@angular/material/card';
 
 export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -30,7 +31,7 @@ export class TimeRangeErrorMatcher implements ErrorStateMatcher {
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [ReactiveFormsModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, CommonModule],
+  imports: [ReactiveFormsModule, MatSelectModule, MatCardModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, CommonModule],
   templateUrl: './profil.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './profil.scss',

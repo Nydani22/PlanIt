@@ -59,6 +59,10 @@ const eventSchema = new mongoose.Schema({
   isExternal: { 
     type: Boolean, 
     default: false 
+  },
+  externalCalendarUrl: { 
+    type: String, 
+    required: false 
   }
 }, { 
   timestamps: true 

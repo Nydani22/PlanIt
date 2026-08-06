@@ -110,6 +110,13 @@ export class App implements OnInit {
       this.previousUrl = currentUrl;
       this.isGroupsRoute.set(currentUrl.includes('/groups'));
       this.isProfileRoute.set(currentUrl.includes('/profil'));
+
+      const isAuthPage = currentUrl.startsWith('/login') || currentUrl.startsWith('/register') || currentUrl.startsWith('/join');
+      
+      if (!isAuthPage && this.authService.getCurrentUserId()) {
+        this.loadUserStats();
+        this.loadUserCalendars();
+      }
     });
   }
 
@@ -152,14 +159,15 @@ export class App implements OnInit {
     if (!userId) return;
 
     const dialogRef = this.dialog.open(ExternalCalendarDialogComponent, {
-      width: '450px',
+      width: '650px',
       maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
       data: calendarToEdit ? { calendar: calendarToEdit } : null 
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (!result) return;
-
+    dialogRef.componentInstance.action.subscribe((result: any) => {
+      
       let updatedList = [...this.userExternalCalendars()];
 
       if (result.action === 'add') {
@@ -180,12 +188,14 @@ export class App implements OnInit {
           );
           
           this.userExternalCalendars.set(updatedUser.externalCalendars || []);
-          
           this.calendarRefreshService.triggerRefresh();
+          
+          dialogRef.close();
         },
         error: (err) => {
           this.snackbarService.showError('Hiba történt a művelet során.');
           console.error(err);
+          dialogRef.componentInstance.isSaving.set(false);
         }
       });
     });

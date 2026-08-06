@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AppEvent } from '../../models/event.model';
+import { AppEvent, UserStatsResponse } from '../../models/event.model';
 import { environment } from '../../../environments/environment';
 import { TimeSearchParams, TimeSearchResponse } from '../../models/findtime.model';
 
@@ -51,5 +51,9 @@ export class EventService {
 
   cancelEventInstance(eventId: string, dateToCancel: string | Date): Observable<AppEvent> {
     return this.http.patch<AppEvent>(`${this.apiUrl}/${eventId}/cancel-instance`, { dateToCancel });
+  }
+
+  getUserStats(): Observable<UserStatsResponse> {
+    return this.http.get<UserStatsResponse>(`${this.apiUrl}/stats`);
   }
 }

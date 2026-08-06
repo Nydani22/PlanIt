@@ -294,6 +294,7 @@ export class CalendarViewComponent implements OnInit {
       dialogRef.afterClosed().subscribe(result => {
         if (result) {
           this.loadEvents();
+          this.calendarRefreshService.triggerRefresh();
         }
       });
 
@@ -382,6 +383,7 @@ export class CalendarViewComponent implements OnInit {
     this.eventService.updateEvent(originalEvent._id, payload).subscribe({
       next: () => {
         this.loadEvents();
+        this.calendarRefreshService.triggerRefresh();
       },
       error: (err) => {
         this.snackbarService.showError('Hiba az esemény mozgatásakor.');
@@ -478,6 +480,7 @@ export class CalendarViewComponent implements OnInit {
     this.eventService.createEvent(newEventPayload as AppEvent).subscribe({
       next: () => {
         this.loadEvents();
+        this.calendarRefreshService.triggerRefresh();
       },
       error: (err) => {
         this.events = this.events.filter(e => e.id !== tempEventId);

@@ -34,3 +34,16 @@ export interface AppEvent {
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
+
+export interface UserStatsResponse {
+  weekly: { eventCount: number; hours: number; busyPercentage: number };
+  monthly: { eventCount: number; hours: number; busyPercentage: number };
+  upcomingEvents: upcomingEvents[];
+}
+
+export interface upcomingEvents {
+  id: string;
+  title: string;
+  date: string;
+  color: string;
+}

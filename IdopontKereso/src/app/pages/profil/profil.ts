@@ -35,8 +35,6 @@ export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './profil.scss',
 })
-
-
 export class Profil implements OnInit {
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
@@ -62,7 +60,6 @@ export class Profil implements OnInit {
       name: ['', Validators.required],
       userName: ['', Validators.required],
       email: [{ value: '', disabled: true }],
-      externalCalendarUrl: [''],
       calendarFeedToken: [{ value: '', disabled: true }],
       settings: this.fb.group({
         defaultView: ['week'],
@@ -106,9 +103,7 @@ export class Profil implements OnInit {
           next: (response: TokenResponse) => {
             if (response.success) {
               const newFeedUrl = `${environment.apiUrl}/api/events/feed/${response.token}`;
-              
               this.calendarFeedUrl.set(newFeedUrl);
-
               this.snackbarService.showSuccess('A naptár link sikeresen megújítva!');
             }
           },
@@ -155,7 +150,6 @@ export class Profil implements OnInit {
 
     this.userService.getCurrentUser().subscribe({
       next: (user: User) => {
-        
         const feedUrl = user.calendarFeedToken 
           ? `${environment.apiUrl}/api/events/feed/${user.calendarFeedToken}` 
           : 'Nincs még token generálva';
@@ -166,7 +160,6 @@ export class Profil implements OnInit {
           name: user.fullName,
           userName: user.userName,
           email: user.email,
-          externalCalendarUrl: user.externalCalendarUrl || '',
           settings: user.settings
         });
         
@@ -190,7 +183,6 @@ export class Profil implements OnInit {
     const updateData = {
       fullName: formValues.name,
       userName: formValues.userName,
-      externalCalendarUrl: formValues.externalCalendarUrl, 
       settings: formValues.settings
     };
 

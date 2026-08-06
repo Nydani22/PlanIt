@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, HostListener, ChangeDetectionStrategy, untracked } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Navbar } from './components/navbar/navbar';
@@ -20,6 +20,11 @@ import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { ExternalCalendarDialogComponent } from './components/external-calendar-dialog/external-calendar-dialog.component';
+import { UserService } from './services/user/user.service';
+import { ExternalCalendar, User } from './models/user.model';
+import { UserStatsResponse, upcomingEvents } from './models/event.model';
+import { EventService } from './services/event/event.service';
 
 @Component({
   selector: 'app-root',
@@ -47,24 +52,38 @@ import { MatButtonModule } from '@angular/material/button';
 export class App implements OnInit {
   private themeService = inject(ThemeService);
   private authService = inject(AuthService);
+  private userService = inject(UserService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+  private eventService = inject(EventService);
   private snackbarService = inject(SnackbarService);
   calendarRefreshService = inject(CalendarRefreshService);
+  
   isSidebarOpen = signal<boolean>(this.getInitialSidebarState());
   isGroupsRoute = signal<boolean>(false);
+  isProfileRoute = signal<boolean>(false);
   isMobile = signal<boolean>(false);
   groupState = inject(GroupStateService);
   private previousUrl: string = '';
+
+  userExternalCalendars = signal<ExternalCalendar[]>([]);
+  upcomingEvents = signal<upcomingEvents[]>([]);
+  statsTimeframe = signal<'week' | 'month'>('week');
+  
+  weeklyEventCount = signal<number>(0);
+  weeklyHours = signal<number>(0);
+  weeklyBusyPercentage = signal<number>(0);
+
+  monthlyEventCount = signal<number>(0);
+  monthlyHours = signal<number>(0);
+  monthlyBusyPercentage = signal<number>(0);
 
   constructor() {
     effect(() => {
       const isOpen = this.isSidebarOpen();
       const url = this.router.url;
       
-      const isExcludedPage = url.startsWith('/login') || 
-                             url.startsWith('/register') || 
-                             url.startsWith('/join');
+      const isExcludedPage = url.startsWith('/login') || url.startsWith('/register') || url.startsWith('/join');
 
       if (!isExcludedPage) {
         localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
@@ -72,18 +91,103 @@ export class App implements OnInit {
     });
   }
 
-  
-
   ngOnInit() {
     this.checkScreenSize();
+    
+    this.loadUserCalendars();
+    this.loadUserStats();
+
+    this.calendarRefreshService.refresh$.subscribe(() => {
+      this.loadUserCalendars();
+      this.loadUserStats();
+    });
+
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       const currentUrl = event.urlAfterRedirects || event.url;
       this.checkRoute(currentUrl);
-      this.previousUrl = currentUrl; 
-      
+      this.previousUrl = currentUrl;
       this.isGroupsRoute.set(currentUrl.includes('/groups'));
+      this.isProfileRoute.set(currentUrl.includes('/profil'));
+    });
+  }
+
+  loadUserCalendars() {
+    const userId = this.authService.getCurrentUserId();
+    if (userId) {
+      this.userService.getCurrentUser().subscribe({
+        next: (user: User) => {
+          this.userExternalCalendars.set(user.externalCalendars || []);
+        },
+        error: (err) => console.error('Hiba a naptárak betöltésekor:', err)
+      });
+    }
+  }
+
+  loadUserStats() {
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) return; 
+
+    this.eventService.getUserStats().subscribe({
+      next: (stats: UserStatsResponse) => {
+        this.weeklyEventCount.set(stats.weekly.eventCount);
+        this.weeklyHours.set(stats.weekly.hours);
+        this.weeklyBusyPercentage.set(stats.weekly.busyPercentage);
+
+        this.monthlyEventCount.set(stats.monthly.eventCount);
+        this.monthlyHours.set(stats.monthly.hours);
+        this.monthlyBusyPercentage.set(stats.monthly.busyPercentage);
+
+        this.upcomingEvents.set(stats.upcomingEvents);
+      },
+      error: (err) => {
+        console.error('Hiba a statisztikák betöltésekor:', err);
+      }
+    });
+  }
+
+  openExternalCalendarDialog(calendarToEdit?: ExternalCalendar) {
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) return;
+
+    const dialogRef = this.dialog.open(ExternalCalendarDialogComponent, {
+      width: '450px',
+      maxWidth: '90vw',
+      data: calendarToEdit ? { calendar: calendarToEdit } : null 
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) return;
+
+      let updatedList = [...this.userExternalCalendars()];
+
+      if (result.action === 'add') {
+        updatedList.push(result.calendar);
+      } 
+      else if (result.action === 'update') {
+        const index = updatedList.findIndex(c => c._id === result.calendar._id);
+        if (index > -1) updatedList[index] = result.calendar;
+      } 
+      else if (result.action === 'delete') {
+        updatedList = updatedList.filter(c => c._id !== result.calendar._id);
+      }
+
+      this.userService.updateUser(userId, { externalCalendars: updatedList }).subscribe({
+        next: (updatedUser: User) => {
+          this.snackbarService.showSuccess(
+            result.action === 'delete' ? 'Naptár sikeresen törölve!' : 'Naptár sikeresen frissítve!'
+          );
+          
+          this.userExternalCalendars.set(updatedUser.externalCalendars || []);
+          
+          this.calendarRefreshService.triggerRefresh();
+        },
+        error: (err) => {
+          this.snackbarService.showError('Hiba történt a művelet során.');
+          console.error(err);
+        }
+      });
     });
   }
 

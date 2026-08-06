@@ -12,38 +12,7 @@
       
       <div class="flex flex-col h-full p-4 overflow-hidden">
         
-        @if (!isGroupsRoute()) {
-          <div class="flex flex-col gap-4">
-            <button (click)="openEventDialog()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
-              <mat-icon>add</mat-icon>
-              <span class="flex-1 text-center px-2">Hozzáadás</span>
-            </button>
-            
-            <button (click)="navigateToFindTime()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
-              <mat-icon>search</mat-icon>
-              <span class="flex-1 text-center px-2">Keresés</span>
-            </button>
-          </div>
-
-          <div class="my-auto mb-auto bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-none rounded-xl overflow-hidden p-1 shadow-inner transform origin-top -mb-4">
-            <mat-calendar 
-              class="text-gray-800 dark:text-gray-100"
-              [selected]="calendarRefreshService.selectedDate()" 
-              (selectedChange)="onDateSelected($event)">
-            </mat-calendar>
-          </div>
-          
-          <div class="pt-4 border-t border-gray-300 dark:border-gray-600/50 mt-4 shrink-0 flex items-center gap-1.5">
-            <mat-slide-toggle 
-                class="instant-toggle preload-transitions"
-                [checked]="calendarRefreshService.interactionsEnabled()" 
-                (change)="calendarRefreshService.interactionsEnabled.set($event.checked)"
-                color="primary">
-              <span class="text-gray-800 dark:text-gray-200 text-sm font-medium">Naptár interakciók</span>
-            </mat-slide-toggle>
-            <mat-icon class="text-gray-500 dark:text-gray-400 text-[18px] w-[18px] h-[18px] cursor-pointer" matTooltip="Kikapcsolva megakadályozza a véletlen esemény létrehozást és áthelyezést.">info</mat-icon>
-          </div>
-        } @else {
+        @if (isGroupsRoute()) {
           <div class="flex flex-col h-full">
             
             <div class="flex justify-between items-center mb-4 shrink-0">
@@ -78,6 +47,144 @@
               }
             </div>
 
+          </div>
+        } @else if (isProfileRoute()) {
+          <div class="flex flex-col h-full overflow-hidden">
+            
+            <div class="shrink-0 p-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl mb-4 transition-all">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                  <mat-icon class="text-sm">bar_chart</mat-icon> Statisztika
+                </span>
+                
+                <div class="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden p-0.5 bg-white dark:bg-gray-700">
+                  <button type="button" 
+                          (click)="statsTimeframe.set('week')"
+                          [class.bg-amber-300]="statsTimeframe() === 'week'"
+                          [class.text-amber-950]="statsTimeframe() === 'week'"
+                          class="px-2 py-0.5 text-[10px] font-bold rounded transition-colors text-gray-600 dark:text-gray-300">
+                    Hét
+                  </button>
+                  <button type="button" 
+                          (click)="statsTimeframe.set('month')"
+                          [class.bg-amber-300]="statsTimeframe() === 'month'"
+                          [class.text-amber-950]="statsTimeframe() === 'month'"
+                          class="px-2 py-0.5 text-[10px] font-bold rounded transition-colors text-gray-600 dark:text-gray-300">
+                    Hónap
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 text-center">
+                  <div class="text-lg font-extrabold text-amber-600 dark:text-amber-400">
+                    {{ statsTimeframe() === 'week' ? weeklyEventCount() : monthlyEventCount() }}
+                  </div>
+                  <div class="text-[10px] text-gray-500 dark:text-gray-400">Esemény</div>
+                </div>
+
+                <div class="p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 text-center">
+                  <div class="text-lg font-extrabold text-amber-600 dark:text-amber-400">
+                    {{ statsTimeframe() === 'week' ? weeklyHours() : monthlyHours() }} ó
+                  </div>
+                  <div class="text-[10px] text-gray-500 dark:text-gray-400">Elfoglalt idő</div>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[11px] font-medium text-gray-600 dark:text-gray-300">
+                  <span>Naptár terheltség</span>
+                  <span>{{ statsTimeframe() === 'week' ? weeklyBusyPercentage() : monthlyBusyPercentage() }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                  <div class="bg-amber-400 h-full transition-all duration-500 ease-out"
+                       [style.width.%]="statsTimeframe() === 'week' ? weeklyBusyPercentage() : monthlyBusyPercentage()">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="shrink-0 p-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl mb-4 transition-all">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                  <mat-icon class="text-sm">event_upcoming</mat-icon> Közelgő események
+                </span>
+              </div>
+
+              <div class="flex flex-col gap-2.5 min-h-[195px]">
+                @for (event of upcomingEvents(); track event.id) {
+                  <div class="flex flex-col p-2.5 rounded-lg bg-white dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 shadow-sm hover:shadow-md transition-shadow cursor-default shrink-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="event.color"></span>
+                      <span class="text-xs font-bold truncate text-gray-800 dark:text-gray-100">{{ event.title }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 ml-4 text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                      <mat-icon class="text-[14px] w-[14px] h-[14px]">schedule</mat-icon>
+                      <span>{{ event.date | date:'MMM d., HH:mm' }}</span>
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="flex-1 flex items-center justify-center">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 italic">Nincs közelgő esemény.</span>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <div class="flex-1 min-h-0 flex flex-col p-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl">
+              <div class="shrink-0 flex justify-between items-center mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">Saját Naptárak</span>
+                <button mat-icon-button color="primary" (click)="openExternalCalendarDialog()" class="w-8 h-8 flex items-center justify-center leading-none" title="Új naptár hozzáadása">
+                  <mat-icon class="text-sm">add_circle</mat-icon>
+                </button>
+              </div>
+
+              <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-1.5 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                @for (cal of userExternalCalendars(); track cal._id || cal.url) {
+                  <div (click)="openExternalCalendarDialog(cal)" class="shrink-0 flex items-center justify-between text-xs p-1.5 rounded hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
+                    <div class="flex items-center gap-2 truncate">
+                      <span class="w-3 h-3 rounded-full shrink-0" [style.background-color]="cal.color"></span>
+                      <span class="truncate font-medium text-gray-700 dark:text-gray-200">{{ cal.name }}</span>
+                    </div>
+                  </div>
+                } @empty {
+                  <span class="text-[11px] text-gray-400 italic mt-2">Nincs külső naptár felvéve.</span>
+                }
+              </div>
+            </div>
+            
+          </div>
+
+        } @else {
+          <div class="flex flex-col gap-4">
+            <button (click)="openEventDialog()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
+              <mat-icon>add</mat-icon>
+              <span class="flex-1 text-center px-2">Hozzáadás</span>
+            </button>
+            
+            <button (click)="navigateToFindTime()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
+              <mat-icon>search</mat-icon>
+              <span class="flex-1 text-center px-2">Keresés</span>
+            </button>
+          </div>
+
+          <div class="my-auto mb-auto bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-none rounded-xl overflow-hidden p-1 shadow-inner transform origin-top -mb-4">
+            <mat-calendar 
+              class="text-gray-800 dark:text-gray-100"
+              [selected]="calendarRefreshService.selectedDate()" 
+              (selectedChange)="onDateSelected($event)">
+            </mat-calendar>
+          </div>
+          
+          <div class="pt-4 border-t border-gray-300 dark:border-gray-600/50 mt-4 shrink-0 flex items-center gap-1.5">
+            <mat-slide-toggle 
+                class="instant-toggle preload-transitions"
+                [checked]="calendarRefreshService.interactionsEnabled()" 
+                (change)="calendarRefreshService.interactionsEnabled.set($event.checked)"
+                color="primary">
+              <span class="text-gray-800 dark:text-gray-200 text-sm font-medium">Naptár interakciók</span>
+            </mat-slide-toggle>
+            <mat-icon class="text-gray-500 dark:text-gray-400 text-[18px] w-[18px] h-[18px] cursor-pointer" matTooltip="Kikapcsolva megakadályozza a véletlen esemény létrehozást és áthelyezést.">info</mat-icon>
           </div>
         }
 

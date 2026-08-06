@@ -1,3 +1,10 @@
+export interface ExternalCalendar {
+  _id?: string;
+  name: string;
+  url: string;
+  color: string;
+}
+
 export interface UserSettings {
   defaultView: 'month' | 'week' | 'day';
   dayStartHour: number;
@@ -12,7 +19,7 @@ export interface User {
   email: string;
   fullName: string;
   password?: string;
-  externalCalendarUrl: string | null;
+  externalCalendars?: ExternalCalendar[];
   calendarFeedToken: string | null;
   settings: UserSettings;
   createdAt?: string;

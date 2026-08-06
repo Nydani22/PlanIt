@@ -16,7 +16,11 @@ const userSchema = new mongoose.Schema({
     hideWeekends: { type: Boolean, default: false },
     hourSegments: { type: Number, default: 2 },
   },
-  externalCalendarUrl: { type: String },
+  externalCalendars: [{
+    name: { type: String, required: true }, 
+    url: { type: String, required: true },
+    color: { type: String, default: '#3f51b5' }
+  }],
   calendarFeedToken: {
     type: String,
     unique: true,

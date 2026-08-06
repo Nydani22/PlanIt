@@ -64,6 +64,19 @@ exports.findOne = async (req, res) => {
     }
 };
 
+exports.getUserStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const stats = await eventService.calculateUserStats(userId);
+        
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error('Hiba a statisztikák lekérésekor:', error);
+        res.status(500).json({ message: 'Belső szerverhiba a statisztikák betöltésekor.' });
+    }
+};
+
 exports.update = async (req, res) => {
     try {
         const userId = req.user.id;

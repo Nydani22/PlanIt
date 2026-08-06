@@ -211,6 +211,83 @@ exports.generateICalStringByToken = async (token) => {
     return calendar.toString();
 };
 
+exports.deleteAllExternalEventsForUser = async (userId) => {
+    return await Event.deleteMany({ 
+        organizerId: userId, 
+        isExternal: true 
+    });
+};
+
+// Segédfüggvény az órák számolásához
+const calculateTotalHours = (events) => {
+    return events.reduce((total, event) => {
+        // Időtartam ms-ben
+        const durationMs = new Date(event.toDate) - new Date(event.fromDate); 
+        // Átváltás órába (két tizedesjegyre kerekítve, ha tört)
+        const hours = durationMs / (1000 * 60 * 60);
+        return total + (hours > 0 ? hours : 0);
+    }, 0);
+};
+
+exports.calculateUserStats = async (userId) => {
+    const now = new Date();
+
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+    currentWeekStart.setHours(0, 0, 0, 0);
+
+    const currentWeekEnd = new Date(currentWeekStart);
+    currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+    currentWeekEnd.setHours(23, 59, 59, 999);
+
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const upcomingWindowEnd = new Date(now);
+    upcomingWindowEnd.setDate(now.getDate() + 14);
+    const searchEnd = currentMonthEnd > upcomingWindowEnd ? currentMonthEnd : upcomingWindowEnd;
+    
+    const allRelevantEvents = await exports.getExpandedEventsForUsers(currentMonthStart, searchEnd, [userId]);
+
+    const upcomingEvents = allRelevantEvents
+        .filter(event => new Date(event.fromDate) > now)
+        .slice(0, 3)
+        .map(event => ({
+            id: event._id,
+            title: event.eventName,
+            date: event.fromDate,
+            color: event.color || '#3f51b5'
+        }));
+
+    const weeklyEvents = allRelevantEvents.filter(e => 
+        new Date(e.fromDate) >= currentWeekStart && new Date(e.fromDate) <= currentWeekEnd
+    );
+    const weeklyEventCount = weeklyEvents.length;
+    const weeklyHours = Math.round(calculateTotalHours(weeklyEvents));
+    const weeklyBusyPercentage = Math.min(Math.round((weeklyHours / 40) * 100), 100); 
+
+    const monthlyEvents = allRelevantEvents.filter(e => 
+        new Date(e.fromDate) >= currentMonthStart && new Date(e.fromDate) <= currentMonthEnd
+    );
+    const monthlyEventCount = monthlyEvents.length;
+    const monthlyHours = Math.round(calculateTotalHours(monthlyEvents));
+    const monthlyBusyPercentage = Math.min(Math.round((monthlyHours / 160) * 100), 100); 
+
+    return {
+        weekly: {
+            eventCount: weeklyEventCount,
+            hours: weeklyHours,
+            busyPercentage: weeklyBusyPercentage
+        },
+        monthly: {
+            eventCount: monthlyEventCount,
+            hours: monthlyHours,
+            busyPercentage: monthlyBusyPercentage
+        },
+        upcomingEvents: upcomingEvents
+    };
+};
+
 
 exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) => {
   const start = new Date(searchStart);
@@ -236,7 +313,8 @@ exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) 
           category: event.category,
           attendees: event.attendees,
           fromDate: event.fromDate,
-          toDate: event.toDate
+          toDate: event.toDate,
+          color: event.color
         });
       }
     } 

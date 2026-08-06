@@ -1,5 +1,8 @@
 const userService = require('../services/user.service');
 const { decryptToken } = require('../utils/encryption.util');
+const eventService = require('../services/event.service');
+const calendarSyncService = require('../services/calendarSync.service');
+
 exports.getCurrentUser = async (req, res) => {
   try {
     const user = await userService.getUserById(req.user.id);
@@ -33,8 +36,17 @@ exports.findOne = async (req, res) => {
 exports.update = async (req, res) => {
     try {
       const updatedUser = await userService.updateUser(req.params.id, req.body);
+
       if (!updatedUser) return res.status(404).json({ message: 'Felhasználó nem található' });
-      
+
+      if (req.body.externalCalendars !== undefined) {
+        if (updatedUser.externalCalendars && updatedUser.externalCalendars.length === 0) {
+            await eventService.deleteAllExternalEventsForUser(req.params.id);
+        } else if (updatedUser.externalCalendars && updatedUser.externalCalendars.length > 0) {
+            calendarSyncService.syncExternalCalendars(req.params.id, updatedUser.externalCalendars).catch(err => console.error('Hiba a gyors szinkronizáció során:', err));
+        }
+      }
+
       res.status(200).json(updatedUser);
     } catch (error) {
       res.status(500).json({ message: error.message });

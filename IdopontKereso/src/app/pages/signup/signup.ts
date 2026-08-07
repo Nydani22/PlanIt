@@ -1,5 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormGroupDirective, FormsModule, NgForm, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { NotificationService } from '../../services/notification/notification.service';
 import { AuthResponse } from '../../models/auth.model';
+import { ErrorStateMatcher } from '@angular/material/core';
 
 
 const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -17,6 +18,14 @@ const passwordMatchValidator: ValidatorFn = (control: AbstractControl): Validati
   if (!password || !password2) return null;
   return password.value === password2.value ? null : { passwordMismatch: true };
 };
+
+export class PasswordErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const isSubmitted = form && form.submitted;
+    const isInvalid = !!(control && control.invalid) || !!(form && form.hasError('passwordMismatch'));
+    return !!(isInvalid && (control?.dirty || control?.touched || isSubmitted));
+  }
+}
 
 @Component({
   selector: 'app-signup',
@@ -31,6 +40,7 @@ export class Signup {
   private router = inject(Router);
   private snackbarService = inject(SnackbarService);
   private notificationService = inject(NotificationService);
+  passMatcher = new PasswordErrorStateMatcher();
   registerForm: FormGroup;
   errorMessage = signal('');
 

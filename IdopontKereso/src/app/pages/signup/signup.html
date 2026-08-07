@@ -55,11 +55,18 @@
                     type="button">
                     <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
                 </button>
+                <mat-error>
+                    @if (registerForm.get('password')?.hasError('minlength')) {
+                        A jelszó legalább 6 karakter legyen!
+                    } @else if (registerForm.get('password')?.hasError('pattern')) {
+                        Tartalmazzon kisbetűt és számot!
+                    }
+                </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Jelszó megerősítés</mat-label>
-                <input matInput [type]="hide2() ? 'password' : 'text'" formControlName="password2" required/>
+                <input matInput [type]="hide2() ? 'password' : 'text'" formControlName="password2" required [errorStateMatcher]="passMatcher" />
                 <button
                     mat-icon-button
                     matSuffix
@@ -69,9 +76,13 @@
                     <mat-icon>{{hide2() ? 'visibility_off' : 'visibility'}}</mat-icon>
                 </button>
                 
-                @if (registerForm.hasError('passwordMismatch') && registerForm.get('password2')?.touched) {
-                    <mat-error>A két jelszó nem egyezik!</mat-error>
-                }
+                <mat-error>
+                    @if (registerForm.get('password2')?.hasError('required')) {
+                        A jelszó megerősítése kötelező!
+                    }  @else if (registerForm.hasError('passwordMismatch')) {
+                        A két jelszó nem egyezik!
+                    }
+                </mat-error>
             </mat-form-field>
 
             @if (errorMessage()) {

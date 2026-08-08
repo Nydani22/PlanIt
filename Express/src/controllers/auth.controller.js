@@ -33,7 +33,7 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const { accessToken, refreshToken } = await authService.loginUser(email, password);
-        emailService.sendLoginNotification(user.email, user.name).catch(console.error);
+        emailService.sendLoginNotification(email, null).catch(console.error);
         const isProduction = process.env.NODE_ENV === 'production';
 
         const cookieOptions = {

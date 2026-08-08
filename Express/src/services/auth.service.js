@@ -31,6 +31,11 @@ exports.registerUser = async (userData) => {
         throw new Error('Ez az email cím már foglalt.');
     }
 
+    const existingUserName = await User.findOne({userName});
+    if (existingUserName) {
+        throw new Error('Ez az felhasználónév már foglalt.');
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 

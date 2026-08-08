@@ -1,11 +1,13 @@
 const authService = require('../services/auth.service');
-
+const emailService = require('../services/email.service');
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 exports.register = async (req, res) => {
     try {
         const { user, accessToken, refreshToken } = await authService.registerUser(req.body);
-        
+
+        await emailService.sendWelcomeEmail(req.body.email, req.body.name);
+
         const isProduction = process.env.NODE_ENV === 'production';
 
         const cookieOptions = {
@@ -31,6 +33,7 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const { accessToken, refreshToken } = await authService.loginUser(email, password);
+        emailService.sendLoginNotification(user.email, user.name).catch(console.error);
         const isProduction = process.env.NODE_ENV === 'production';
 
         const cookieOptions = {

@@ -57,24 +57,28 @@
 
             <div class="bg-white dark:bg-gray-800 pt-2 md:pt-4 px-2 md:px-4 rounded-lg shadow-sm w-full flex flex-col flex-1 max-h-full min-h-0 min-w-0">
                 <div class="w-full h-full overflow-auto pb-2 md:pb-4">
-                    <div class="min-w-[700px] lg:min-w-0 flex flex-col h-full">
+                    <div class="min-w-[700px] lg:min-w-0 flex flex-col h-full select-none">
                     @switch (view) { 
                         @case (CalendarView.Month) {
                             <mwl-calendar-month-view 
                                 [headerTemplate]="monthHeaderTemplate" 
+                                [cellTemplate]="customCellTemplate" 
                                 [viewDate]="viewDate" 
                                 [events]="events" 
                                 [refresh]="refresh" 
                                 [weekStartsOn]="1" 
                                 locale="hu"
                                 (dayClicked)="onDayClicked($event.day.date)"
-                                (eventClicked)="onEventClick($event.event)" 
+                                (eventClicked)="onEventClick($event.event)"
+                                (eventTimesChanged)="eventTimesChanged($event)"
                             />
                         }
                         @case (CalendarView.Week) {
                             <mwl-calendar-week-view 
+                                [hourSegmentTemplate]="customHourSegmentTemplate"
                                 [headerTemplate]="customHeaderTemplate" 
                                 [viewDate]="viewDate" 
+                                [eventTemplate]="customEventTemplate"
                                 [events]="events" 
                                 [refresh]="refresh" 
                                 [weekStartsOn]="1" 
@@ -83,21 +87,21 @@
                                 [dayEndHour]="dayEndHour" 
                                 [hourSegments]="hourSegments" 
                                 [excludeDays]="excludeDays"
-                                (hourSegmentClicked)="onHourSegmentClicked($event.date)"
                                 (eventTimesChanged)="eventTimesChanged($event)" 
                                 (eventClicked)="onEventClick($event.event)" 
                             />
                         } 
                         @case (CalendarView.Day) {
-                            <mwl-calendar-day-view 
+                            <mwl-calendar-day-view
+                                [hourSegmentTemplate]="customHourSegmentTemplate" 
                                 [viewDate]="viewDate" 
                                 [events]="events" 
                                 [refresh]="refresh"
+                                [eventTemplate]="customEventTemplate"
                                 locale="hu" 
                                 [dayStartHour]="dayStartHour" 
                                 [dayEndHour]="dayEndHour" 
                                 [hourSegments]="hourSegments"
-                                (hourSegmentClicked)="onHourSegmentClicked($event.date)"
                                 (eventTimesChanged)="eventTimesChanged($event)" 
                                 (eventClicked)="onEventClick($event.event)" 
                             />
@@ -149,5 +153,63 @@
         
       </div>
     }
+  </div>
+</ng-template>
+
+<ng-template
+  #customHourSegmentTemplate
+  let-segment="segment"
+  let-locale="locale"
+  let-segmentHeight="segmentHeight"
+  let-isTimeLabel="isTimeLabel">
+  <div
+    class="cal-hour-segment"
+    [style.height.px]="segmentHeight"
+    [class.cal-hour-start]="segment.isStart"
+    [class.cal-after-hour-start]="!segment.isStart"
+    [ngClass]="segment.cssClass"
+    (mousedown)="startDragToCreate(segment.date)"
+    (mouseenter)="dragToCreate(segment.date)"
+    (mouseup)="endDragToCreate()">
+    <div class="cal-time" *ngIf="isTimeLabel">
+      {{ segment.date | calendarDate:'weekViewHour':locale }}
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #customCellTemplate let-day="day" let-locale="locale">
+  <div class="cal-cell-top flex justify-end items-center p-1">
+    <span class="cal-day-number font-semibold text-sm">{{ day.date | date:'dd' }}</span>
+  </div>
+  
+  <div class="flex flex-col gap-1 p-1 pb-2">
+    @for (event of day.events; track event.id) {
+      <div 
+           class="text-xs px-1.5 py-1 rounded cursor-pointer transition-opacity hover:opacity-80 shadow-sm border border-transparent overflow-hidden truncate"
+           [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
+           [style.color]="event.color?.secondaryText || '#0369a1'"
+           [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
+           
+           mwlDraggable
+           [dragAxis]="{ x: event.draggable === true, y: event.draggable === true }"
+           [dropData]="{ event: event, draggedFrom: day }"
+           [class.cal-draggable]="event.draggable"
+           dragActiveClass="opacity-50"
+           
+           (click)="onEventClick(event); $event.stopPropagation()">
+        {{ event.title }}
+      </div>
+    }
+  </div>
+</ng-template>
+
+<ng-template #customEventTemplate let-weekEvent="weekEvent" let-dayEvent="dayEvent" let-monthEvent="event" let-eventClicked="eventClicked">
+  <div *ngIf="weekEvent?.event || dayEvent?.event as event"
+       class="h-full w-full text-xs px-1.5 py-1 rounded cursor-pointer transition-opacity hover:opacity-80 shadow-sm border border-transparent overflow-hidden"
+       [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
+       [style.color]="event.color?.secondaryText || '#0369a1'"
+       [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
+       (click)="eventClicked.emit({ event: event, sourceEvent: $event })">
+    {{ event.title }}
   </div>
 </ng-template>

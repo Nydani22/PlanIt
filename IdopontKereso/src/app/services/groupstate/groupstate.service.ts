@@ -32,8 +32,6 @@ export class GroupStateService {
     this.groupService.getGroups().subscribe({
       next: (data: Group[]) => {
         this.myGroups.set(data);
-        this.isLoading.set(false);
-        
         if (data.length > 0) {
           const currentSelected = this.selectedGroupId();
           const exists = data.some(g => g._id === currentSelected);
@@ -43,6 +41,7 @@ export class GroupStateService {
         } else {
           this.selectedGroupId.set('');
         }
+        this.isLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
         console.error('Hiba a csoportok lekérésekor', err);

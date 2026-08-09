@@ -14,6 +14,7 @@ import { CustomDateFormatter } from './custom-date-formatter.provider';
 import { EventDialogComponent } from '../event-dialog/event-dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-refresh.service';
+import { HostListener } from '@angular/core';
 
 registerLocaleData(localeHu);
 
@@ -63,6 +64,10 @@ export class CalendarViewComponent implements OnInit {
   private lastClickedDate: Date | null = null;
   private lastClickedEventId: string | number | undefined = undefined;
 
+  dragToCreateActive = false;
+  dragStart: Date | null = null;
+  dragEnd: Date | null = null;
+  private readonly dragTempEventId = 'drag-ghost-event';
 
   constructor() {
     effect(() => {
@@ -169,10 +174,19 @@ export class CalendarViewComponent implements OnInit {
       let displayTitle = item.eventName;
       
       if (!item.isAllDay) {
-        const startTimeStr = startDate.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
-        const endTimeStr = endDate.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+        const isMultiDay = startDate.toDateString() !== endDate.toDateString();
         
-        displayTitle = `${startTimeStr} - ${endTimeStr} | ${item.eventName}`;
+        if (isMultiDay) {
+          const startStr = startDate.toLocaleString('hu-HU', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const endStr = endDate.toLocaleString('hu-HU', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          
+          displayTitle = `${startStr} - ${endStr} | ${item.eventName}`;
+        } else {
+          const startTimeStr = startDate.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+          const endTimeStr = endDate.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+          
+          displayTitle = `${startTimeStr} - ${endTimeStr} | ${item.eventName}`;
+        }
       }
 
       const isGroupEvent = item.attendees && item.attendees.length > 1;
@@ -418,6 +432,7 @@ export class CalendarViewComponent implements OnInit {
   }
 
   onDayClicked(date: Date): void {
+    if (!this.calendarRefreshService.interactionsEnabled()) return;
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - this.lastClickTime;
 
@@ -488,6 +503,79 @@ export class CalendarViewComponent implements OnInit {
         this.snackbarService.showError('Hiba az esemény létrehozásakor.');
       }
     });
+  }
+
+
+  startDragToCreate(segmentDate: Date) {
+    if (!this.calendarRefreshService.interactionsEnabled()) return; 
+    
+    this.dragToCreateActive = true;
+    this.dragStart = segmentDate;
+    this.dragEnd = segmentDate;
+
+    const segmentDurationMs = (60 / this.hourSegments) * 60 * 1000;
+    const end = new Date(segmentDate.getTime() + segmentDurationMs);
+    
+    const ghostEvent: CalendarEvent = {
+      id: this.dragTempEventId,
+      title: 'Kijelölés...',
+      start: segmentDate,
+      end: end,
+      color: {
+        primary: '#9ca3af',
+        secondary: 'color-mix(in srgb, #9ca3af 20%, white)',
+        secondaryText: '#9ca3af'
+      },
+      cssClass: 'opacity-50 pointer-events-none'
+    };
+
+    this.events = [...this.events, ghostEvent];
+    this.refresh.next();
+  }
+
+  dragToCreate(segmentDate: Date) {
+    if (this.dragToCreateActive && this.dragStart) {
+      this.dragEnd = segmentDate;
+
+      let start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
+      let end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
+      
+      const segmentDurationMs = (60 / this.hourSegments) * 60 * 1000;
+      const finalEnd = new Date(end.getTime() + segmentDurationMs);
+
+      this.events = this.events.map(event => {
+        if (event.id === this.dragTempEventId) {
+          return {
+            ...event,
+            start: start,
+            end: finalEnd
+          };
+        }
+        return event;
+      });
+      
+      this.refresh.next();
+    }
+  }
+
+  @HostListener('document:mouseup')
+  endDragToCreate() {
+    if (this.dragToCreateActive && this.dragStart && this.dragEnd) {
+      this.dragToCreateActive = false;
+      
+      this.events = this.events.filter(e => e.id !== this.dragTempEventId);
+      
+      let start = this.dragStart < this.dragEnd ? this.dragStart : this.dragEnd;
+      let end = this.dragStart < this.dragEnd ? this.dragEnd : this.dragStart;
+      
+      const segmentDurationMs = (60 / this.hourSegments) * 60 * 1000;
+      end = new Date(end.getTime() + segmentDurationMs);
+
+      this.createDefaultEvent(start, end);
+      
+      this.dragStart = null;
+      this.dragEnd = null;
+    }
   }
 
   setView(view: CalendarView) {

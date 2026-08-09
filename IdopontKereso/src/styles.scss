@@ -251,6 +251,10 @@ body .cal-day-view .cal-drag-over .cal-hour-segment {
         opacity: 0.3; 
         color: var(--cal-day-secondary-text-color);
       }
+      
+      &.cal-drag-over {
+        background-color: rgba(255, 255, 255, 0.1) !important; 
+      }
     }
   }
   

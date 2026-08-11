@@ -8,10 +8,15 @@ const handleAIChat = async (req, res) => {
         const userId = req.user.id;
 
         const now = new Date();
-        const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-        const upcomingEvents = await eventService.getUserEvents(userId, now, twoWeeksLater);
+        const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+        
+        const searchStart = new Date(now.getTime() - ninetyDays);
+        const searchEnd = new Date(now.getTime() + ninetyDays);
+        
+        
+        const windowEvents = await eventService.getUserEvents(userId, searchStart, searchEnd);
 
-        const minimalEvents = upcomingEvents.map(e => ({
+        const minimalEvents = windowEvents.map(e => ({
             id: e._id,
             title: e.eventName,
             start: e.fromDate,
@@ -84,7 +89,6 @@ const handleAIChat = async (req, res) => {
                         ...eventArgs,
                         isAllDay: eventArgs.isAllDay ?? false,
                         category: eventArgs.category || 'OTHER',
-                        color: '#3b82f6',
                         organizerId: userId
                     };
                     const saved = await eventService.createEvent(newEventPayload, userId);

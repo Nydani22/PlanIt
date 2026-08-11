@@ -60,14 +60,13 @@
 
     <div class="p-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center gap-1 shrink-0">
 
-      <button mat-icon-button 
-              (click)="toggleRecording()" 
-              [color]="isRecording() ? 'warn' : 'primary'"
-              [disabled]="isLoading()"
-              class="flex-shrink-0 transition-colors duration-300">
+      <button mat-mini-fab 
+        (click)="toggleRecording()" 
+        [color]="isRecording() ? 'warn' : 'primary'"
+        [disabled]="isLoading()"
+        class="flex-shrink-0 mr-1 transition-colors duration-300">
         <mat-icon>{{ isRecording() ? 'mic' : 'mic_none' }}</mat-icon>
       </button>
-
       <mat-form-field appearance="outline" class="w-full text-sm -mb-[22px]">
         <input matInput 
                placeholder="Írj, vagy Ctrl+V..." 
@@ -77,8 +76,8 @@
                [disabled]="isLoading()">
       </mat-form-field>
 
-      <button mat-fab color="primary" class="flex-shrink-0 ml-1 shadow-none" (click)="sendMessage()" [disabled]="isLoading() || (!userInput().trim() && !selectedFile())">
-        <mat-icon class="text-[20px]">send</mat-icon>
+      <button mat-mini-fab color="primary" class="flex-shrink-0 ml-1 shadow-none" (click)="sendMessage()" [disabled]="isLoading() || (!userInput().trim() && !selectedFile())">
+        <mat-icon>send</mat-icon>
       </button>
     </div>
   </div>

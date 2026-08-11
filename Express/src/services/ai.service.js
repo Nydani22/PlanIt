@@ -17,8 +17,14 @@ const createEventsTool = {
             description: { type: "STRING", description: "Részletes leírás." },
             location: { type: "STRING", description: "Helyszín." },
             isAllDay: { type: "BOOLEAN", description: "Egész napos-e." },
-            fromDate: { type: "STRING", description: "Kezdő dátum ISO 8601 formátumban (UTC-ben)." },
-            toDate: { type: "STRING", description: "Befejező dátum ISO 8601 formátumban (UTC-ben)." },
+            fromDate: { 
+              type: "STRING", 
+              description: "Kezdő dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+            },
+            toDate: { 
+              type: "STRING", 
+              description: "Befejező dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+            },
             category: { 
               type: "STRING", 
               description: "Az esemény kategóriája. KÖTELEZŐEN csak a megadott listából választhatsz egyet, ami a legjobban illik! Ha bizonytalan vagy, használd az 'OTHER' értéket.",
@@ -27,6 +33,27 @@ const createEventsTool = {
                 "HOLIDAY", "HEALTH", "STUDY", "SPORTS", "FINANCE", 
                 "CELEBRATION", "TRAVEL", "OTHER"
               ]
+            },
+            color: { type: "STRING", description: "Az esemény egyedi színe (pl. HEX kóddal), ha a felhasználó külön kéri." },
+            recurrence: {
+              type: "OBJECT",
+              description: "Ismétlődés beállításai (ha az esemény rendszeres).",
+              properties: {
+                frequency: { 
+                  type: "STRING", 
+                  description: "Az ismétlődés gyakorisága.", 
+                  enum: ["NONE", "DAILY", "WEEKLY"] 
+                },
+                daysOfWeek: {
+                  type: "ARRAY",
+                  description: "A hét mely napjain ismétlődik. 0=Vasárnap, 1=Hétfő, 2=Kedd, 3=Szerda, 4=Csütörtök, 5=Péntek, 6=Szombat. Csak WEEKLY esetén releváns.",
+                  items: { type: "INTEGER" }
+                },
+                untilDate: { 
+                  type: "STRING", 
+                  description: "Az ismétlődés befejező dátuma ISO 8601 formátumban (UTC). Ha nincs végdátum, hagyd üresen." 
+                }
+              }
             }
           },
           required: ["eventName", "isAllDay", "fromDate", "toDate", "category"]
@@ -51,9 +78,40 @@ const updateEventsTool = {
           properties: {
             eventId: { type: "STRING", description: "A módosítandó esemény adatbázis azonosítója (_id). KÖTELEZŐ!" },
             eventName: { type: "STRING", description: "Új cím (csak ha változik)." },
-            fromDate: { type: "STRING", description: "Új kezdő dátum ISO 8601 (UTC) (csak ha változik)." },
-            toDate: { type: "STRING", description: "Új befejező dátum ISO 8601 (UTC) (csak ha változik)." },
-            description: { type: "STRING", description: "Új leírás (csak ha változik)." }
+            fromDate: { 
+              type: "STRING", 
+              description: "Kezdő dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+            },
+            toDate: { 
+              type: "STRING", 
+              description: "Befejező dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+            },
+            description: { type: "STRING", description: "Új leírás (csak ha változik)." },
+            color: { type: "STRING", description: "Új egyedi szín (csak ha változik)." },
+            category: { 
+              type: "STRING", 
+              description: "Új kategória (csak ha változik).",
+              enum: [
+                "WORK", "MEETING", "PERSONAL", "FAMILY", "IMPORTANT", 
+                "HOLIDAY", "HEALTH", "STUDY", "SPORTS", "FINANCE", 
+                "CELEBRATION", "TRAVEL", "OTHER"
+              ]
+            },
+            recurrence: {
+              type: "OBJECT",
+              description: "Új ismétlődési beállítások (csak ha változik).",
+              properties: {
+                frequency: { 
+                  type: "STRING", 
+                  enum: ["NONE", "DAILY", "WEEKLY"] 
+                },
+                daysOfWeek: {
+                  type: "ARRAY",
+                  items: { type: "INTEGER" }
+                },
+                untilDate: { type: "STRING" }
+              }
+            }
           },
           required: ["eventId"]
         }

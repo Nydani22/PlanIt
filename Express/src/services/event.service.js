@@ -126,6 +126,10 @@ exports.updateEvent = async (eventId, userId, updateData) => {
         throw error;
     }
 
+    if (updateData.category && !updateData.color) {
+        updateData.color = CATEGORY_COLORS[updateData.category] || CATEGORY_COLORS['OTHER'];
+    }
+
     return await Event.findByIdAndUpdate(
         eventId,
         updateData,

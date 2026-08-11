@@ -13,7 +13,7 @@ export class AiService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/ai`;
 
-  sendMessage(message: string, image?: File): Observable<AiResponse> {
+  sendMessage(message: string, image?: File, history?: any[]): Observable<AiResponse> {
     const formData = new FormData();
     
     if (message) {
@@ -24,6 +24,10 @@ export class AiService {
       formData.append('image', image);
     }
 
+    if (history && history.length > 0) {
+      formData.append('history', JSON.stringify(history));
+    }
+
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const currentLocalTime = new Date().toString();
     
@@ -31,5 +35,5 @@ export class AiService {
     formData.append('currentTime', currentLocalTime);
 
     return this.http.post<AiResponse>(`${this.apiUrl}/chat`, formData);
-  }
+  } 
 }

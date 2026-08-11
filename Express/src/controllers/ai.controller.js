@@ -3,7 +3,7 @@ const eventService = require('../services/event.service');
 
 const handleAIChat = async (req, res) => {
     try {
-        const { message, timeZone, currentTime } = req.body;
+        const { message, timeZone, currentTime, history } = req.body;
         const file = req.file;
         const userId = req.user.id;
 
@@ -18,6 +18,22 @@ const handleAIChat = async (req, res) => {
             end: e.toDate
         }));
 
+        let parsedHistory = [];
+        if (history) {
+            try {
+                parsedHistory = typeof history === 'string' ? JSON.parse(history) : history;
+            } catch (e) {
+                console.error('Hiba a history feldolgozásakor:', e);
+            }
+        }
+
+        let historyText = "Nincs előzmény.";
+        if (parsedHistory && Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+            historyText = parsedHistory.map(msg => 
+                `${msg.role === 'user' ? 'Felhasználó' : 'AI'}: ${msg.content}`
+            ).join('\n');
+        }
+
         const systemInstruction = `
             Információk a felhasználóról:
             - Aktuális helyi idő: ${currentTime || new Date().toISOString()}
@@ -26,12 +42,16 @@ const handleAIChat = async (req, res) => {
             KÖZELGŐ ESEMÉNYEK A KÖVETKEZŐ 14 NAPBAN (JSON formátumban):
             ${JSON.stringify(minimalEvents)}
 
+            EDDIGI BESZÉLGETÉS ELŐZMÉNYE (Kérlek, használd kontextusként a visszautalásokhoz!):
+            ${historyText}
+
             SZIGORÚ SZABÁLYOK: 
             1. Ha új eseményt kér, használd a 'createEvents' eszközt!
-            2. Ha módosítani akar: Keresd meg a fenti listában a módosítandó esemény 'id'-jét, és használd az 'updateEvent' eszközt!
-            3. HA TÖBB HASONLÓ ESEMÉNY VAN a listában, vagy NINCS BENNE, és nem tudod pontosan beazonosítani az 'id'-t, AKKOR NE HASZNÁLJ ESZKÖZT! Helyette normál szövegként kérdezz vissza a felhasználótól (pl. "Pontosan melyik eseményre gondolsz?").
-            4. Ha a naptáráról kérdez általánosan (pl. "mi lesz jövő hónapban?"), használd a 'getEvents' eszközt!
-            5. Válaszgeneráláskor NE használj Markdown formázást, csak nyers szöveget!
+            2. Ha módosítani akar: Keresd meg a fenti listában az esemény(ek) 'id'-jét, és használd az 'updateEvents' eszközt!
+            3. Ha TÖRÖLNI akar: Keresd meg az esemény(ek) 'id'-jét a listában, és használd a 'deleteEvents' eszközt!
+            4. HA TÖBB HASONLÓ ESEMÉNY VAN a listában, vagy NINCS BENNE, és nem tudod pontosan beazonosítani az 'id'-t, AKKOR NE HASZNÁLJ ESZKÖZT! Helyette normál szövegként kérdezz vissza a felhasználótól.
+            5. Ha a naptáráról kérdez általánosan, használd a 'getEvents' eszközt!
+            6. Válaszgeneráláskor NE használj Markdown formázást, csak nyers szöveget!
             `;
 
         let contents = [
@@ -79,18 +99,38 @@ const handleAIChat = async (req, res) => {
                 });
             }
 
-            if (call.name === 'updateEvent') {
-                const args = call.args;
-                const eventId = args.eventId;
-                const { eventId: _, ...updateData } = args;
+            if (call.name === 'updateEvents') {
+                const updatesArray = call.args.updates;
+                let updatedEvents = [];
 
-                const updatedEvent = await eventService.updateEvent(eventId, userId, updateData);
+                for (const updateArgs of updatesArray) {
+                    const { eventId, ...updateData } = updateArgs;
+                    const updated = await eventService.updateEvent(eventId, userId, updateData);
+                    updatedEvents.push(updated);
+                }
 
                 return res.json({
                     success: true,
-                    action: 'updateEvent',
-                    message: `Sikeresen módosítottam az eseményt!`,
-                    event: updatedEvent
+                    action: 'updateEvent', 
+                    message: `Sikeresen módosítottam ${updatedEvents.length} db eseményt!`,
+                    events: updatedEvents
+                });
+            }
+
+            if (call.name === 'deleteEvents') {
+                const idsArray = call.args.eventIds;
+                let deletedCount = 0;
+
+                for (const eventId of idsArray) {
+                    await eventService.deleteEvent(eventId, userId);
+                    deletedCount++;
+                }
+
+                return res.json({
+                    success: true,
+                    action: 'deleteEvent',
+                    message: `Sikeresen töröltem ${deletedCount} db eseményt a naptáradból!`,
+                    deletedIds: idsArray
                 });
             }
 

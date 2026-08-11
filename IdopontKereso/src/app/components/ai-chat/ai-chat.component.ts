@@ -96,6 +96,13 @@ export class AiChatComponent {
 
     if (!text && !file) return;
 
+    const recentHistory = this.messages()
+      .slice(-6)
+      .map(msg => ({
+        role: msg.sender,
+        content: msg.text || ''
+      }));
+
     this.messages.update(msgs => [...msgs, { 
       sender: 'user', 
       text: text, 
@@ -107,30 +114,27 @@ export class AiChatComponent {
     this.isLoading.set(true);
     this.scrollToBottom();
 
-    this.aiService.sendMessage(text, file || undefined).subscribe({
+    this.aiService.sendMessage(text, file || undefined, recentHistory).subscribe({
       next: (res) => {
         this.messages.update(msgs => [...msgs, { sender: 'ai', text: res.message }]);
         this.isLoading.set(false);
         this.scrollToBottom();
         
-        if (res.action === 'createEvent' || res.action === 'updateEvent') {
+        if (res.action === 'createEvent' || res.action === 'updateEvent' || res.action === 'deleteEvent') {
           this.calendarRefreshService.triggerRefresh();
         }
       },
       error: (err) => {
         this.messages.update(msgs => [...msgs, { sender: 'ai', text: 'Hiba történt a kapcsolódás során. Kérlek próbáld újra!' }]);
-        this.snackbarService.showError('Nem sikerült elérni az AI szervert.');
         this.isLoading.set(false);
         this.scrollToBottom();
       }
     });
-  }
+}
 
   private scrollToBottom() {
-    setTimeout(() => {
-      if (this.chatContainer) {
-        this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
-      }
-    }, 100);
+    if (this.chatContainer) {
+      this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
+    }
   }
 }

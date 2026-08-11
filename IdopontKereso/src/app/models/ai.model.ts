@@ -11,4 +11,6 @@ export interface AiResponse {
   action: string;
   message: string;
   event?: AppEvent;
+  events?: AppEvent[];
+  deletedIds?: string[];
 }

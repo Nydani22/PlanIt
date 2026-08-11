@@ -37,22 +37,29 @@ const createEventsTool = {
   }
 };
 
-const updateEventTool = {
-  name: "updateEvent",
-  description: "Módosítja vagy áthelyezi egy MÁR LÉTEZŐ esemény adatait. Csak akkor használd, ha a felhasználó egyértelműen egy meglévő esemény módosítását kéri. A módosítandó esemény 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned!",
+const updateEventsTool = {
+  name: "updateEvents",
+  description: "Módosítja vagy áthelyezi egy vagy TÖBB meglévő esemény adatait. Ha a felhasználó egyszerre több esemény (pl. 'az összes csütörtöki') eltolását kéri, az összeset tedd bele a listába! A módosítandó események 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned!",
   parameters: {
     type: "OBJECT",
     properties: {
-      eventId: { 
-        type: "STRING", 
-        description: "A módosítandó esemény adatbázis azonosítója (_id). KÖTELEZŐ!" 
-      },
-      eventName: { type: "STRING", description: "Új cím (csak ha változik)." },
-      fromDate: { type: "STRING", description: "Új kezdő dátum ISO 8601 (UTC) (csak ha változik)." },
-      toDate: { type: "STRING", description: "Új befejező dátum ISO 8601 (UTC) (csak ha változik)." },
-      description: { type: "STRING", description: "Új leírás (csak ha változik)." }
+      updates: {
+        type: "ARRAY",
+        description: "A módosítandó események listája.",
+        items: {
+          type: "OBJECT",
+          properties: {
+            eventId: { type: "STRING", description: "A módosítandó esemény adatbázis azonosítója (_id). KÖTELEZŐ!" },
+            eventName: { type: "STRING", description: "Új cím (csak ha változik)." },
+            fromDate: { type: "STRING", description: "Új kezdő dátum ISO 8601 (UTC) (csak ha változik)." },
+            toDate: { type: "STRING", description: "Új befejező dátum ISO 8601 (UTC) (csak ha változik)." },
+            description: { type: "STRING", description: "Új leírás (csak ha változik)." }
+          },
+          required: ["eventId"]
+        }
+      }
     },
-    required: ["eventId"]
+    required: ["updates"]
   }
 };
 
@@ -69,6 +76,24 @@ const getEventsTool = {
   }
 };
 
+const deleteEventsTool = {
+  name: "deleteEvents",
+  description: "Töröl egy vagy TÖBB meglévő eseményt a naptárból. Akkor használd, ha a felhasználó események törlését, eltávolítását vagy lemondását kéri. A törlendő események 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned!",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      eventIds: {
+        type: "ARRAY",
+        description: "A törlendő események adatbázis azonosítóinak (_id) listája.",
+        items: {
+          type: "STRING"
+        }
+      }
+    },
+    required: ["eventIds"]
+  }
+};
+
 
 const fallbackModels = [
   'gemini-flash-latest',
@@ -80,7 +105,7 @@ const getModel = (modelName) => {
   return genAI.getGenerativeModel({ 
     model: modelName,
     tools: [{
-      functionDeclarations: [createEventsTool, updateEventTool, getEventsTool]
+      functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool]
     }]
   });
 };

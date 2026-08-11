@@ -8,6 +8,7 @@ import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/ht
 import { AuthInterceptor } from './services/auth/auth.interceptor';
 import { AuthService } from './services/auth/auth.service';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { provideMarkdown } from 'ngx-markdown';
 
 function initializeApp(authService: AuthService) {
   return () => authService.initAuth();
@@ -22,6 +23,7 @@ export const appConfig: ApplicationConfig = {
       deps: [AuthService],
       multi: true
     },
+    provideMarkdown(),
     { provide: MAT_DATE_LOCALE, useValue: 'hu-HU' },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),

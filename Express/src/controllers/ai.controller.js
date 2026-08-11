@@ -14,7 +14,7 @@ const handleAIChat = async (req, res) => {
         const searchEnd = new Date(now.getTime() + ninetyDays);
         
         
-        const windowEvents = await eventService.getUserEvents(userId, searchStart, searchEnd);
+        const windowEvents = await eventService.getExpandedEventsForUsers(searchStart, searchEnd, [userId]);
 
         const minimalEvents = windowEvents.map(e => ({
             id: e._id,
@@ -56,7 +56,6 @@ const handleAIChat = async (req, res) => {
             3. Ha TÖRÖLNI akar: Keresd meg az esemény(ek) 'id'-jét a listában, és használd a 'deleteEvents' eszközt!
             4. HA TÖBB HASONLÓ ESEMÉNY VAN a listában, vagy NINCS BENNE, és nem tudod pontosan beazonosítani az 'id'-t, AKKOR NE HASZNÁLJ ESZKÖZT! Helyette normál szövegként kérdezz vissza a felhasználótól.
             5. Ha a naptáráról kérdez általánosan, használd a 'getEvents' eszközt!
-            6. Válaszgeneráláskor NE használj Markdown formázást, csak nyers szöveget!
             `;
 
         let contents = [

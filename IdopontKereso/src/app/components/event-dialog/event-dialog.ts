@@ -21,6 +21,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { AuthService } from '../../services/auth/auth.service';
 import { GroupService } from '../../services/group/group.service';
+import { SnackbarService } from '../../services/snackbar/snackbar.service';
 
 export interface EventDialogData {
   event?: AppEvent;
@@ -54,6 +55,12 @@ export const dateRangeValidator: ValidatorFn = (control: AbstractControl): Valid
   }
 
   if (start.getTime() > end.getTime()) {
+    const isRecurring = control.parent?.get('recurrenceDetails.isRecurring')?.value;
+    
+    if (isRecurring) {
+      return null; 
+    }
+    
     return { dateRangeInvalid: true };
   }
   
@@ -339,6 +346,9 @@ export class EventDialogComponent implements OnInit {
       const eTime = time.isAllDay ? '23:59' : time.endTime;
       const fullFromDate = this.combineDateAndTime(time.startDate, sTime, time.isAllDay);
       const fullToDate = this.combineDateAndTime(targetEndDate, eTime, time.isAllDay);
+      if (rec.isRecurring && fullFromDate.getTime() > fullToDate.getTime()) {
+        fullToDate.setDate(fullToDate.getDate() + 1);
+      }
       const settings = this.eventForm.get('settingsDetails')?.getRawValue();
 
       const payload: AppEvent = {

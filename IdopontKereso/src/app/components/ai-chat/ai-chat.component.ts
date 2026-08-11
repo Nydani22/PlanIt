@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { AiService } from '../../services/ai/ai.service';
 import { ChatMessage } from '../../models/ai.model';
 import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-refresh.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
+import { MarkdownModule } from 'ngx-markdown';
 
 @Component({
   selector: 'app-ai-chat',
@@ -21,12 +22,13 @@ import { SnackbarService } from '../../services/snackbar/snackbar.service';
     MatIconModule, 
     MatInputModule, 
     MatFormFieldModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MarkdownModule
   ],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss']
 })
-export class AiChatComponent {
+export class AiChatComponent implements OnInit {
   private aiService = inject(AiService);
   private calendarRefreshService = inject(CalendarRefreshService);
   private snackbarService = inject(SnackbarService);
@@ -43,6 +45,14 @@ export class AiChatComponent {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
+
+  isRecording = signal(false);
+  private recognition: any;
+
+  ngOnInit() {
+    this.initSpeechRecognition();
+  }
+
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -130,7 +140,49 @@ export class AiChatComponent {
         this.scrollToBottom();
       }
     });
-}
+  }
+
+  private initSpeechRecognition() {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'hu-HU';
+      this.recognition.interimResults = false;
+      this.recognition.maxAlternatives = 1;
+
+      this.recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.userInput.update(current => current ? current + ' ' + transcript : transcript);
+      };
+
+      this.recognition.onend = () => {
+        this.isRecording.set(false);
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.error('Hangfelismerési hiba:', event.error);
+        this.isRecording.set(false);
+        if (event.error !== 'no-speech') {
+          this.snackbarService.showError('Hiba történt a mikrofon használatakor.');
+        }
+      };
+    }
+  }
+
+  toggleRecording() {
+    if (!this.recognition) {
+      this.snackbarService.showError('A böngésződ sajnos nem támogatja a hangalapú gépelést.');
+      return;
+    }
+
+    if (this.isRecording()) {
+      this.recognition.stop();
+    } else {
+      this.isRecording.set(true);
+      this.recognition.start();
+    }
+  }
 
   private scrollToBottom() {
     if (this.chatContainer) {

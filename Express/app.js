@@ -6,6 +6,7 @@ const userRoutes = require('./src/routes/user.routes');
 const authRoutes = require('./src/routes/auth.routes'); 
 const eventRoutes = require('./src/routes/event.routes');
 const groupRoutes = require('./src/routes/group.routes');
+const aiRoutes = require('./src/routes/ai.routes')
 const notificationRoutes = require('./src/routes/notification.routes');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -26,6 +27,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.use('/api/ai', aiRoutes)
 app.use('/api/groups', groupRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);

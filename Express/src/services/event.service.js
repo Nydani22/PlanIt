@@ -6,6 +6,22 @@ const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
 const { expandEventInWindow } = require('../utils/event.util');
 
+const CATEGORY_COLORS = {
+  'WORK': '#3f51b5',
+  'MEETING': '#009688',
+  'PERSONAL': '#9c27b0',
+  'FAMILY': '#ff9800',
+  'IMPORTANT': '#f44336',
+  'HOLIDAY': '#03a9f4',
+  'HEALTH': '#4caf50',
+  'STUDY': '#ff5722',
+  'SPORTS': '#8bc34a',
+  'FINANCE': '#ffc107',
+  'CELEBRATION': '#e91e63',
+  'TRAVEL': '#795548',
+  'OTHER': '#9e9e9e'
+};
+
 exports.createEvent = async (eventData, userId) => {
     const { 
         eventName, fromDate, toDate, description, location, 
@@ -36,6 +52,8 @@ exports.createEvent = async (eventData, userId) => {
         }];
     }
 
+    const finalColor = color || CATEGORY_COLORS[category] || CATEGORY_COLORS['OTHER'];
+
     const newEvent = new Event({
         eventName,
         fromDate,
@@ -46,7 +64,7 @@ exports.createEvent = async (eventData, userId) => {
         organizerId: userId,
         groupId,
         category,
-        color,
+        color: finalColor, 
         timezone,
         recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
         attendees: finalAttendees
@@ -218,12 +236,9 @@ exports.deleteAllExternalEventsForUser = async (userId) => {
     });
 };
 
-// Segédfüggvény az órák számolásához
 const calculateTotalHours = (events) => {
     return events.reduce((total, event) => {
-        // Időtartam ms-ben
-        const durationMs = new Date(event.toDate) - new Date(event.fromDate); 
-        // Átváltás órába (két tizedesjegyre kerekítve, ha tört)
+        const durationMs = new Date(event.toDate) - new Date(event.fromDate);
         const hours = durationMs / (1000 * 60 * 60);
         return total + (hours > 0 ? hours : 0);
     }, 0);

@@ -25,6 +25,7 @@ import { UserService } from './services/user/user.service';
 import { ExternalCalendar, User } from './models/user.model';
 import { UserStatsResponse, upcomingEvents } from './models/event.model';
 import { EventService } from './services/event/event.service';
+import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 
 @Component({
   selector: 'app-root',
@@ -43,7 +44,8 @@ import { EventService } from './services/event/event.service';
     MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    AiChatComponent
   ],
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,7 +53,7 @@ import { EventService } from './services/event/event.service';
 })
 export class App implements OnInit {
   private themeService = inject(ThemeService);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private userService = inject(UserService);
   private router = inject(Router);
   private dialog = inject(MatDialog);

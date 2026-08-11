@@ -1,0 +1,77 @@
+@if (!isOpen()) {
+  <button mat-fab color="primary" (click)="toggleChat()" 
+    class="opacity-70 hover:opacity-100 transition-opacity duration-300 shadow-lg">
+    <mat-icon>smart_toy</mat-icon>
+  </button>
+}
+
+@if (isOpen()) {
+  <div class="flex flex-col w-[380px] h-[600px] max-w-[90vw] max-h-[80vh] bg-black dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all duration-300 origin-bottom-right">
+    
+    <div class="bg-amber-300 text-amber-900 p-3 flex items-center justify-between shadow-sm z-10 shrink-0">
+      <div class="flex items-center gap-2">
+        <mat-icon>smart_toy</mat-icon>
+        <span class="font-bold tracking-wide text-sm">Naptár AI Asszisztens</span>
+      </div>
+      <button mat-icon-button  class="w-10 h-10 flex items-center justify-center leading-none bg-gray-50 dark:bg-gray-800 rounded-full shrink-0">
+        
+      </button>
+      <button mat-icon-button (click)="toggleChat()" color="accent" routerLink="/profil"
+          class="flex items-center justify-center leading-none m-0 p-0">
+        <mat-icon class="text-[18px]">close</mat-icon>
+      </button>
+    </div>
+
+    <div #chatContainer class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-gray-50 dark:bg-gray-900 scroll-smooth">
+      @for (msg of messages(); track $index) {
+        <div class="flex" [ngClass]="{'justify-end': msg.sender === 'user', 'justify-start': msg.sender === 'ai'}">
+          <div class="max-w-[85%] rounded-2xl px-4 py-2 shadow-sm" [ngClass]="msg.sender === 'user' ? 'bg-amber-300 text-amber-900 rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 rounded-bl-none'">
+            
+            @if (msg.imageUrl) {
+              <img [src]="msg.imageUrl" alt="Feltöltött kép" class="max-h-40 rounded-lg mb-2 object-contain bg-black/10">
+            }
+            
+            <p class="whitespace-pre-wrap text-sm m-0 leading-relaxed">{{ msg.text }}</p>
+          </div>
+        </div>
+      }
+
+      @if (isLoading()) {
+        <div class="flex justify-start">
+          <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-3 shadow-sm">
+            <mat-spinner diameter="16"></mat-spinner>
+            <!--<span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Az AI feldolgozza az adatokat...</span>-->
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (selectedFilePreview()) {
+      <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 shrink-0">
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-blue-600 text-[18px]">image</mat-icon>
+          <span class="text-xs font-medium truncate max-w-[150px] text-gray-700 dark:text-gray-300">{{ selectedFile()?.name || 'Beillesztett kép' }}</span>
+        </div>
+        <button mat-icon-button color="warn" (click)="removeFile()" class="w-6 h-6 flex items-center justify-center">
+          <mat-icon class="text-[16px]">close</mat-icon>
+        </button>
+      </div>
+    }
+
+    <div class="p-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center gap-1 shrink-0">
+
+      <mat-form-field appearance="outline" class="w-full text-sm -mb-[22px]">
+        <input matInput 
+               placeholder="Írj, vagy Ctrl+V..." 
+               [(ngModel)]="userInput" 
+               (keyup.enter)="sendMessage()" 
+               (paste)="onPaste($event)" 
+               [disabled]="isLoading()">
+      </mat-form-field>
+
+      <button mat-fab color="primary" class="!w-10 !h-10 flex-shrink-0 ml-1 shadow-none" (click)="sendMessage()" [disabled]="isLoading() || (!userInput().trim() && !selectedFile())">
+        <mat-icon class="text-[20px]">send</mat-icon>
+      </button>
+    </div>
+  </div>
+}

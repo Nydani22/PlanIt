@@ -84,117 +84,81 @@ const handleAIChat = async (req, res) => {
         const functionCalls = response.functionCalls();
 
         if (functionCalls && functionCalls.length > 0) {
-            const call = functionCalls[0];
+            let savedEvents = [];
+            let updatedEvents = [];
+            let deletedIds = [];
+            let fetchedEventsSummary = [];
+            let hasModification = false;
+
+            for (const call of functionCalls) {
+                if (call.name === 'createEvents') {
+                    const eventsArray = call.args.events;
+                    for (const eventArgs of eventsArray) {
+                        const newEventPayload = {
+                            ...eventArgs,
+                            isAllDay: eventArgs.isAllDay ?? false,
+                            category: eventArgs.category || 'OTHER',
+                            organizerId: userId
+                        };
+                        const saved = await eventService.createEvent(newEventPayload, userId);
+                        savedEvents.push(saved);
+                    }
+                    hasModification = true;
+                }
+
+                else if (call.name === 'updateEvents') {
+                    const updatesArray = call.args.updates;
+                    for (const updateArgs of updatesArray) {
+                        const { eventId, ...updateData } = updateArgs;
+                        const updated = await eventService.updateEvent(eventId, userId, updateData);
+                        updatedEvents.push(updated);
+                    }
+                    hasModification = true;
+                }
+
+                else if (call.name === 'deleteEvents') {
+                    const idsArray = call.args.eventIds;
+                    for (const eventId of idsArray) {
+                        await eventService.deleteEvent(eventId, userId);
+                        deletedIds.push(eventId);
+                    }
+                    hasModification = true;
+                }
+
+                else if (call.name === 'getEvents') {
+                    const { startDate, endDate } = call.args;
+                    const events = await eventService.getUserEvents(userId, startDate, endDate);
+                    
+                    const minimalEvents = events.map(e => ({
+                        title: e.eventName,
+                        start: e.fromDate,
+                        end: e.toDate
+                    }));
+                    fetchedEventsSummary.push(...minimalEvents);
+                }
+            }
+
+            const summaryPrompt = `
+            A felhasználó kérése ez volt: "${message || 'Hangüzenet'}"
             
-            if (call.name === 'createEvents') {
-                const eventsArray = call.args.events;
-                let savedEvents = [];
+            Az alábbi műveleteket hajtottam végre a háttérben:
+            - Létrehozva: ${savedEvents.length} db (Adatok: ${JSON.stringify(savedEvents.map(e => ({ title: e.eventName, start: e.fromDate })))})
+            - Módosítva: ${updatedEvents.length} db
+            - Törölve: ${deletedIds.length} db
+            - Lekérdezett események (ha volt ilyen): ${JSON.stringify(fetchedEventsSummary)}
+            
+            Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy mit csináltál! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Használj Markdown formázást a kiemelésekhez!
+            `;
+            
+            const secondResult = await generateAIContent(summaryPrompt);
 
-                for (const eventArgs of eventsArray) {
-                    const newEventPayload = {
-                        ...eventArgs,
-                        isAllDay: eventArgs.isAllDay ?? false,
-                        category: eventArgs.category || 'OTHER',
-                        organizerId: userId
-                    };
-                    const saved = await eventService.createEvent(newEventPayload, userId);
-                    savedEvents.push(saved);
-                }
-
-                const summaryPrompt = `
-                A felhasználó kérése: "${message || 'Hangüzenet'}"
-                Sikeresen létrehoztam ${savedEvents.length} eseményt a naptárban. (Részletek: ${JSON.stringify(savedEvents.map(e => ({ title: e.eventName, start: e.fromDate, end: e.toDate })))})
-                Kérlek, írj egy barátságos, természetes nyelvű visszaigazolást a felhasználónak arról, hogy miket hoztál létre! Használj Markdown formázást (pl. vastagítást a nevekhez vagy időpontokhoz)!
-                `;
-                const secondResult = await generateAIContent(summaryPrompt);
-
-                return res.json({
-                    success: true,
-                    action: 'createEvent',
-                    message: secondResult.response.text(),
-                    events: savedEvents
-                });
-            }
-
-            if (call.name === 'updateEvents') {
-                const updatesArray = call.args.updates;
-                let updatedEvents = [];
-
-                for (const updateArgs of updatesArray) {
-                    const { eventId, ...updateData } = updateArgs;
-                    const updated = await eventService.updateEvent(eventId, userId, updateData);
-                    updatedEvents.push(updated);
-                }
-
-                const summaryPrompt = `
-                A felhasználó kérése: "${message || 'Hangüzenet'}"
-                Sikeresen módosítottam ${updatedEvents.length} eseményt. (Részletek: ${JSON.stringify(updatedEvents.map(e => ({ title: e.eventName, start: e.fromDate })))})
-                Kérlek, írj egy barátságos, természetes visszaigazolást erről Markdown formázással! Röviden foglald össze a változásokat!
-                `;
-                const secondResult = await generateAIContent(summaryPrompt);
-
-                return res.json({
-                    success: true,
-                    action: 'updateEvent', 
-                    message: secondResult.response.text(),
-                    events: updatedEvents
-                });
-            }
-
-            if (call.name === 'deleteEvents') {
-                const idsArray = call.args.eventIds;
-                let deletedCount = 0;
-
-                for (const eventId of idsArray) {
-                    await eventService.deleteEvent(eventId, userId);
-                    deletedCount++;
-                }
-
-                const summaryPrompt = `
-                A felhasználó kérése: "${message || 'Hangüzenet'}"
-                Sikeresen töröltem ${deletedCount} eseményt.
-                Kérlek, írj egy rövid, barátságos visszaigazolást arról, hogy a kért eseményeket eltávolítottad a naptárból!
-                `;
-                const secondResult = await generateAIContent(summaryPrompt);
-
-                return res.json({
-                    success: true,
-                    action: 'deleteEvent',
-                    message: secondResult.response.text(),
-                    deletedIds: idsArray
-                });
-            }
-
-            if (call.name === 'getEvents') {
-                const { startDate, endDate } = call.args;
-                
-                const events = await eventService.getUserEvents(userId, startDate, endDate);
-                
-                const minimalEvents = events.map(e => ({
-                    id: e._id,
-                    title: e.eventName,
-                    start: e.fromDate,
-                    end: e.toDate,
-                    location: e.location || 'Nincs megadva'
-                }));
-
-                const summaryPrompt = `
-                A felhasználó eredeti kérdése ez volt: "${message}"
-                
-                Az adatbázisból a következő eseményeket találtam a kért időszakban (JSON):
-                ${JSON.stringify(minimalEvents)}
-                
-                Kérlek, válaszold meg a kérdést a fenti adatok alapján egyszerű, nyers szövegként! Ha nincs esemény a listában, mondd meg neki, hogy azon az időszakon szabad. Ne feledd: NE használj Markdown formázást!
-                `;
-
-                const secondResult = await generateAIContent(summaryPrompt);
-                
-                return res.json({
-                    success: true,
-                    action: 'message',
-                    message: secondResult.response.text()
-                });
-            }
+            return res.json({
+                success: true,
+                action: hasModification ? 'updateEvent' : 'message',
+                message: secondResult.response.text(),
+                events: [...savedEvents, ...updatedEvents],
+                deletedIds: deletedIds
+            });
         }
 
         return res.json({

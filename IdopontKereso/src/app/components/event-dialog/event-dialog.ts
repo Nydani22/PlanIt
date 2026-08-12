@@ -101,6 +101,7 @@ export class EventDialogComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private authService = inject(AuthService);
   private groupService = inject(GroupService);
+  private snackbarService = inject(SnackbarService)
   canEdit = signal<boolean>(true);
   eventForm: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -168,7 +169,6 @@ export class EventDialogComponent implements OnInit {
       this.patchEventData(ev);
     }
     
-    this.cdr.detectChanges();
   }
 
 
@@ -289,18 +289,8 @@ export class EventDialogComponent implements OnInit {
       });
     }
 
-    let fromDate: Date;
-    let toDate: Date;
-
-    if (ev.isAllDay) {
-      const utcFrom = new Date(ev.fromDate);
-      const utcTo = new Date(ev.toDate);
-      fromDate = new Date(utcFrom.getUTCFullYear(), utcFrom.getUTCMonth(), utcFrom.getUTCDate());
-      toDate = new Date(utcTo.getUTCFullYear(), utcTo.getUTCMonth(), utcTo.getUTCDate());
-    } else {
-      fromDate = new Date(ev.fromDate);
-      toDate = new Date(ev.toDate);
-    }
+    const fromDate = new Date(ev.fromDate);
+    const toDate = new Date(ev.toDate);
 
     const startTime = this.extractTime(fromDate);
     const endTime = this.extractTime(toDate);
@@ -388,14 +378,18 @@ export class EventDialogComponent implements OnInit {
           next: (res) => {
             this.dialogRef.close(true);
           },
-          error: (err) => console.error('Hiba az esemény frissítésekor:', err)
+          error: (err) => {
+            this.snackbarService.showError("Hiba az esemény frissítésekor.");
+          }
         });
       } else {
         this.eventService.createEvent(payload).subscribe({
           next: (res) => {
             this.dialogRef.close(true);
           },
-          error: (err) => console.error('Hiba az esemény létrehozásakor:', err)
+          error: (err) => {
+            this.snackbarService.showError("Hiba az esemény létrehozásakor.");
+          }
         });
       }
     }
@@ -423,7 +417,9 @@ export class EventDialogComponent implements OnInit {
             next: () => {
               this.dialogRef.close(true);
             },
-            error: (err) => console.error('Hiba az esemény törlésekor:', err)
+            error: (err) => {
+             this.snackbarService.showError("Hiba az esemény törlésekor.") 
+            }
           });
         }
       });      
@@ -435,12 +431,8 @@ export class EventDialogComponent implements OnInit {
     const timeStr = time || '00:00';
     const [hours, minutes] = timeStr.split(':').map(Number);
     
-    if (isAllDay) {
-      return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes, 0));
-    } else {
-      const combined = new Date(date);
-      combined.setHours(hours, minutes, 0, 0);
-      return combined;
-    }
+    const combined = new Date(date);
+    combined.setHours(hours, minutes, 0, 0);
+    return combined;
   }
 }

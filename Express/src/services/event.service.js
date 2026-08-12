@@ -64,8 +64,7 @@ exports.createEvent = async (eventData, userId) => {
         organizerId: userId,
         groupId,
         category,
-        color: finalColor, 
-        timezone,
+        color: finalColor,
         recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
         attendees: finalAttendees
     });
@@ -126,7 +125,7 @@ exports.updateEvent = async (eventId, userId, updateData) => {
         throw error;
     }
 
-    if (updateData.category && !updateData.color) {
+    if (updateData.category && updateData.category !== event.category && !updateData.color) {
         updateData.color = CATEGORY_COLORS[updateData.category] || CATEGORY_COLORS['OTHER'];
     }
 
@@ -313,9 +312,31 @@ exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) 
   const end = new Date(searchEnd);
 
   const events = await Event.find({
-    $or: [
-      { 'attendees.userId': { $in: attendeeIds } },
-      { organizerId: { $in: attendeeIds } } 
+    $and: [
+      {
+        $or: [
+          { 'attendees.userId': { $in: attendeeIds } },
+          { organizerId: { $in: attendeeIds } } 
+        ]
+      },
+      {
+        $or: [
+          {
+            'recurrence.frequency': 'NONE',
+            fromDate: { $lte: end },
+            toDate: { $gte: start }
+          },
+          {
+            'recurrence.frequency': { $ne: 'NONE' },
+            fromDate: { $lte: end },
+            $or: [
+              { 'recurrence.untilDate': null },
+              { 'recurrence.untilDate': { $exists: false } },
+              { 'recurrence.untilDate': { $gte: start } }
+            ]
+          }
+        ]
+      }
     ]
   });
 

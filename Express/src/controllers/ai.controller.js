@@ -101,10 +101,17 @@ const handleAIChat = async (req, res) => {
                     savedEvents.push(saved);
                 }
 
+                const summaryPrompt = `
+                A felhasználó kérése: "${message || 'Hangüzenet'}"
+                Sikeresen létrehoztam ${savedEvents.length} eseményt a naptárban. (Részletek: ${JSON.stringify(savedEvents.map(e => ({ title: e.eventName, start: e.fromDate, end: e.toDate })))})
+                Kérlek, írj egy barátságos, természetes nyelvű visszaigazolást a felhasználónak arról, hogy miket hoztál létre! Használj Markdown formázást (pl. vastagítást a nevekhez vagy időpontokhoz)!
+                `;
+                const secondResult = await generateAIContent(summaryPrompt);
+
                 return res.json({
                     success: true,
                     action: 'createEvent',
-                    message: `Sikeresen feldolgoztam és létrehoztam ${savedEvents.length} db eseményt a naptáradban!`,
+                    message: secondResult.response.text(),
                     events: savedEvents
                 });
             }
@@ -119,10 +126,17 @@ const handleAIChat = async (req, res) => {
                     updatedEvents.push(updated);
                 }
 
+                const summaryPrompt = `
+                A felhasználó kérése: "${message || 'Hangüzenet'}"
+                Sikeresen módosítottam ${updatedEvents.length} eseményt. (Részletek: ${JSON.stringify(updatedEvents.map(e => ({ title: e.eventName, start: e.fromDate })))})
+                Kérlek, írj egy barátságos, természetes visszaigazolást erről Markdown formázással! Röviden foglald össze a változásokat!
+                `;
+                const secondResult = await generateAIContent(summaryPrompt);
+
                 return res.json({
                     success: true,
                     action: 'updateEvent', 
-                    message: `Sikeresen módosítottam ${updatedEvents.length} db eseményt!`,
+                    message: secondResult.response.text(),
                     events: updatedEvents
                 });
             }
@@ -136,10 +150,17 @@ const handleAIChat = async (req, res) => {
                     deletedCount++;
                 }
 
+                const summaryPrompt = `
+                A felhasználó kérése: "${message || 'Hangüzenet'}"
+                Sikeresen töröltem ${deletedCount} eseményt.
+                Kérlek, írj egy rövid, barátságos visszaigazolást arról, hogy a kért eseményeket eltávolítottad a naptárból!
+                `;
+                const secondResult = await generateAIContent(summaryPrompt);
+
                 return res.json({
                     success: true,
                     action: 'deleteEvent',
-                    message: `Sikeresen töröltem ${deletedCount} db eseményt a naptáradból!`,
+                    message: secondResult.response.text(),
                     deletedIds: idsArray
                 });
             }

@@ -28,7 +28,7 @@ import { MarkdownModule } from 'ngx-markdown';
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss']
 })
-export class AiChatComponent implements OnInit {
+export class AiChatComponent {
   private aiService = inject(AiService);
   private calendarRefreshService = inject(CalendarRefreshService);
   private snackbarService = inject(SnackbarService);
@@ -47,11 +47,9 @@ export class AiChatComponent implements OnInit {
   @ViewChild('chatContainer') chatContainer!: ElementRef<HTMLDivElement>;
 
   isRecording = signal(false);
-  private recognition: any;
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
 
-  ngOnInit() {
-    this.initSpeechRecognition();
-  }
 
 
   onFileSelected(event: any) {
@@ -142,45 +140,92 @@ export class AiChatComponent implements OnInit {
     });
   }
 
-  private initSpeechRecognition() {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
-    if (SpeechRecognition) {
-      this.recognition = new SpeechRecognition();
-      this.recognition.lang = 'hu-HU';
-      this.recognition.interimResults = false;
-      this.recognition.maxAlternatives = 1;
+  private async startRecording() {
+    try {
+      // 1. Elkérjük a mikrofon engedélyt a böngészőtől
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaRecorder = new MediaRecorder(stream);
+      this.audioChunks = [];
 
-      this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        this.userInput.update(current => current ? current + ' ' + transcript : transcript);
-      };
-
-      this.recognition.onend = () => {
-        this.isRecording.set(false);
-      };
-
-      this.recognition.onerror = (event: any) => {
-        console.error('Hangfelismerési hiba:', event.error);
-        this.isRecording.set(false);
-        if (event.error !== 'no-speech') {
-          this.snackbarService.showError('Hiba történt a mikrofon használatakor.');
+      // 2. Gyűjtjük a hangadatokat, ahogy beszél a felhasználó
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
         }
       };
+
+      // 3. Amikor leállítjuk a felvételt, fájlt csinálunk belőle
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        // Fájllá alakítjuk, hogy a meglévő Service tudja kezelni
+        const audioFile = new File([audioBlob], 'voice.webm', { type: 'audio/webm' });
+        
+        // Azonnal elküldjük az AI-nak
+        this.sendAudioMessage(audioFile);
+        
+        // Kikapcsoljuk a mikrofont (eltűnik a piros pötty a böngésző tabról)
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      // Indítjuk a felvételt
+      this.mediaRecorder.start();
+      this.isRecording.set(true);
+    } catch (err) {
+      console.error('Mikrofon hiba:', err);
+      this.snackbarService.showError('Nem sikerült hozzáférni a mikrofonhoz!');
     }
   }
 
-  toggleRecording() {
-    if (!this.recognition) {
-      this.snackbarService.showError('A böngésződ sajnos nem támogatja a hangalapú gépelést.');
-      return;
+  private stopRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+      this.isRecording.set(false);
     }
+  }
 
+  // ÚJ FÜGGVÉNY: Kifejezetten a hangfájl beküldésére
+  private sendAudioMessage(audioFile: File) {
+    // Kiírjuk a chaten, hogy elment egy hangüzenet
+    this.messages.update(msgs => [...msgs, { 
+      sender: 'user', 
+      text: '🎤 Hangüzenet elküldve...' 
+    }]);
+
+    this.isLoading.set(true);
+    this.scrollToBottom();
+
+    const recentHistory = this.messages()
+      .slice(-6)
+      .map(msg => ({
+        role: msg.sender,
+        content: msg.text || ''
+      }));
+
+    // A meglévő AiService-t használjuk! Bár a paraméter neve 'image' a service-ben,
+    // valójában bármilyen fájlt (így hangot is) tökéletesen átvisz a backendig!
+    this.aiService.sendMessage('', audioFile, recentHistory).subscribe({
+      next: (res) => {
+        this.messages.update(msgs => [...msgs, { sender: 'ai', text: res.message }]);
+        this.isLoading.set(false);
+        this.scrollToBottom();
+        
+        if (res.action === 'createEvent' || res.action === 'updateEvent' || res.action === 'deleteEvent') {
+          this.calendarRefreshService.triggerRefresh();
+        }
+      },
+      error: (err) => {
+        this.messages.update(msgs => [...msgs, { sender: 'ai', text: 'Hiba történt a kapcsolódás során. Kérlek próbáld újra!' }]);
+        this.isLoading.set(false);
+        this.scrollToBottom();
+      }
+    });
+  }
+
+  async toggleRecording() {
     if (this.isRecording()) {
-      this.recognition.stop();
+      this.stopRecording();
     } else {
-      this.isRecording.set(true);
-      this.recognition.start();
+      await this.startRecording();
     }
   }
 

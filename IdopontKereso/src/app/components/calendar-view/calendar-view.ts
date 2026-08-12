@@ -160,11 +160,11 @@ export class CalendarViewComponent implements OnInit {
       let endDate: Date;
 
       if (item.isAllDay) {
-        const utcStart = new Date(item.fromDate);
-        const utcEnd = new Date(item.toDate);
+        const localStart = new Date(item.fromDate);
+        const localEnd = new Date(item.toDate);
         
-        startDate = new Date(utcStart.getUTCFullYear(), utcStart.getUTCMonth(), utcStart.getUTCDate(), 0, 0, 0);
-        endDate = new Date(utcEnd.getUTCFullYear(), utcEnd.getUTCMonth(), utcEnd.getUTCDate(), 23, 59, 59);
+        startDate = new Date(localStart.getFullYear(), localStart.getMonth(), localStart.getDate(), 0, 0, 0);
+        endDate = new Date(localEnd.getFullYear(), localEnd.getMonth(), localEnd.getDate(), 23, 59, 59);
       } else {
         startDate = new Date(item.fromDate);
         endDate = new Date(item.toDate);

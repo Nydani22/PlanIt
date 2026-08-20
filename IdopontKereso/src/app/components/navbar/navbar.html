@@ -1,6 +1,6 @@
 <nav class="w-full px-4 py-2 bg-amber-300">
   <ul class="flex items-center justify-between w-full m-0 p-0 list-none">
-      <li>
+      <li class="flex items-center gap-2">
         @if (authService.getToken()) {
         <button mat-icon-button color="accent" (click)="onToggleMenu()"
             class="flex items-center justify-center leading-none m-0 p-0">
@@ -18,6 +18,10 @@
             class="flex items-center justify-center leading-none m-0 p-0">
             <mat-icon>person</mat-icon>
         </button>
+        } @else {
+          <a routerLink="/" class="flex items-center justify-center h-12 mr-2 cursor-pointer outline-none">
+            <img src="/images/logo.png" alt="PlanIt Logo" class="h-10 w-auto object-contain">
+          </a>
         }
       </li>
       <li class="flex gap-2">
@@ -34,17 +38,10 @@
                   notifications
                 </mat-icon>
             </button>
-
-            
             
             <button mat-icon-button color="accent" (click)="logout()" 
                     class="flex items-center justify-center leading-none m-0 p-0">
                 <mat-icon>logout</mat-icon>
-            </button>
-        } @else {
-            <button mat-icon-button color="accent" routerLink="/login" 
-                    class="flex items-center justify-center leading-none m-0 p-0">
-                <mat-icon>login</mat-icon>
             </button>
         }
       </li>

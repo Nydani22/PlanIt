@@ -1,10 +1,15 @@
-<div class="flex flex-col h-screen w-full">
-
-  <app-navbar (menuToggled)="sidenav.toggle()"></app-navbar>
-
-  <mat-sidenav-container class="flex-1 w-full bg-transparent">
+@if (isLandingPage()) {
+  <div class="w-full min-h-screen bg-gray-50 dark:bg-gray-900">
+    <router-outlet></router-outlet>
+  </div>
+} @else {
+  <div class="flex flex-col h-screen w-full overflow-hidden">
     
-    <mat-sidenav 
+    <app-navbar (menuToggled)="sidenav.toggle()"></app-navbar>
+
+    <mat-sidenav-container class="flex-1 w-full bg-transparent">
+      
+      <mat-sidenav 
       #sidenav 
       [mode]="isMobile() ? 'over' : 'side'" 
       [opened]="isSidebarOpen()" 
@@ -191,16 +196,19 @@
       </div>
     </mat-sidenav>
 
-    <mat-sidenav-content class="flex flex-col overflow-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
-      <main class="flex-1 w-full h-full">
-          <router-outlet />
-      </main>
-    </mat-sidenav-content>
+      <mat-sidenav-content class="flex flex-col overflow-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <main class="flex-1 w-full h-full">
+            <router-outlet></router-outlet>
+        </main>
+      </mat-sidenav-content>
 
-  </mat-sidenav-container>
-  @if (authService.getToken()) {
-    <div class="fixed bottom-6 right-6 z-50">
-      <app-ai-chat></app-ai-chat>
-    </div>
-  }
-</div>
+    </mat-sidenav-container>
+
+    @if (authService.getToken()) {
+      <div class="fixed bottom-6 right-6 z-50">
+        <app-ai-chat></app-ai-chat>
+      </div>
+    }
+    
+  </div>
+}

@@ -7,13 +7,15 @@ import { Groups } from './pages/groups/groups';
 import { Join } from './pages/join/join';
 import { Profil } from './pages/profil/profil';
 import { FindTime } from './pages/find-time/find-time';
+import { LandingPage } from './pages/landing-page/landing-page';
 
 export const routes: Routes = [
-    { path: '', component: Home, canActivate: [authGuard] },
+    { path: '', component: LandingPage },
+    { path: 'home', component: Home, canActivate: [authGuard] },
     { path: 'login', component: Login },
     { path: 'register', component: Signup},
     { path: 'join/:id', component: Join},
-    {path: 'find-time', component: FindTime, canActivate: [authGuard]},
+    { path: 'find-time', component: FindTime, canActivate: [authGuard]},
     { path: 'profil', component: Profil, canActivate: [authGuard]},
     { path: 'groups', component: Groups, canActivate: [authGuard]},
     { path: '**', redirectTo: '', pathMatch: 'full' }

@@ -57,7 +57,7 @@ export class Login implements OnInit {
   
   checkLoginStatus(): void {
     if (this.authService.getToken()) {
-      this.router.navigate(['/']);
+      this.router.navigate(['/home']);
     }
   }
 
@@ -81,7 +81,7 @@ export class Login implements OnInit {
           localStorage.removeItem('redirectAfterLogin');
           this.router.navigateByUrl(redirectUrl);
         } else {
-          this.router.navigate(['/']);
+          this.router.navigate(['/home']);
         }
       },
       error: (err) => {

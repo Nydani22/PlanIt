@@ -103,7 +103,7 @@ export class Signup {
             localStorage.removeItem('redirectAfterLogin');
             this.router.navigateByUrl(redirectUrl);
           } else {
-            this.router.navigate(['/']); 
+            this.router.navigate(['/home']); 
           }
         },
         error: (err) => {

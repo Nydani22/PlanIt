@@ -2,6 +2,7 @@
 @use '@angular/material' as mat;
 
 @import "../node_modules/angular-calendar/css/angular-calendar.css";
+@import 'aos/dist/aos.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 @include mat.core();
@@ -50,7 +51,7 @@ body {
 
 input::-ms-reveal,
 input::-ms-clear {
-    display: none;
+  display: none;
 }
 
 

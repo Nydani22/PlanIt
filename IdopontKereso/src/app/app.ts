@@ -66,6 +66,7 @@ export class App implements OnInit {
   isProfileRoute = signal<boolean>(false);
   isMobile = signal<boolean>(false);
   groupState = inject(GroupStateService);
+  isLandingPage = signal<boolean>(false);
   private previousUrl: string = '';
 
   userExternalCalendars = signal<ExternalCalendar[]>([]);
@@ -85,7 +86,7 @@ export class App implements OnInit {
       const isOpen = this.isSidebarOpen();
       const url = this.router.url;
       
-      const isExcludedPage = url.startsWith('/login') || url.startsWith('/register') || url.startsWith('/join');
+      const isExcludedPage = url === '/' || url.startsWith('/login') || url.startsWith('/register') || url.startsWith('/join');
 
       if (!isExcludedPage) {
         localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
@@ -112,6 +113,7 @@ export class App implements OnInit {
       this.previousUrl = currentUrl;
       this.isGroupsRoute.set(currentUrl.includes('/groups'));
       this.isProfileRoute.set(currentUrl.includes('/profil'));
+      this.isLandingPage.set(currentUrl === '/' || currentUrl === '');
 
       const isAuthPage = currentUrl.startsWith('/login') || currentUrl.startsWith('/register') || currentUrl.startsWith('/join');
       
@@ -227,7 +229,8 @@ export class App implements OnInit {
   }
 
   private checkRoute(url: string) {
-    const isExcludedPage = url.startsWith('/login') || 
+    const isExcludedPage = url === '/' || 
+                           url.startsWith('/login') || 
                            url.startsWith('/register') || 
                            url.startsWith('/join');
 
@@ -244,8 +247,8 @@ export class App implements OnInit {
   onDateSelected(date: Date | null) {
     if (date) {
       this.calendarRefreshService.selectedDate.set(date);
-      if (this.router.url !== '/') {
-        this.router.navigate(['/']);
+      if (this.router.url !== '/home') {
+        this.router.navigate(['/home']);
       }
     }
   }
@@ -253,7 +256,8 @@ export class App implements OnInit {
   private getInitialSidebarState(currentUrl?: string): boolean {
     const path = currentUrl || (typeof window !== 'undefined' ? window.location.pathname : '');
     
-    const isExcluded = path.startsWith('/login') || 
+    const isExcluded = path === '/' || path === '' ||
+                       path.startsWith('/login') || 
                        path.startsWith('/register') || 
                        path.startsWith('/join');
                        

@@ -269,12 +269,13 @@ exports.calculateUserStats = async (userId) => {
 
     const upcomingEvents = allRelevantEvents
         .filter(event => new Date(event.fromDate) > now)
+        .sort((a, b) => new Date(a.fromDate) - new Date(b.fromDate))
         .slice(0, 3)
         .map(event => ({
             id: event._id,
             title: event.eventName,
             date: event.fromDate,
-            color: event.color || '#3f51b5'
+            color: event.color
         }));
 
     const weeklyEvents = allRelevantEvents.filter(e => 
@@ -282,14 +283,15 @@ exports.calculateUserStats = async (userId) => {
     );
     const weeklyEventCount = weeklyEvents.length;
     const weeklyHours = Math.round(calculateTotalHours(weeklyEvents));
-    const weeklyBusyPercentage = Math.min(Math.round((weeklyHours / 40) * 100), 100); 
+    const weeklyBusyPercentage = Math.min(Math.round((weeklyHours / 84) * 100), 100); 
 
     const monthlyEvents = allRelevantEvents.filter(e => 
         new Date(e.fromDate) >= currentMonthStart && new Date(e.fromDate) <= currentMonthEnd
     );
     const monthlyEventCount = monthlyEvents.length;
-    const monthlyHours = Math.round(calculateTotalHours(monthlyEvents));
-    const monthlyBusyPercentage = Math.min(Math.round((monthlyHours / 160) * 100), 100); 
+    const monthlyHours = Math.round(calculateTotalHours(monthlyEvents));    
+    const daysInMonth = currentMonthEnd.getDate();
+    const monthlyBusyPercentage = Math.min(Math.round((monthlyHours / (daysInMonth * 12)) * 100), 100);
 
     return {
         weekly: {
@@ -305,7 +307,6 @@ exports.calculateUserStats = async (userId) => {
         upcomingEvents: upcomingEvents
     };
 };
-
 
 exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) => {
   const start = new Date(searchStart);

@@ -54,6 +54,7 @@
     "autoprefixer": "^10.5.4",
     "jsdom": "^27.1.0",
     "postcss": "^8.5.3",
+    "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "vitest": "^4.0.8"

@@ -304,12 +304,18 @@ export class EventDialogComponent implements OnInit {
 
     if (ev.recurrence) {
       const isReallyRecurring = ev.recurrence.frequency !== 'NONE' && ev.recurrence.frequency !== 'none';
+      
+      let localUntilDate: Date | string = '';
+      if (ev.recurrence.untilDate) {
+        const utcDate = new Date(ev.recurrence.untilDate);
+        localUntilDate = new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate());
+      }
 
       this.eventForm.get('recurrenceDetails')?.patchValue({
         isRecurring: isReallyRecurring,
         frequency: isReallyRecurring ? ev.recurrence.frequency : 'none',
         daysOfWeek: ev.recurrence.daysOfWeek || [],
-        untilDate: ev.recurrence.untilDate ? new Date(ev.recurrence.untilDate) : ''
+        untilDate: localUntilDate 
       });
     }
 

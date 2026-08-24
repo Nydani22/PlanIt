@@ -30,6 +30,8 @@ export interface AppEvent {
   groupId?: string;
   recurrence?: Recurrence | null;
   attendees?: Attendee[];
+  sendNotification?: boolean;
+  allowOverlap?: boolean;
   
   createdAt?: Date | string;
   updatedAt?: Date | string;

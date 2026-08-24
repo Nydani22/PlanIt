@@ -1,4 +1,4 @@
-import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, HostListener, inject } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, HostListener, inject, AfterViewInit } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,7 +13,8 @@ import { AuthService } from '../../services/auth/auth.service';
   templateUrl: './landing-page.html',
   styleUrls: ['./landing-page.scss']
 })
-export class LandingPage implements OnInit {
+
+export class LandingPage implements OnInit, AfterViewInit {
   @ViewChild('scrollVideo', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -29,6 +30,25 @@ export class LandingPage implements OnInit {
       AOS.init({ duration: 1000, once: true, offset: 100, easing: 'ease-in-out' });
     }
     this.checkLoginStatus();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.isBrowser) {
+      this.loadVideoAsBlob();
+    }
+  }
+
+  private async loadVideoAsBlob() {
+    try {
+      const response = await fetch('/videos/Calendar.mp4?ngsw-bypass=true');
+      const blob = await response.blob();
+      
+      const videoUrl = URL.createObjectURL(blob);
+
+      this.videoElement.nativeElement.src = videoUrl;
+    } catch (error) {
+      console.error('Hiba a videó betöltésekor:', error);
+    }
   }
 
   checkLoginStatus(): void {

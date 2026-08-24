@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog'; 
 import { MatStepperModule } from '@angular/material/stepper';
@@ -96,7 +96,6 @@ export class EventDialogComponent implements OnInit {
   private eventService = inject(EventService);
   private dialogRef = inject(MatDialogRef<EventDialogComponent>);
   private dialog = inject(MatDialog);
-  private cdr = inject(ChangeDetectorRef);
   public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
   private breakpointObserver = inject(BreakpointObserver);
   private authService = inject(AuthService);
@@ -316,6 +315,8 @@ export class EventDialogComponent implements OnInit {
 
     this.eventForm.get('settingsDetails')?.patchValue({
       color: ev.color || '#3b82f6',
+      sendNotification: ev.sendNotification || false,
+      allowOverlap: ev.allowOverlap || false
     });
   }
 
@@ -349,8 +350,8 @@ export class EventDialogComponent implements OnInit {
         fromDate: fullFromDate,
         toDate: fullToDate,
         color: settings.color,
-        //sendNotification: settings.sendNotification,
-        //allowOverlap: settings.allowOverlap
+        sendNotification: settings.sendNotification,
+        allowOverlap: settings.allowOverlap
       };
 
       if (this.data?.event?.attendees) {
@@ -377,6 +378,7 @@ export class EventDialogComponent implements OnInit {
         this.eventService.updateEvent(this.data.event._id, payload).subscribe({
           next: (res) => {
             this.dialogRef.close(true);
+            this.snackbarService.showSuccess("Az esemény mentése sikeres.");
           },
           error: (err) => {
             this.snackbarService.showError("Hiba az esemény frissítésekor.");
@@ -386,6 +388,7 @@ export class EventDialogComponent implements OnInit {
         this.eventService.createEvent(payload).subscribe({
           next: (res) => {
             this.dialogRef.close(true);
+            this.snackbarService.showSuccess("Az esemény létrehozása sikeres.");
           },
           error: (err) => {
             this.snackbarService.showError("Hiba az esemény létrehozásakor.");

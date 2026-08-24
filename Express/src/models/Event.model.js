@@ -63,6 +63,14 @@ const eventSchema = new mongoose.Schema({
   externalCalendarUrl: { 
     type: String, 
     required: false 
+  },
+  sendNotification: {
+    type: Boolean,
+    default: false
+  },
+  allowOverlap: {
+    type: Boolean,
+    default: false
   }
 }, { 
   timestamps: true 

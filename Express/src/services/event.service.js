@@ -2,7 +2,6 @@ const Event = require('../models/Event.model');
 const ical = require('ical-generator').default;
 const User = require('../models/User.model');
 const Group = require('../models/Group.model');
-const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
 const { expandEventInWindow } = require('../utils/event.util');
 
@@ -25,8 +24,8 @@ const CATEGORY_COLORS = {
 exports.createEvent = async (eventData, userId) => {
     const { 
         eventName, fromDate, toDate, description, location, 
-        isAllDay, recurrence, category, color, timezone, attendees,
-        groupId
+        isAllDay, recurrence, category, color, attendees,
+        groupId, sendNotification, allowOverlap 
     } = eventData;
 
     let finalAttendees = [];
@@ -66,7 +65,9 @@ exports.createEvent = async (eventData, userId) => {
         category,
         color: finalColor,
         recurrence: recurrence || { frequency: 'NONE', daysOfWeek: [], cancelledDates: [] },
-        attendees: finalAttendees
+        attendees: finalAttendees,
+        sendNotification,
+        allowOverlap
     });
 
     return await newEvent.save();
@@ -355,7 +356,9 @@ exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) 
           attendees: event.attendees,
           fromDate: event.fromDate,
           toDate: event.toDate,
-          color: event.color
+          color: event.color,
+          allowOverlap: event.allowOverlap,
+          sendNotification: event.sendNotification
         });
       }
     } 

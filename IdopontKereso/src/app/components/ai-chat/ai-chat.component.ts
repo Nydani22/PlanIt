@@ -142,32 +142,25 @@ export class AiChatComponent {
 
   private async startRecording() {
     try {
-      // 1. Elkérjük a mikrofon engedélyt a böngészőtől
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaRecorder = new MediaRecorder(stream);
       this.audioChunks = [];
 
-      // 2. Gyűjtjük a hangadatokat, ahogy beszél a felhasználó
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           this.audioChunks.push(event.data);
         }
       };
 
-      // 3. Amikor leállítjuk a felvételt, fájlt csinálunk belőle
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        // Fájllá alakítjuk, hogy a meglévő Service tudja kezelni
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });        
         const audioFile = new File([audioBlob], 'voice.webm', { type: 'audio/webm' });
         
-        // Azonnal elküldjük az AI-nak
         this.sendAudioMessage(audioFile);
         
-        // Kikapcsoljuk a mikrofont (eltűnik a piros pötty a böngésző tabról)
         stream.getTracks().forEach(track => track.stop());
       };
 
-      // Indítjuk a felvételt
       this.mediaRecorder.start();
       this.isRecording.set(true);
     } catch (err) {
@@ -183,9 +176,7 @@ export class AiChatComponent {
     }
   }
 
-  // ÚJ FÜGGVÉNY: Kifejezetten a hangfájl beküldésére
   private sendAudioMessage(audioFile: File) {
-    // Kiírjuk a chaten, hogy elment egy hangüzenet
     this.messages.update(msgs => [...msgs, { 
       sender: 'user', 
       text: '🎤 Hangüzenet elküldve...' 
@@ -201,8 +192,6 @@ export class AiChatComponent {
         content: msg.text || ''
       }));
 
-    // A meglévő AiService-t használjuk! Bár a paraméter neve 'image' a service-ben,
-    // valójában bármilyen fájlt (így hangot is) tökéletesen átvisz a backendig!
     this.aiService.sendMessage('', audioFile, recentHistory).subscribe({
       next: (res) => {
         this.messages.update(msgs => [...msgs, { sender: 'ai', text: res.message }]);
@@ -230,8 +219,10 @@ export class AiChatComponent {
   }
 
   private scrollToBottom() {
-    if (this.chatContainer) {
-      this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
-    }
+    setTimeout(() => {
+      if (this.chatContainer) {
+        this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
+      }
+    }, 0);
   }
 }

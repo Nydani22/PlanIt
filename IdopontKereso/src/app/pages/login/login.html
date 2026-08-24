@@ -16,6 +16,7 @@
                     (blur)="updateErrorMessage()"
                     required 
                     placeholder="pelda@email.hu"
+                    autocomplete="email"
                 />
                 <mat-icon matSuffix class="text-gray-400 dark:text-gray-500">email</mat-icon>
                 @if (email.invalid && (email.dirty || email.touched)) {
@@ -30,6 +31,7 @@
                     [type]="hide() ? 'password' : 'text'" 
                     formControlName="password" 
                     required
+                    autocomplete="current-password"
                 />
                 <button
                     mat-icon-button

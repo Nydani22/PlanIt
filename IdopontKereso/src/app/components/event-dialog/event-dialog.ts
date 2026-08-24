@@ -363,10 +363,17 @@ export class EventDialogComponent implements OnInit {
       }
 
       if (rec.isRecurring && rec.frequency !== 'none') {
+        let finalUntilDate = null;
+        
+        if (rec.untilDate) {
+          const d = new Date(rec.untilDate);
+          finalUntilDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999));
+        }
+
         payload.recurrence = {
           frequency: rec.frequency,
           daysOfWeek: rec.daysOfWeek,
-          untilDate: rec.untilDate ? new Date(rec.untilDate) : null
+          untilDate: finalUntilDate
         };
       } else {
         payload.recurrence = {

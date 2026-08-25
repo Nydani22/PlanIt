@@ -1,5 +1,4 @@
 const authService = require('../services/auth.service');
-const emailService = require('../services/email.service');
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 exports.register = async (req, res) => {

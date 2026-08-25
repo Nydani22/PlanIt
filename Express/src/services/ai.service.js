@@ -154,7 +154,8 @@ const deleteEventsTool = {
 
 
 const fallbackModels = [
-  'gemini-flash-latest',
+  //'gemini-flash-latest',
+  'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite'
 ];
@@ -169,15 +170,25 @@ const getModel = (modelName) => {
 };
 
 const generateAIContent = async (contents) => {
+  const TIMEOUT_MS = 8000; 
+
   for (const modelName of fallbackModels) {
       try {
           const currentModel = getModel(modelName);
-          return await currentModel.generateContent(contents);
+          const response = await Promise.race([
+              currentModel.generateContent(contents),
+              new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('TIMEOUT')), TIMEOUT_MS)
+              )
+          ]);
+          return response;
+          
       } catch (error) {
-          if (error.status === 429 || error.status === 503 || error.status === 404) {
-              console.warn(`[AI Váltás] Hiba a(z) ${modelName} modellnél (${error.status}). Próbálkozás a következővel...`);
-              continue;
+          if (error.message === 'TIMEOUT' || error.status === 429 || error.status === 503 || error.status === 404) {
+            console.warn(`[AI Váltás] Hiba vagy időtúllépés a(z) ${modelName} modellnél. Ugrás a következőre...`);
+            continue;
           }
+          
           throw error;
       }
   }

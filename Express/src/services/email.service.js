@@ -38,19 +38,19 @@ exports.sendWelcomeEmail = async (userEmail, userName) => {
     const { data, error } = await resend.emails.send({
       from: 'UsePlanIt <noreply@useplanit.hu>', 
       to: [userEmail],
-      subject: 'Sikeres regisztráció a useplanit rendszerében! 🎉',
+      subject: 'Sikeres regisztráció a useplanit rendszerében!',
       html: htmlContent,
     });
 
     if (error) {
-      console.error('❌ Hiba az email küldésekor a Resend oldalon:', error);
+      console.error('Hiba az email küldésekor a Resend oldalon:', error);
       return { success: false, error };
     }
 
     return { success: true, data };
 
   } catch (error) {
-    console.error('❌ Váratlan hiba az email szolgáltatásban:', error);
+    console.error('Váratlan hiba az email szolgáltatásban:', error);
     return { success: false, error };
   }
 };
@@ -72,15 +72,15 @@ exports.sendEventReminderEmail = async (userEmail, userName, event) => {
           ${event.eventName}
         </h3>
         
-        <p style="margin: 10px 0;"><strong>⏰ Időpont:</strong> ${timeString}</p>
+        <p style="margin: 10px 0;"><strong>Időpont:</strong> ${timeString}</p>
   `;
 
   if (event.location) {
-    htmlContent += `<p style="margin: 10px 0;"><strong>📍 Helyszín:</strong> ${event.location}</p>`;
+    htmlContent += `<p style="margin: 10px 0;"><strong>Helyszín:</strong> ${event.location}</p>`;
   }
 
   if (event.description) {
-    htmlContent += `<p style="margin: 10px 0;"><strong>📝 Leírás:</strong><br><span style="white-space: pre-wrap; color: #475569;">${event.description}</span></p>`;
+    htmlContent += `<p style="margin: 10px 0;"><strong>Leírás:</strong><br><span style="white-space: pre-wrap; color: #475569;">${event.description}</span></p>`;
   }
 
   htmlContent += `
@@ -97,7 +97,7 @@ exports.sendEventReminderEmail = async (userEmail, userName, event) => {
     const { data, error } = await resend.emails.send({
       from: 'UsePlanIt <noreply@useplanit.hu>', 
       to: [userEmail],
-      subject: `⏰ Emlékeztető: ${event.eventName} hamarosan kezdődik!`,
+      subject: `Emlékeztető: ${event.eventName} hamarosan kezdődik!`,
       html: htmlContent,
     });
 

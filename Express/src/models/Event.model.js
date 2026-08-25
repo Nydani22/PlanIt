@@ -71,7 +71,8 @@ const eventSchema = new mongoose.Schema({
   allowOverlap: {
     type: Boolean,
     default: false
-  }
+  },
+  notificationSent: { type: Boolean, default: false }
 }, { 
   timestamps: true 
 });

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User.model');
 const RefreshToken = require('../models/RefreshToken.model');
 const crypto = require('crypto');
+const emailService = require('../services/email.service');
 const { encryptToken } = require('../utils/encryption.util');
 
 const generateTokens = async (user) => {
@@ -52,6 +53,10 @@ exports.registerUser = async (userData) => {
     });
 
     await newUser.save();
+    
+    emailService.sendWelcomeEmail(email, fullName).catch(err => {
+        console.error('Hiba az üdvözlő email küldésekor:', err);
+    });
     
     const tokens = await generateTokens(newUser);
     

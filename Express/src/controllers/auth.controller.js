@@ -6,8 +6,6 @@ exports.register = async (req, res) => {
     try {
         const { user, accessToken, refreshToken } = await authService.registerUser(req.body);
 
-        await emailService.sendWelcomeEmail(req.body.email, req.body.name);
-
         const isProduction = process.env.NODE_ENV === 'production';
 
         const cookieOptions = {

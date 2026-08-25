@@ -28,7 +28,7 @@ function initCronJobs() {
                 if (user && user.email) {
                     const dateStr = event.fromDate.toLocaleString('hu-HU');
                     
-                    await sendEventReminderEmail(user.email, user.fullName, event.eventName, dateStr);
+                    await sendEventReminderEmail(user.email, user.fullName, event);
                     
                     event.notificationSent = true;
                     await event.save();

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { PLATFORM_ID, inject, Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
-import { tap, catchError, filter, take } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError, firstValueFrom, timer } from 'rxjs';
+import { tap, catchError, filter, take, retry } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
@@ -32,30 +32,24 @@ export class AuthService {
     }
   }
   
-  initAuth(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const token = this.getToken();
-      
-      if (!token || token === 'undefined') {
-        resolve(true);
-        return;
-      }
+  async initAuth(): Promise<boolean> {
+    const token = this.getToken();
+    
+    if (!token || token === 'undefined') {
+      return true;
+    }
 
-      if (this.isTokenValid(token)) {
-        resolve(true);
-        return;
-      }
+    if (this.isTokenValid(token)) {
+      return true;
+    }
 
-      this.refreshToken().subscribe({
-        next: () => {
-          resolve(true);
-        },
-        error: () => {
-          console.warn('Munkamenet lejárt, bejelentkezés szükséges.');
-          resolve(true); 
-        }
-      });
-    });
+    try {
+      await firstValueFrom(this.refreshToken());
+      return true;
+    } catch (error) {
+      console.warn('Munkamenet lejárt vagy a szerver nem elérhető.');
+      return true;
+    }
   }
 
   register(userData: RegisterData): Observable<AuthResponse> {
@@ -88,6 +82,16 @@ export class AuthService {
     this.refreshTokenSubject.next(null);
 
     return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
+      retry({
+        count: 3, 
+        delay: (error, retryCount) => {
+          if (error.status === 401 || error.status === 403) {
+            throw error;
+          }
+          console.warn(`Szerver ébresztése... (Próbálkozás: ${retryCount}/3)`);
+          return timer(3000); 
+        }
+      }),
       tap((res: AuthResponse) => {
         this.isRefreshing = false;
         this.setToken(res.accessToken);

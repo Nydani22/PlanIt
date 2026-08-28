@@ -1,4 +1,4 @@
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { catchError, switchMap, throwError } from 'rxjs';
@@ -8,7 +8,7 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = authService.getToken();
 
-  if (req.url.includes('/refresh') || req.url.includes('/login')) {
+  if (req.url.includes('/refresh') || req.url.includes('/login') || req.url.includes('/logout')) {
     return next(req);
   }
 
@@ -22,24 +22,17 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error) => {
       if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
-        
         return authService.refreshToken().pipe(
           switchMap((res: AuthResponse) => {
-            
             if (res && res.accessToken) {
               const retryReq = req.clone({
                 setHeaders: { Authorization: `Bearer ${res.accessToken}` }
               });            
               return next(retryReq);
             }
-            
-            authService.logout();
-            return throwError(() => new Error('Sikertelen token frissítés'));
+            return throwError(() => error);
           }),
           catchError((refreshErr) => {
-            if (refreshErr instanceof HttpErrorResponse && (refreshErr.status === 401 || refreshErr.status === 403)) {
-              authService.logout();
-            }
             return throwError(() => refreshErr);
           })
         );
@@ -47,4 +40,4 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
       return throwError(() => error);
     })
   );
-}
+};

@@ -235,7 +235,6 @@ body .cal-day-view .cal-drag-over .cal-hour-segment {
     .cal-day-cell {
       background-color: transparent;
       border-right-color: var(--cal-border-color);
-      overflow: hidden;
       min-width: 0;
 
       &:hover {

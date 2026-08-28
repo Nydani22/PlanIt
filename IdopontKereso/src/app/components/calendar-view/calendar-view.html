@@ -178,30 +178,40 @@
 </ng-template>
 
 <ng-template #customCellTemplate let-day="day" let-locale="locale">
-  <!-- Teljes cellát kitöltő, szigorúan vágó fő konténer -->
   <div class="h-full w-full flex flex-col overflow-hidden box-border" style="min-width: 0;">
     
     <div class="cal-cell-top flex justify-end items-center p-1 shrink-0">
       <span class="cal-day-number font-semibold text-sm">{{ day.date | date:'dd' }}</span>
     </div>
     
-    <!-- Események listája, ami nem nyúlhat túl -->
     <div class="flex flex-col gap-1 px-1 pb-2 flex-1 overflow-hidden w-full max-w-full box-border" style="min-width: 0;">
       @for (event of day.events; track event.id) {
         <div 
-             class="text-[10px] md:text-xs px-1 md:px-1.5 py-0.5 md:py-1 rounded cursor-pointer transition-opacity hover:opacity-80 shadow-sm truncate block w-full max-w-full box-border"
-             [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
-             [style.color]="event.color?.secondaryText || '#0369a1'"
-             [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
-             
-             mwlDraggable
-             [dragAxis]="{ x: event.draggable === true, y: event.draggable === true }"
-             [dropData]="{ event: event, draggedFrom: day }"
-             [class.cal-draggable]="event.draggable"
-             dragActiveClass="opacity-50"
-             
-             (click)="onEventClick(event); $event.stopPropagation()">
-          {{ event.title }}
+            class="group relative text-[10px] md:text-xs px-1 md:px-1.5 py-0.5 md:py-1 rounded cursor-pointer transition-opacity hover:opacity-100 shadow-sm block w-full max-w-full box-border hover:z-50"
+            [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
+            [style.color]="event.color?.secondaryText || '#0369a1'"
+            [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
+            
+            [mwlCalendarTooltip]="event.title"
+            [tooltipTemplate]="customTooltipTemplate"
+            tooltipPlacement="auto"
+            [tooltipAppendToBody]="true"
+            
+            mwlDraggable
+            [dragAxis]="{ x: event.draggable === true, y: event.draggable === true }"
+            [dropData]="{ event: event, draggedFrom: day }"
+            [class.cal-draggable]="event.draggable"
+            dragActiveClass="opacity-50"
+            
+            (click)="onEventClick(event); $event.stopPropagation()">
+            
+          <span class="block truncate w-full pr-8">{{ event.title }}</span>
+
+          <div class="hidden group-hover:flex absolute top-0.5 right-0.5 items-center gap-1 bg-white/70 dark:bg-black/40 rounded px-1 py-0.5 shadow-sm" (click)="$event.stopPropagation()">
+             <mat-icon class="text-[14px] w-[14px] h-[14px] hover:text-amber-600 transition-colors" (click)="onEventClick(event)">edit</mat-icon>
+             <mat-icon class="text-[14px] w-[14px] h-[14px] hover:text-red-600 transition-colors" (click)="onDeleteEvent($event, event)">delete</mat-icon>
+          </div>
+
         </div>
       }
     </div>
@@ -211,11 +221,36 @@
 
 <ng-template #customEventTemplate let-weekEvent="weekEvent" let-dayEvent="dayEvent" let-monthEvent="event" let-eventClicked="eventClicked">
   <div *ngIf="weekEvent?.event || dayEvent?.event as event"
-       class="h-full w-full text-xs px-1.5 py-1 rounded cursor-pointer transition-opacity hover:opacity-80 shadow-sm border border-transparent overflow-hidden"
+       class="group relative h-full w-full text-xs px-1.5 py-1 rounded cursor-pointer transition-opacity hover:opacity-100 shadow-sm border border-transparent overflow-hidden hover:z-50"
        [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
        [style.color]="event.color?.secondaryText || '#0369a1'"
        [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
        (click)="eventClicked.emit({ event: event, sourceEvent: $event })">
-    {{ event.title }}
+       
+    <span class="block truncate w-full pr-8">{{ event.title }}</span>
+    
+    <div class="hidden group-hover:flex absolute top-1 right-1 items-center gap-1 bg-white/70 dark:bg-black/40 rounded px-1 py-0.5 shadow-sm" (click)="$event.stopPropagation()">
+       <mat-icon class="text-[14px] w-[14px] h-[14px] hover:text-amber-600 transition-colors" (click)="eventClicked.emit({ event: event, sourceEvent: $event })">edit</mat-icon>
+       <mat-icon class="text-[14px] w-[14px] h-[14px] hover:text-red-600 transition-colors" (click)="onDeleteEvent($event, event)">delete</mat-icon>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #customTooltipTemplate let-event="event">
+  <div class="bg-gray-800 dark:bg-gray-700 text-white p-3 rounded-lg shadow-xl border border-gray-600 max-w-xs z-[9999] text-left">
+    
+    <div class="font-bold text-sm mb-1 text-amber-400">
+      {{ event?.title?.includes(' | ') ? event?.title?.split(' | ')[1] : event?.title }}
+    </div>
+    
+    <div class="text-xs text-gray-300 mb-2 font-medium flex items-center gap-1">
+      <mat-icon class="text-[14px] w-[14px] h-[14px]">schedule</mat-icon>
+      {{ event?.start | date:'HH:mm' }} <span *ngIf="event?.end">- {{ event?.end | date:'HH:mm' }}</span>
+    </div>
+    
+    <div class="text-xs text-gray-400 leading-relaxed whitespace-normal">
+      {{ event?.meta?.description || 'Nincs leírás megadva ehhez az eseményhez.' }}
+    </div>
+    
   </div>
 </ng-template>

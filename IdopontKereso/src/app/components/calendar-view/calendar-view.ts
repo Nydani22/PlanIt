@@ -15,6 +15,8 @@ import { EventDialogComponent } from '../event-dialog/event-dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-refresh.service';
 import { HostListener } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
 registerLocaleData(localeHu);
 
@@ -27,7 +29,7 @@ const VIEW_MAP: Record<UserSettings['defaultView'], CalendarView> = {
 @Component({
   selector: 'app-calendar-view',
   standalone: true,
-  imports: [CommonModule, CalendarModule, MatButtonModule, MatButton],
+  imports: [CommonModule, CalendarModule, MatButtonModule, MatButton, MatIconModule],
   providers: [
     { provide: LOCALE_ID, useValue: 'hu' },
     {
@@ -214,16 +216,7 @@ export class CalendarViewComponent implements OnInit {
           originalId: item._id,
           recurrence: item.recurrence,
           originalEvent: item
-        }/*,
-        actions: [
-          {
-            label: ' 🗑️ ',
-            a11yLabel: 'Törlés',
-            onClick: ({ event }: { event: CalendarEvent }): void => {
-              console.log('Törlésre kattintottak:', event);
-            },
-          }
-        ]*/
+        }
       };
 
       if (!item.recurrence || item.recurrence.frequency === 'none') {
@@ -324,6 +317,40 @@ export class CalendarViewComponent implements OnInit {
         this.lastClickedEventId = undefined;
       }, 300);
     }
+  }
+
+  onDeleteEvent(mouseEvent: MouseEvent, calendarEvent: CalendarEvent): void {
+    mouseEvent.stopPropagation();
+    const originalEvent = calendarEvent.meta?.originalEvent;
+    
+    if (!originalEvent || !originalEvent._id) return;
+
+    const confirmDialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '500px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: {
+        title: 'Esemény törlése',
+        message: 'Biztosan törölni szeretnéd ezt az eseményt? Ezt a műveletet nem lehet visszavonni.',
+        confirmText: 'Törlés',
+        cancelText: 'Mégsem',
+        color: 'warn' 
+      }
+    });
+
+    confirmDialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.eventService.deleteEvent(originalEvent._id).subscribe({
+          next: () => {
+            this.snackbarService.showSuccess('Esemény sikeresen törölve.');
+            this.loadEvents();
+            this.calendarRefreshService.triggerRefresh();
+          },
+          error: () => this.snackbarService.showError('Hiba az esemény törlésekor.')
+        });
+      }
+    });      
   }
 
   eventTimesChanged({
@@ -459,6 +486,7 @@ export class CalendarViewComponent implements OnInit {
       }, 300);
     }
   }
+  
   private createDefaultEvent(start: Date, end: Date): void {
     
     const tempEventId = 'temp-' + Date.now();

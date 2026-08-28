@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { PLATFORM_ID, inject, Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
-import { tap, catchError, filter, take } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError, timer } from 'rxjs';
+import { tap, catchError, filter, take, retry } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
@@ -76,7 +76,7 @@ export class AuthService {
     );
   }
 
-  refreshToken(): Observable<AuthResponse> {
+ refreshToken(): Observable<AuthResponse> {
     if (this.isRefreshing) {
       return this.refreshTokenSubject.pipe(
         filter(token => token !== null),
@@ -88,6 +88,16 @@ export class AuthService {
     this.refreshTokenSubject.next(null);
 
     return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
+      retry({
+        count: 3,
+        delay: (error, retryCount) => {
+          if (error.status === 401 || error.status === 403) {
+            throw error;
+          }
+          console.warn(`Szerver ébresztése... (Próbálkozás: ${retryCount}/3)`);
+          return timer(3000);
+        }
+      }),
       tap((res: AuthResponse) => {
         this.isRefreshing = false;
         this.setToken(res.accessToken);

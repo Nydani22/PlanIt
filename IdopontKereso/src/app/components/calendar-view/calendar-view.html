@@ -191,12 +191,6 @@
             [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
             [style.color]="event.color?.secondaryText || '#0369a1'"
             [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
-            
-            [mwlCalendarTooltip]="event.title"
-            [tooltipTemplate]="customTooltipTemplate"
-            tooltipPlacement="auto"
-            [tooltipAppendToBody]="true"
-            
             mwlDraggable
             [dragAxis]="{ x: event.draggable === true, y: event.draggable === true }"
             [dropData]="{ event: event, draggedFrom: day }"
@@ -233,24 +227,5 @@
        <mat-icon class="text-[14px] w-[14px] h-[14px] hover:text-amber-600 transition-colors" (click)="eventClicked.emit({ event: event, sourceEvent: $event })">edit</mat-icon>
        <mat-icon class="text-[14px] w-[14px] h-[14px] hover:text-red-600 transition-colors" (click)="onDeleteEvent($event, event)">delete</mat-icon>
     </div>
-  </div>
-</ng-template>
-
-<ng-template #customTooltipTemplate let-event="event">
-  <div class="bg-gray-800 dark:bg-gray-700 text-white p-3 rounded-lg shadow-xl border border-gray-600 max-w-xs z-[9999] text-left">
-    
-    <div class="font-bold text-sm mb-1 text-amber-400">
-      {{ event?.title?.includes(' | ') ? event?.title?.split(' | ')[1] : event?.title }}
-    </div>
-    
-    <div class="text-xs text-gray-300 mb-2 font-medium flex items-center gap-1">
-      <mat-icon class="text-[14px] w-[14px] h-[14px]">schedule</mat-icon>
-      {{ event?.start | date:'HH:mm' }} <span *ngIf="event?.end">- {{ event?.end | date:'HH:mm' }}</span>
-    </div>
-    
-    <div class="text-xs text-gray-400 leading-relaxed whitespace-normal">
-      {{ event?.meta?.description || 'Nincs leírás megadva ehhez az eseményhez.' }}
-    </div>
-    
   </div>
 </ng-template>

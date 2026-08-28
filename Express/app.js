@@ -14,6 +14,7 @@ const socketUtil = require('./src/utils/socket');
 const initCronJobs = require('./src/utils/cronJobs').initCronJobs;
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 connectDB();

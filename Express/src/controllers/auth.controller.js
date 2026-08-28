@@ -76,6 +76,14 @@ exports.logout = async (req, res) => {
     if (refreshToken) {
         await authService.logoutUser(refreshToken);
     }
-    res.clearCookie('refreshToken');
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'None' : 'Lax'
+    });
+    
     res.json({ message: 'Sikeres kijelentkezés' });
 };

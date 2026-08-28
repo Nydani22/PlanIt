@@ -49,24 +49,30 @@ exports.login = async (req, res) => {
 
 exports.refresh = async (req, res) => {
     const oldRefreshToken = req.cookies.refreshToken;
-    if (!oldRefreshToken) return res.status(401).json({ message: 'Nincs refresh token' });
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'None' : 'Lax'
+    };
+
+    if (!oldRefreshToken) {
+        res.clearCookie('refreshToken', cookieOptions);
+        return res.status(401).json({ message: 'Nincs refresh token' });
+    }
 
     try {
         const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(oldRefreshToken);
 
-        const isProduction = process.env.NODE_ENV === 'production';
-
-        const cookieOptions = {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? 'None' : 'Lax',
+        res.cookie('refreshToken', newRefreshToken, {
+            ...cookieOptions,
             maxAge: ONE_WEEK
-        };
-
-        res.cookie('refreshToken', newRefreshToken, cookieOptions);
+        });
 
         res.json({ accessToken });
     } catch (err) {
+        res.clearCookie('refreshToken', cookieOptions);
         res.status(403).json({ message: err.message });
     }
 };

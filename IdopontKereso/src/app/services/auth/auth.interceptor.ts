@@ -37,7 +37,9 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
             return throwError(() => new Error('Sikertelen token frissítés'));
           }),
           catchError((refreshErr) => {
-            authService.logout();
+            if (refreshErr instanceof HttpErrorResponse && (refreshErr.status === 401 || refreshErr.status === 403)) {
+              authService.logout();
+            }
             return throwError(() => refreshErr);
           })
         );

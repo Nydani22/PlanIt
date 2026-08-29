@@ -13,17 +13,4 @@ function authenticateToken(req, res, next) {
   });
 }
 
-/*
-function isAdmin(req, res, next) {
-  if (req.user.role !== 'admin') {
-    return res.sendStatus(403);
-  }
-  next();
-}
-
-module.exports = { authenticateToken, isAdmin };
-
-Ha lesz admin az oldalon (aminek még nem látom fontosságát, mert nincs rá szükség)
-*/
-
 module.exports =  authenticateToken;

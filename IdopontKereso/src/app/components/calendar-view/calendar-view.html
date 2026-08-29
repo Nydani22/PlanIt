@@ -218,10 +218,11 @@
        (click)="eventClicked.emit({ event: event, sourceEvent: $event })">
        
     <span class="block truncate w-full pr-8">{{ event.title }}</span>
-    
-    <div class="event-actions hidden group-hover:flex absolute top-1 right-1 items-center gap-1.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded px-1.5 py-0.5 shadow-sm" (click)="$event.stopPropagation()">
+    @if (event.meta?.canEdit) {
+      <div class="event-actions hidden group-hover:flex absolute top-1 right-1 items-center gap-1.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded px-1.5 py-0.5 shadow-sm" (click)="$event.stopPropagation()">
        <mat-icon (click)="eventClicked.emit({ event: event, sourceEvent: $event })">edit</mat-icon>
        <mat-icon (click)="onDeleteEvent($event, event)">delete</mat-icon>
-    </div>
+      </div>
+    }
   </div>
 </ng-template>

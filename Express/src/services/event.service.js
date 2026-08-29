@@ -92,7 +92,12 @@ exports.getUserEvents = async (userId, startDate, endDate) => {
         ];
     }
 
-    return await Event.find(query).sort({ fromDate: 1 });
+    return await Event.find(query)
+        .sort({ fromDate: 1 })
+        .populate({
+            path: 'groupId',
+            select: 'groupName members'
+        });
 };
 
 exports.getEventById = async (eventId, userId) => {

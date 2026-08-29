@@ -12,6 +12,7 @@ export interface TimeSearchParams {
   endHour?: number;
   allowedDays?: number[];
 }
+
 export interface TimeSlot {
   start: string | Date;
   end: string | Date;

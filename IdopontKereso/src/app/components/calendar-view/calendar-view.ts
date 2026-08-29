@@ -17,6 +17,7 @@ import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-
 import { HostListener } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+import { Group } from '../../models/group.model';
 
 registerLocaleData(localeHu);
 
@@ -156,6 +157,7 @@ export class CalendarViewComponent implements OnInit {
   private expandEvents(events: AppEvent[]): CalendarEvent[] {
     const calendarEvents: CalendarEvent[] = [];
     const MAX_RECURRENCE_YEARS = 1;
+    const currentUserId = this.authService.getCurrentUserId();
 
     events.forEach(item => {
       let startDate: Date;
@@ -194,6 +196,32 @@ export class CalendarViewComponent implements OnInit {
       const isGroupEvent = item.attendees && item.attendees.length > 1;
       const interactionsOn = this.calendarRefreshService.interactionsEnabled();
       const isExternalEvent = item.isExternal
+      const organizer = item.organizerId as string | User | undefined;
+      const organizerId = typeof organizer === 'object' && organizer !== null
+        ? organizer._id
+        : organizer;
+
+      let isGroupAdminOrOwner = false;
+
+      const group = item.groupId as string | Group | undefined;
+
+      if (group && typeof group === 'object' && Array.isArray(group.members)) {
+        
+        const myMembership = group.members.find(m => {
+          const memberUser = m.userId as unknown as string | User;
+          const mUserId = typeof memberUser === 'object' && memberUser !== null
+            ? memberUser._id 
+            : memberUser;
+            
+          return mUserId === currentUserId;
+        });
+
+        if (myMembership && (myMembership.role === 'OWNER' || myMembership.role === 'ADMIN')) {
+          isGroupAdminOrOwner = true;
+        }
+      }
+      const canEdit = (organizerId === currentUserId || isGroupAdminOrOwner) && !isExternalEvent;
+
       const baseEvent: CalendarEvent = {
         id: item._id,
         title: displayTitle,
@@ -215,7 +243,8 @@ export class CalendarViewComponent implements OnInit {
           description: item.description,
           originalId: item._id,
           recurrence: item.recurrence,
-          originalEvent: item
+          originalEvent: item,
+          canEdit: canEdit
         }
       };
 

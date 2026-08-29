@@ -35,6 +35,14 @@ const createEventsTool = {
               ]
             },
             color: { type: "STRING", description: "Az esemény egyedi színe (pl. HEX kóddal), ha a felhasználó külön kéri." },
+            sendNotification: { type: "BOOLEAN", description: "Igaz, ha a felhasználó értesítést kér az eseményről." },
+            allowOverlap: { type: "BOOLEAN", description: "Igaz, ha az esemény ütközhet más naptári eseményekkel." },
+            groupName: { type: "STRING", description: "A csoport neve, ha az eseményt egy adott csoport számára szervezed. KÖTELEZŐ megadni, ha a felhasználó egy csapattal közös programot kér, így a tagok automatikusan meghívást kapnak!" },
+            optionalAttendees: { 
+              type: "ARRAY", 
+              description: "Azoknak a tagoknak a nevei, akiknek a részvétele csak OPCIONÁLIS (nem kötelező). Ha a felhasználó ilyet kér, tedd a nevüket ebbe a listába!",
+              items: { type: "STRING" }
+            },
             recurrence: {
               type: "OBJECT",
               description: "Ismétlődés beállításai (ha az esemény rendszeres).",
@@ -88,6 +96,8 @@ const updateEventsTool = {
             },
             description: { type: "STRING", description: "Új leírás (csak ha változik)." },
             color: { type: "STRING", description: "Új egyedi szín (csak ha változik)." },
+            sendNotification: { type: "BOOLEAN", description: "Új értesítési beállítás (csak ha változik)." },
+            allowOverlap: { type: "BOOLEAN", description: "Új ütközésengedélyezési beállítás (csak ha változik)." },
             category: { 
               type: "STRING", 
               description: "Új kategória (csak ha változik).",
@@ -152,9 +162,40 @@ const deleteEventsTool = {
   }
 };
 
+const getUserGroupsTool = {
+  name: "getUserGroups",
+  description: "Lekérdezi azokat a csoportokat, amelyeknek a felhasználó tagja vagy tulajdonosa. Használd ezt, ha a felhasználó a csoportjairól, közösségeiről kérdez (pl. 'Milyen csoportokban vagyok benne?').",
+  parameters: {
+    type: "OBJECT",
+    properties: {}
+  }
+};
+
+const findAvailableTimeTool = {
+  name: "findAvailableTime",
+  description: "Szabad időpontokat keres a felhasználó, vagy egy megadott csoport számára. Akkor használd, ha a felhasználó megkérdezi, hogy 'Mikor érek rá jövő héten?', vagy 'Mikor van szabad időpontunk a Projekt X csapattal egy 2 órás megbeszélésre?'.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      searchStart: { type: "STRING", description: "Keresés kezdete ISO 8601 formátumban (UTC)." },
+      searchEnd: { type: "STRING", description: "Keresés vége ISO 8601 formátumban (UTC)." },
+      durationMinutes: { type: "INTEGER", description: "Keresett időtartam percben (pl. 30, 60, 90)." },
+      groupName: { type: "STRING", description: "A csoport neve, amellyel a találkozót tervezik. Ha csak a saját naptárában keres, hagyd teljesen üresen (vagy undefined)!" },
+      allowedDays: { 
+        type: "ARRAY", 
+        description: "Engedélyezett napok (0=Vasárnap, 1=Hétfő, ..., 6=Szombat). Alapértelmezett: hétköznapok [1,2,3,4,5].",
+        items: { type: "INTEGER" }
+      },
+      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája (pl. 9)." },
+      endHour: { type: "INTEGER", description: "Napi keresés befejező órája (pl. 17)." }
+    },
+    required: ["searchStart", "searchEnd", "durationMinutes"]
+  }
+};
+
 
 const fallbackModels = [
-  'gemini-flash-latest',
+  //'gemini-flash-latest',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite'
@@ -164,7 +205,7 @@ const getModel = (modelName) => {
   return genAI.getGenerativeModel({ 
     model: modelName,
     tools: [{
-      functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool]
+      functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool]
     }]
   });
 };

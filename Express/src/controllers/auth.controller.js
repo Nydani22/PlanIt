@@ -50,6 +50,9 @@ exports.login = async (req, res) => {
 exports.refresh = async (req, res) => {
     const oldRefreshToken = req.cookies.refreshToken;
     const isProduction = process.env.NODE_ENV === 'production';
+
+    console.log('Végpont:', req.originalUrl);
+    console.log('Beérkező sütik:', req.cookies);
     
     const cookieOptions = {
         httpOnly: true,
@@ -84,6 +87,9 @@ exports.logout = async (req, res) => {
         secure: isProduction,
         sameSite: isProduction ? 'None' : 'Lax'
     };
+
+    console.log('Végpont:', req.originalUrl);
+    console.log('Beérkező sütik:', req.cookies);
 
     try {
         const refreshToken = req.cookies.refreshToken;

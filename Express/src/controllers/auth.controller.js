@@ -78,18 +78,24 @@ exports.refresh = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-        await authService.logoutUser(refreshToken);
-    }
-    
     const isProduction = process.env.NODE_ENV === 'production';
-    
-    res.clearCookie('refreshToken', {
+    const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? 'None' : 'Lax'
-    });
-    
-    res.json({ message: 'Sikeres kijelentkezés' });
+    };
+
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (refreshToken) {
+            await authService.logoutUser(refreshToken);
+        }
+        
+        res.clearCookie('refreshToken', cookieOptions);
+        res.json({ message: 'Sikeres kijelentkezés' });
+    } catch (err) {
+        console.error('Hiba a kijelentkezés során:', err);
+        res.clearCookie('refreshToken', cookieOptions);
+        res.status(500).json({ message: 'Részleges kijelentkezés történt.' });
+    }
 };

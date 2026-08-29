@@ -83,13 +83,13 @@ export class AuthService {
 
     return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
       retry({
-        count: 3, 
+        count: 10,
         delay: (error, retryCount) => {
           if (error.status === 401 || error.status === 403) {
             throw error;
           }
-          console.warn(`Szerver ébresztése... (Próbálkozás: ${retryCount}/3)`);
-          return timer(3000); 
+          console.warn(`Szerver ébresztése... (Próbálkozás: ${retryCount}/10). A Render szerver indulása akár 50 másodperc is lehet.`);
+          return timer(5000);
         }
       }),
       tap((res: AuthResponse) => {

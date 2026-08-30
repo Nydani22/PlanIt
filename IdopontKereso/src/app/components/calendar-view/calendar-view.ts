@@ -18,6 +18,7 @@ import { HostListener } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { Group } from '../../models/group.model';
+import { EventDetailsDialog } from '../event-details-dialog/event-details-dialog';
 
 registerLocaleData(localeHu);
 
@@ -302,6 +303,28 @@ export class CalendarViewComponent implements OnInit {
     });
 
     return calendarEvents;
+  }
+
+  onEventView(calendarEvent: CalendarEvent): void {
+    const originalAppEvent = calendarEvent.meta?.originalEvent;
+    if (!originalAppEvent) return;
+
+    const dialogRef = this.dialog.open(EventDetailsDialog, {
+      width: '600px',
+      maxWidth: '95vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: { 
+        event: originalAppEvent,
+        canEdit: calendarEvent.meta?.canEdit
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'edit') {
+        this.onEventClick(calendarEvent);
+      }
+    });
   }
 
   onEventClick(calendarEvent: CalendarEvent): void {

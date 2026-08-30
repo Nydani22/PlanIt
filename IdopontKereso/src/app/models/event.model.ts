@@ -1,4 +1,5 @@
 import { CategoryColor } from "./category.model";
+import { User } from "./user.model";
 
 export interface Recurrence {
   frequency: 'NONE' | 'DAILY' | 'WEEKLY' | string;
@@ -8,7 +9,7 @@ export interface Recurrence {
 }
 
 export interface Attendee {
-  userId: string;
+  userId: User | string;
   status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | string;
   attendanceType: 'REQUIRED' | 'OPTIONAL' | string;
 }

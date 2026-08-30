@@ -184,6 +184,7 @@
       @for (event of day.events; track event.id) {
         <div 
             class="group relative text-[10px] md:text-xs px-1 md:px-1.5 py-0.5 md:py-1 rounded transition-opacity hover:opacity-100 shadow-sm block w-full max-w-full box-border hover:z-50"
+            (click)="onEventView(event); $event.stopPropagation()"
             [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
             [style.color]="event.color?.secondaryText || '#0369a1'"
             [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')"
@@ -216,14 +217,15 @@
 <ng-template #customEventTemplate let-weekEvent="weekEvent" let-dayEvent="dayEvent" let-monthEvent="event" let-eventClicked="eventClicked">
   <div *ngIf="weekEvent?.event || dayEvent?.event as event"
        class="group relative h-full w-full text-xs px-1.5 py-1 rounded transition-opacity hover:opacity-100 shadow-sm border border-transparent overflow-hidden hover:z-50 flex flex-col"
+       (click)="onEventView(event); $event.stopPropagation()"
        [style.backgroundColor]="event.color?.secondary || '#e0f2fe'"
        [style.color]="event.color?.secondaryText || '#0369a1'"
        [style.borderLeft]="'3px solid ' + (event.color?.primary || '#0284c7')">
        
-    <div class="flex flex-col w-full pr-8 overflow-hidden pointer-events-none">
+    <div class="flex flex-col w-full pr-6 overflow-hidden pointer-events-none h-full justify-start">
       
       @if (!event.allDay) {
-        <span class="font-medium opacity-80 leading-tight mb-0.5">
+        <span class="font-medium opacity-80 leading-none whitespace-nowrap pb-0.5 shrink-0">
           @if (event.meta?.isMultiDay) {
             {{ event.start | date:'HH:mm' }} - {{ event.end | date:'MM.dd. HH:mm' }}
           } @else {
@@ -232,12 +234,12 @@
         </span>
       }
       
-      <span class="font-bold leading-tight truncate text-xs">
+      <span class="font-bold leading-none truncate text-xs whitespace-nowrap shrink-0 pb-0.5">
         {{ event.meta?.originalEvent?.eventName || event.title }}
       </span>
       
       @if (event.meta?.originalEvent?.location) {
-        <span class="opacity-75 truncate mt-0.5">
+        <span class="opacity-75 truncate text-[10px] leading-none whitespace-nowrap">
           {{ event.meta.originalEvent.location }}
         </span>
       }

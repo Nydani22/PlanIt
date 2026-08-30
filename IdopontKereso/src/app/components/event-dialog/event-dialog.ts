@@ -131,7 +131,8 @@ export class EventDialogComponent implements OnInit {
     this.eventForm = this.fb.group({
       basicDetails: this.fb.group({
         eventName: ['', Validators.required],
-        description: ['']
+        description: [''],
+        location: ['']
       }),
       categoryDetails: this.fb.group({
         categoryId: [otherCategory?.id, Validators.required]
@@ -279,7 +280,8 @@ export class EventDialogComponent implements OnInit {
   private patchEventData(ev: AppEvent) {
     this.eventForm.get('basicDetails')?.patchValue({
       eventName: ev.eventName || '',
-      description: ev.description || ''
+      description: ev.description || '',
+      location: ev.location || ''
     });
     
     if (ev.category) {
@@ -351,6 +353,7 @@ export class EventDialogComponent implements OnInit {
       const payload: AppEvent = {
         eventName: basic.eventName,
         description: basic.description,
+        location: basic.location,
         category: catDetails.categoryId,
         isAllDay: time.isAllDay,
         fromDate: fullFromDate,

@@ -95,6 +95,7 @@ const updateEventsTool = {
               description: "Befejező dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
             },
             description: { type: "STRING", description: "Új leírás (csak ha változik)." },
+            location: { type: "STRING", description: "Új helyszín (csak ha változik)." },
             color: { type: "STRING", description: "Új egyedi szín (csak ha változik)." },
             sendNotification: { type: "BOOLEAN", description: "Új értesítési beállítás (csak ha változik)." },
             allowOverlap: { type: "BOOLEAN", description: "Új ütközésengedélyezési beállítás (csak ha változik)." },

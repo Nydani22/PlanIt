@@ -62,11 +62,6 @@ export class CalendarViewComponent implements OnInit {
 
   events: CalendarEvent[] = [];
 
-  private clickTimeout: any;
-  private lastClickTime: number = 0;
-  private lastClickedDate: Date | null = null;
-  private lastClickedEventId: string | number | undefined = undefined;
-
   dragToCreateActive = false;
   dragStart: Date | null = null;
   dragEnd: Date | null = null;
@@ -244,7 +239,8 @@ export class CalendarViewComponent implements OnInit {
           originalId: item._id,
           recurrence: item.recurrence,
           originalEvent: item,
-          canEdit: canEdit
+          canEdit: canEdit,
+          isMultiDay: startDate.toDateString() !== endDate.toDateString()
         }
       };
 
@@ -309,43 +305,24 @@ export class CalendarViewComponent implements OnInit {
   }
 
   onEventClick(calendarEvent: CalendarEvent): void {
-    const currentTime = new Date().getTime();
-    const timeDiff = currentTime - this.lastClickTime;
+    const originalAppEvent = calendarEvent.meta?.originalEvent;
+    
+    if (!originalAppEvent) return;
 
-    if (timeDiff < 300 && this.lastClickedEventId === calendarEvent.id) {
-      clearTimeout(this.clickTimeout);
-      
-      const originalAppEvent = calendarEvent.meta?.originalEvent;
-      
-      if (!originalAppEvent) return;
+    const dialogRef = this.dialog.open(EventDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: { event: originalAppEvent }
+    });
 
-      const dialogRef = this.dialog.open(EventDialogComponent, {
-        width: '800px',
-        maxWidth: '95vw',
-        restoreFocus: false,
-        autoFocus: false,
-        data: { event: originalAppEvent }
-      });
-
-      dialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          this.loadEvents();
-          this.calendarRefreshService.triggerRefresh();
-        }
-      });
-
-      this.lastClickTime = 0;
-      this.lastClickedEventId = undefined;
-      
-    } else {
-      this.lastClickTime = currentTime;
-      this.lastClickedEventId = calendarEvent.id;
-      
-      this.clickTimeout = setTimeout(() => {
-        this.lastClickTime = 0;
-        this.lastClickedEventId = undefined;
-      }, 300);
-    }
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadEvents();
+        this.calendarRefreshService.triggerRefresh();
+      }
+    });
   }
 
   onDeleteEvent(mouseEvent: MouseEvent, calendarEvent: CalendarEvent): void {
@@ -461,60 +438,6 @@ export class CalendarViewComponent implements OnInit {
       }
     });
   }
-
-
-  onHourSegmentClicked(date: Date): void {
-    if (!this.calendarRefreshService.interactionsEnabled()) return;
-    const currentTime = new Date().getTime();
-    const timeDiff = currentTime - this.lastClickTime;
-
-    if (timeDiff < 300 && this.lastClickedDate?.getTime() === date.getTime()) {
-      clearTimeout(this.clickTimeout);
-      
-      const endDate = new Date(date.getTime() + 60 * 60 * 1000); 
-      this.createDefaultEvent(date, endDate);
-      
-      this.lastClickTime = 0;
-      this.lastClickedDate = null;
-    } else {
-      this.lastClickTime = currentTime;
-      this.lastClickedDate = date;
-      
-      this.clickTimeout = setTimeout(() => {
-        this.lastClickTime = 0;
-        this.lastClickedDate = null;
-      }, 300);
-    }
-  }
-
-  onDayClicked(date: Date): void {
-    if (!this.calendarRefreshService.interactionsEnabled()) return;
-    const currentTime = new Date().getTime();
-    const timeDiff = currentTime - this.lastClickTime;
-
-    if (timeDiff < 300 && this.lastClickedDate?.getTime() === date.getTime()) {
-      clearTimeout(this.clickTimeout);
-      
-      const startDate = new Date(date);
-      startDate.setHours(8, 0, 0, 0);
-      
-      const endDate = new Date(startDate);
-      endDate.setHours(9, 0, 0, 0);
-      
-      this.createDefaultEvent(startDate, endDate);
-      
-      this.lastClickTime = 0;
-      this.lastClickedDate = null;
-    } else {
-      this.lastClickTime = currentTime;
-      this.lastClickedDate = date;
-      
-      this.clickTimeout = setTimeout(() => {
-        this.lastClickTime = 0;
-        this.lastClickedDate = null;
-      }, 300);
-    }
-  }
   
   private createDefaultEvent(start: Date, end: Date): void {
     
@@ -538,6 +461,7 @@ export class CalendarViewComponent implements OnInit {
     const newEventPayload: Partial<AppEvent> = {
       eventName: 'Új esemény',
       description: '',
+      location: '',
       category: 'OTHER',
       isAllDay: false,
       fromDate: start,               

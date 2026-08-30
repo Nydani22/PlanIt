@@ -97,6 +97,10 @@ exports.getUserEvents = async (userId, startDate, endDate) => {
         .populate({
             path: 'groupId',
             select: 'groupName members'
+        })
+        .populate({
+            path: 'attendees.userId',
+            select: 'fullName userName email'
         });
 };
 

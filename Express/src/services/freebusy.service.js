@@ -13,24 +13,22 @@ exports.findAvailableTimeSlots = (params, events) => {
 
   const totalDurationMinutes = (durationDays * 24 * 60) + durationMinutes;
   const durationMs = totalDurationMinutes * 60000;
-  
+  const intraDayDurationMs = durationMinutes * 60000;
   const bufferBeforeMs = bufferBeforeMinutes * 60000;
   const bufferAfterMs = bufferAfterMinutes * 60000;
   const availableSlots = [];
 
   let currentDay = new Date(searchStart);
-  currentDay.setUTCHours(0, 0, 0, 0);
+  currentDay.setHours(0, 0, 0, 0); 
   const endDay = new Date(searchEnd);
-  endDay.setUTCHours(23, 59, 59, 999);
+  endDay.setHours(23, 59, 59, 999);
 
   const checkCollisions = (checkStart, checkEnd) => {
     let isRequiredBusy = false;
     let busyOptionalCount = 0;
 
     for (const event of events) {
-      if (event.allowOverlap) {
-        continue;
-      }
+      if (event.allowOverlap) continue;
       
       if (event.fromDate < checkEnd && event.toDate > checkStart) {
         const eventUsers = event.attendees.map(a => a.userId.toString());
@@ -40,11 +38,8 @@ exports.findAvailableTimeSlots = (params, events) => {
           isRequiredBusy = true;
           break;
         }
-
         optionalAttendees.forEach(optId => {
-          if (eventUsers.includes(optId)) {
-            busyOptionalCount++;
-          }
+          if (eventUsers.includes(optId)) busyOptionalCount++;
         });
       }
     }
@@ -52,49 +47,47 @@ exports.findAvailableTimeSlots = (params, events) => {
   };
 
   while (currentDay <= endDay) {
-    const dayOfWeek = currentDay.getUTCDay();
+    const dayOfWeek = currentDay.getDay();
 
     if (allowedDays.includes(dayOfWeek)) {
       let slotStart = new Date(currentDay);
-      slotStart.setUTCHours(startHour, 0, 0, 0);
+      slotStart.setHours(startHour, 0, 0, 0);
 
       const activeEnd = new Date(currentDay);
-      activeEnd.setUTCHours(endHour, 0, 0, 0);
+      activeEnd.setHours(endHour, 0, 0, 0);
       
       if (endHour <= startHour) {
-        activeEnd.setUTCDate(activeEnd.getUTCDate() + 1);
+        activeEnd.setDate(activeEnd.getDate() + 1);
       }
 
       const stepMs = 30 * 60000; 
-
       
-      while ((slotStart.getTime() + durationMs) <= activeEnd.getTime() && (slotStart.getTime() + durationMs) <= endDay.getTime()) {
+      while ((slotStart.getTime() + intraDayDurationMs) <= activeEnd.getTime() && (slotStart.getTime() + durationMs) <= endDay.getTime()) {
         const slotEnd = new Date(slotStart.getTime() + durationMs);
         
         let isAllDaysAllowed = true;
         let checkDay = new Date(slotStart);
-        checkDay.setUTCHours(0, 0, 0, 0);
+        checkDay.setHours(0, 0, 0, 0);
         
         let endCheckDay = new Date(slotEnd);
-        endCheckDay.setUTCHours(0, 0, 0, 0);
+        endCheckDay.setHours(0, 0, 0, 0);
         
-        if (slotEnd.getUTCHours() === 0 && slotEnd.getUTCMinutes() === 0 && slotEnd.getTime() > slotStart.getTime()) {
-           endCheckDay.setUTCDate(endCheckDay.getUTCDate() - 1);
+        if (slotEnd.getHours() === 0 && slotEnd.getMinutes() === 0 && slotEnd.getTime() > slotStart.getTime()) {
+           endCheckDay.setDate(endCheckDay.getDate() - 1);
         }
 
         let tempDay = new Date(checkDay);
         while (tempDay <= endCheckDay) {
-          if (!allowedDays.includes(tempDay.getUTCDay())) {
+          if (!allowedDays.includes(tempDay.getDay())) {
             isAllDaysAllowed = false;
             break;
           }
-          tempDay.setUTCDate(tempDay.getUTCDate() + 1);
+          tempDay.setDate(tempDay.getDate() + 1);
         }
 
         if (isAllDaysAllowed) {
           const checkStart = new Date(slotStart.getTime() - bufferBeforeMs);
           const checkEnd = new Date(slotEnd.getTime() + bufferAfterMs);
-
           const { isRequiredBusy, busyOptionalCount } = checkCollisions(checkStart, checkEnd);
 
           if (!isRequiredBusy) {
@@ -105,15 +98,14 @@ exports.findAvailableTimeSlots = (params, events) => {
             });
           }
         }
-        
         slotStart = new Date(slotStart.getTime() + stepMs);
       }
     }
-    currentDay.setUTCDate(currentDay.getUTCDate() + 1);
+    currentDay.setDate(currentDay.getDate() + 1);
   }
 
   const startLimitDate = new Date(searchStart);
-  startLimitDate.setUTCHours(0, 0, 0, 0);
+  startLimitDate.setHours(0, 0, 0, 0);
   const startLimitMs = startLimitDate.getTime();
   const endLimitMs = endDay.getTime();
 
@@ -122,9 +114,7 @@ exports.findAvailableTimeSlots = (params, events) => {
   });
 
   filteredSlots.sort((a, b) => {
-    if (b.availableOptionalCount !== a.availableOptionalCount) {
-      return b.availableOptionalCount - a.availableOptionalCount;
-    }
+    if (b.availableOptionalCount !== a.availableOptionalCount) return b.availableOptionalCount - a.availableOptionalCount;
     return a.start.getTime() - b.start.getTime();
   });
 

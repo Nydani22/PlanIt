@@ -178,17 +178,17 @@ const findAvailableTimeTool = {
   parameters: {
     type: "OBJECT",
     properties: {
-      searchStart: { type: "STRING", description: "Keresés kezdete ISO 8601 formátumban (UTC)." },
+      searchStart: { type: "STRING", description: "Keresés kezdete ISO 8601 formátumban (UTC). A legkisebb megadható időpont a JELENLEGI (mostani) pillanat!" },
       searchEnd: { type: "STRING", description: "Keresés vége ISO 8601 formátumban (UTC)." },
       durationMinutes: { type: "INTEGER", description: "Keresett időtartam percben (pl. 30, 60, 90)." },
       groupName: { type: "STRING", description: "A csoport neve, amellyel a találkozót tervezik. Ha csak a saját naptárában keres, hagyd teljesen üresen (vagy undefined)!" },
       allowedDays: { 
         type: "ARRAY", 
-        description: "Engedélyezett napok (0=Vasárnap, 1=Hétfő, ..., 6=Szombat). Alapértelmezett: hétköznapok [1,2,3,4,5].",
+        description: "Engedélyezett napok (0=Vasárnap, 1=Hétfő, ..., 6=Szombat). Alapértelmezett: hétköznapok [1,2,3,4,5]. A helyi időzóna szerinti napokat add meg!",
         items: { type: "INTEGER" }
       },
-      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája (pl. 9)." },
-      endHour: { type: "INTEGER", description: "Napi keresés befejező órája (pl. 17)." }
+      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája a FELHASZNÁLÓ HELYI IDEJE szerint (pl. reggel 9 órához 9-et adj meg)!" },
+      endHour: { type: "INTEGER", description: "Napi keresés befejező órája a FELHASZNÁLÓ HELYI IDEJE szerint (pl. délután 5 órához 17-et adj meg)!" }
     },
     required: ["searchStart", "searchEnd", "durationMinutes"]
   }

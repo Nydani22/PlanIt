@@ -303,31 +303,37 @@ export class FindTime implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    const offsetHours = new Date().getTimezoneOffset() / 60;
+    const now = new Date();
+    const selectedStart = new Date(this.searchParams.searchStart);
+    selectedStart.setHours(0, 0, 0, 0);
     
-    const getAdjustedDate = (date: Date, isEnd: boolean) => {
-      const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      if (isEnd) {
-        adjusted.setUTCHours(23, 59, 59, 999);
-      } else {
-        adjusted.setUTCHours(0, 0, 0, 0);
-      }
-      return adjusted;
-    };
+    const effectiveStartMs = Math.max(selectedStart.getTime(), now.getTime());
+    const effectiveStartDate = new Date(effectiveStartMs);
+
+    const actualEnd = new Date(this.searchParams.searchEnd);
+    actualEnd.setHours(23, 59, 59, 999);
 
     const paramsToSubmit: TimeSearchParams = {
       ...this.searchParams,
-      searchStart: getAdjustedDate(this.searchParams.searchStart, false),
-      searchEnd: getAdjustedDate(this.searchParams.searchEnd, true),
-      
-      startHour: (this.searchParams.startHour ?? 9) + offsetHours,
-      endHour: (this.searchParams.endHour ?? 17) + offsetHours
+      searchStart: effectiveStartDate, 
+      searchEnd: actualEnd,
+      startHour: this.searchParams.startHour ?? 0,
+      endHour: this.searchParams.endHour ?? 24
     };
 
     this.eventService.findAvailableTimeSlots(paramsToSubmit).subscribe({
       next: (response: TimeSearchResponse) => {
         if (response.success) {
-          this.availableSlots.set(response.data); 
+          
+          const actualEndMs = actualEnd.getTime();
+
+          const validSlots = response.data.filter(slot => {
+            const slotStartMs = new Date(slot.start).getTime();
+            const slotEndMs = new Date(slot.end).getTime();
+            return slotStartMs >= effectiveStartMs && slotEndMs <= actualEndMs;
+          });
+          
+          this.availableSlots.set(validSlots); 
         } else {
           this.errorMessage.set('Nem sikerült időpontokat találni.');
         }

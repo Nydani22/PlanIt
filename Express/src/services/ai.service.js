@@ -174,21 +174,21 @@ const getUserGroupsTool = {
 
 const findAvailableTimeTool = {
   name: "findAvailableTime",
-  description: "Szabad időpontokat keres a felhasználó, vagy egy megadott csoport számára. Akkor használd, ha a felhasználó megkérdezi, hogy 'Mikor érek rá jövő héten?', vagy 'Mikor van szabad időpontunk a Projekt X csapattal egy 2 órás megbeszélésre?'.",
+  description: "Szabad időpontokat keres a felhasználó, vagy egy megadott csoport számára. Akkor használd, ha a felhasználó megkérdezi, hogy 'Mikor érek rá jövő héten?', vagy 'Mikor van szabad időpontunk a Projekt X csapattal?'.",
   parameters: {
     type: "OBJECT",
     properties: {
-      searchStart: { type: "STRING", description: "Keresés kezdete ISO 8601 formátumban (UTC). A legkisebb megadható időpont a JELENLEGI (mostani) pillanat!" },
-      searchEnd: { type: "STRING", description: "Keresés vége ISO 8601 formátumban (UTC)." },
+      searchStart: { type: "STRING", description: "Keresés kezdete ISO 8601 formátumban (SZIGORÚAN UTC-ben!). A legkisebb megadható időpont a JELENLEGI pillanat." },
+      searchEnd: { type: "STRING", description: "Keresés vége ISO 8601 formátumban (SZIGORÚAN UTC-ben!)." },
       durationMinutes: { type: "INTEGER", description: "Keresett időtartam percben (pl. 30, 60, 90)." },
-      groupName: { type: "STRING", description: "A csoport neve, amellyel a találkozót tervezik. Ha csak a saját naptárában keres, hagyd teljesen üresen (vagy undefined)!" },
+      groupName: { type: "STRING", description: "A csoport neve, amellyel a találkozót tervezik. Ha csak a saját naptárában keres, hagyd üresen!" },
       allowedDays: { 
         type: "ARRAY", 
-        description: "Engedélyezett napok (0=Vasárnap, 1=Hétfő, ..., 6=Szombat). Alapértelmezett: hétköznapok [1,2,3,4,5]. A helyi időzóna szerinti napokat add meg!",
+        description: "Engedélyezett napok UTC SZERINT (0=Vasárnap, 1=Hétfő, ..., 6=Szombat). Figyelj arra, hogy ha az időzóna eltolódás miatt a helyi reggel UTC-ben még az előző napra esik (pl. hétfő 01:00 CEST = vasárnap 23:00 UTC), akkor az előző napot is bele kell tenned a listába!",
         items: { type: "INTEGER" }
       },
-      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája a FELHASZNÁLÓ HELYI IDEJE szerint (pl. reggel 9 órához 9-et adj meg)!" },
-      endHour: { type: "INTEGER", description: "Napi keresés befejező órája a FELHASZNÁLÓ HELYI IDEJE szerint (pl. délután 5 órához 17-et adj meg)!" }
+      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája SZIGORÚAN UTC-BEN! Ha a felhasználó magyar idő (CEST/CET) szerint reggel 9-et kér, ki kell vonnod az időzóna eltolódást, és 7-et (nyáron) vagy 8-at (télen) kell megadnod!" },
+      endHour: { type: "INTEGER", description: "Napi keresés befejező órája SZIGORÚAN UTC-BEN! Ha magyar idő szerint 17:00-t kér, 15-öt vagy 16-ot adj meg!" }
     },
     required: ["searchStart", "searchEnd", "durationMinutes"]
   }

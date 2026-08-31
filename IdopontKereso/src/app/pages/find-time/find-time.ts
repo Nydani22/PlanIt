@@ -312,21 +312,56 @@ export class FindTime implements OnInit, OnDestroy {
 
     const actualEnd = new Date(this.searchParams.searchEnd);
     actualEnd.setHours(23, 59, 59, 999);
+    const actualEndMs = actualEnd.getTime();
+
+    const offsetHours = Math.round(effectiveStartDate.getTimezoneOffset() / 60);
+    
+    const localStartHour = this.searchParams.startHour ?? 0;
+    const localEndHour = this.searchParams.endHour ?? 24;
+
+    let utcStartHour = localStartHour + offsetHours;
+    let dayShiftStart = 0;
+    while (utcStartHour < 0) { utcStartHour += 24; dayShiftStart -= 1; }
+    while (utcStartHour >= 24) { utcStartHour -= 24; dayShiftStart += 1; }
+
+    let utcEndHour = localEndHour + offsetHours;
+    let dayShiftEnd = 0;
+    while (utcEndHour < 0) { utcEndHour += 24; dayShiftEnd -= 1; }
+    while (utcEndHour > 24) { utcEndHour -= 24; dayShiftEnd += 1; }
+
+    const utcAllowedDaysSet = new Set<number>();
+    this.searchParams.allowedDays.forEach(localDay => {
+      const startDay = localDay + dayShiftStart;
+      const endDay = localDay + dayShiftEnd;
+      const minDay = Math.min(startDay, endDay);
+      const maxDay = Math.max(startDay, endDay);
+      
+      for (let d = minDay; d <= maxDay; d++) {
+        utcAllowedDaysSet.add(((d % 7) + 7) % 7);
+      }
+    });
+
+    const submitStart = new Date(effectiveStartMs);
+    submitStart.setDate(submitStart.getDate() - 1);
+    submitStart.setHours(0, 0, 0, 0);
+
+    const submitEnd = new Date(actualEndMs);
+    submitEnd.setDate(submitEnd.getDate() + 1);
+    submitEnd.setHours(23, 59, 59, 999);
 
     const paramsToSubmit: TimeSearchParams = {
       ...this.searchParams,
-      searchStart: effectiveStartDate, 
-      searchEnd: actualEnd,
-      startHour: this.searchParams.startHour ?? 0,
-      endHour: this.searchParams.endHour ?? 24
+      searchStart: submitStart,
+      searchEnd: submitEnd,
+      startHour: utcStartHour,
+      endHour: utcEndHour,
+      allowedDays: Array.from(utcAllowedDaysSet)
     };
 
     this.eventService.findAvailableTimeSlots(paramsToSubmit).subscribe({
       next: (response: TimeSearchResponse) => {
         if (response.success) {
           
-          const actualEndMs = actualEnd.getTime();
-
           const validSlots = response.data.filter(slot => {
             const slotStartMs = new Date(slot.start).getTime();
             const slotEndMs = new Date(slot.end).getTime();

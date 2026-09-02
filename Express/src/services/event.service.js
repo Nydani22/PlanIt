@@ -226,8 +226,8 @@ exports.generateICalStringByToken = async (token) => {
             const startD = new Date(item.fromDate);
             const endD = new Date(item.toDate);
             
+            const durationDays = Math.max(1, Math.round((endD.getTime() - startD.getTime()) / (1000 * 60 * 60 * 24)));
             const startDayShift = startD.getUTCHours() >= 12 ? 1 : 0;
-            const endDayShift = endD.getUTCHours() >= 12 ? 1 : 0;
             
             const realStart = new Date(
                 startD.getUTCFullYear(), 
@@ -235,11 +235,8 @@ exports.generateICalStringByToken = async (token) => {
                 startD.getUTCDate() + startDayShift
             );
             
-            const realEnd = new Date(
-                endD.getUTCFullYear(), 
-                endD.getUTCMonth(), 
-                endD.getUTCDate() + endDayShift + 1 
-            );
+            const realEnd = new Date(realStart);
+            realEnd.setDate(realStart.getDate() + durationDays);
 
             eventConfig.start = realStart;
             eventConfig.end = realEnd;

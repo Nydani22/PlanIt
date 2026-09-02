@@ -186,6 +186,8 @@ export class FindTime implements OnInit, OnDestroy {
 
   onSearchModeChange(mode: 'self' | 'group') {
     this.searchMode = mode;
+    this.availableSlots.set([]);
+    this.errorMessage.set('');
     
     if (mode === 'self') {
       this.searchParams.requiredAttendees = [this.currentUserId];

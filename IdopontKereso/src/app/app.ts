@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, OnInit, HostListener, ChangeDetectionStrategy, untracked } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, HostListener, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Navbar } from './components/navbar/navbar';
@@ -11,7 +11,7 @@ import { EventDialogComponent } from './components/event-dialog/event-dialog';
 import { CalendarRefreshService } from './services/calendarRefresh/calendar-refresh.service';
 import { MatIcon } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatCalendar, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -53,6 +53,7 @@ import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 })
 export class App implements OnInit {
   private themeService = inject(ThemeService);
+  @ViewChild(MatCalendar) calendar!: MatCalendar<Date>;
   authService = inject(AuthService);
   private userService = inject(UserService);
   private router = inject(Router);
@@ -90,6 +91,13 @@ export class App implements OnInit {
 
       if (!isExcludedPage) {
         localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
+      }
+    });
+
+    effect(() => {
+      const newDate = this.calendarRefreshService.selectedDate();
+      if (this.calendar) {
+        this.calendar.activeDate = newDate;
       }
     });
   }

@@ -177,6 +177,7 @@
             <mat-calendar 
               class="text-gray-800 dark:text-gray-100"
               [selected]="calendarRefreshService.selectedDate()" 
+              [startAt]="calendarRefreshService.selectedDate()" 
               (selectedChange)="onDateSelected($event)">
             </mat-calendar>
           </div>

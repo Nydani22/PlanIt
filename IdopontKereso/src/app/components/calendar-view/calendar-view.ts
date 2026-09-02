@@ -71,8 +71,12 @@ export class CalendarViewComponent implements OnInit {
   constructor() {
     effect(() => {
       const newDate = this.calendarRefreshService.selectedDate();
-      if (this.viewDate.getTime() !== newDate.getTime()) {
-        this.viewDate = newDate;
+      if (
+        this.viewDate.getFullYear() !== newDate.getFullYear() ||
+        this.viewDate.getMonth() !== newDate.getMonth() ||
+        this.viewDate.getDate() !== newDate.getDate()
+      ) {
+        this.viewDate = new Date(newDate);
         this.loadEvents();
       }
     }, { allowSignalWrites: true });
@@ -104,6 +108,11 @@ export class CalendarViewComponent implements OnInit {
       this.loadUserSettings();
       this.loadEvents();
     }
+  }
+
+  onNavigate() {
+    this.calendarRefreshService.selectedDate.set(new Date(this.viewDate));
+    this.loadEvents();
   }
 
   private loadUserSettings() {

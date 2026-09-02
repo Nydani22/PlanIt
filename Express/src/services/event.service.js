@@ -198,7 +198,6 @@ exports.generateICalStringByToken = async (token) => {
     if (!user) {
         return null;
     }
-
     
     const events = await Event.find({ 
         organizerId: user._id, 
@@ -206,25 +205,50 @@ exports.generateICalStringByToken = async (token) => {
     });
 
     const calendar = ical({ 
-        name: `${user.fullName} Naptára`,
-        timezone: 'UTC'
+        name: `${user.fullName} Naptára`
     });
 
-    const APP_DOMAIN = 'useplanit.netlify.app';
+    const APP_DOMAIN = 'useplanit.hu';
 
     events.forEach(item => {
         const eventUid = item.uid ? item.uid : `${item._id.toString()}@${APP_DOMAIN}`;
 
-        const calEvent = calendar.createEvent({
+        let eventConfig = {
             id: eventUid,
-            start: item.fromDate,
-            end: item.toDate,
             summary: item.eventName,
             description: item.description,
             location: item.location,
             allDay: item.isAllDay,
             lastModified: item.updatedAt
-        });
+        };
+
+        if (item.isAllDay) {
+            const startD = new Date(item.fromDate);
+            const endD = new Date(item.toDate);
+            
+            const startDayShift = startD.getUTCHours() >= 12 ? 1 : 0;
+            const endDayShift = endD.getUTCHours() >= 12 ? 1 : 0;
+            
+            const realStart = new Date(
+                startD.getUTCFullYear(), 
+                startD.getUTCMonth(), 
+                startD.getUTCDate() + startDayShift
+            );
+            
+            const realEnd = new Date(
+                endD.getUTCFullYear(), 
+                endD.getUTCMonth(), 
+                endD.getUTCDate() + endDayShift + 1 
+            );
+
+            eventConfig.start = realStart;
+            eventConfig.end = realEnd;
+        } else {
+            eventConfig.start = item.fromDate;
+            eventConfig.end = item.toDate;
+        }
+
+        const calEvent = calendar.createEvent(eventConfig);
 
         if (item.recurrence && item.recurrence.frequency !== 'NONE') {
             const repeating = {

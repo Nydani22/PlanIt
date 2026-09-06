@@ -35,18 +35,18 @@ exports.createEvent = async (eventData, userId) => {
         const organizerIndex = finalAttendees.findIndex(a => a.userId.toString() === userId.toString());
         
         if (organizerIndex !== -1) {
-            finalAttendees[organizerIndex].status = 'ACCEPTED';
+            finalAttendees[organizerIndex].status = groupId ? 'PENDING' : 'ACCEPTED';
         } else {
             finalAttendees.push({
                 userId: userId,
-                status: 'ACCEPTED',
+                status: groupId ? 'PENDING' : 'ACCEPTED',
                 attendanceType: 'REQUIRED'
             });
         }
     } else {
         finalAttendees = [{
             userId: userId,
-            status: 'ACCEPTED',
+            status: groupId ? 'PENDING' : 'ACCEPTED',
             attendanceType: 'REQUIRED'
         }];
     }

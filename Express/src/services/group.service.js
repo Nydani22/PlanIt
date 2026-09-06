@@ -2,7 +2,7 @@ const Group = require('../models/Group.model');
 const notificationService = require('./notification.service');
 const crypto = require('crypto');
 const Invitation = require('../models/Invitation.model');
-
+const Event = require('../models/Event.model');
 
 exports.createGroup = async (groupData, userId) => {
     const { groupName, description } = groupData;
@@ -107,15 +107,12 @@ exports.joinWithInvite = async (token, userId) => {
 
     const isAlreadyMember = group.members.some(member => member.userId.toString() === userId.toString());
     if (isAlreadyMember) {
-        await Invitation.deleteOne({ _id: invitation._id });
         throw new Error('Már tagja vagy ennek a csoportnak!');
     }
 
     group.members.push({ userId: userId, role: 'MEMBER' });
     await group.save();
 
-    //await Invitation.deleteOne({ _id: invitation._id }); 
-    
     await group.populate('members.userId', '_id userName fullName email');
 
     const joinedMember = group.members.find(m => m.userId._id.toString() === userId.toString());
@@ -140,6 +137,25 @@ exports.joinWithInvite = async (token, userId) => {
         type: 'SYSTEM',
         message: `Sikeresen csatlakoztál a csoporthoz: ${group.groupName}`
     });
+
+    const now = new Date();
+
+    await Event.updateMany(
+        { 
+            groupId: group._id, 
+            toDate: { $gte: now },
+            'attendees.userId': { $ne: userId }
+        },
+        { 
+            $push: { 
+                attendees: {
+                    userId: userId,
+                    status: 'PENDING',
+                    attendanceType: 'OPTIONAL'
+                } 
+            } 
+        }
+    );
 
     return group;
 };

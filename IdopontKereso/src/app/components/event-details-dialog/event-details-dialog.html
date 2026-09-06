@@ -1,7 +1,7 @@
-<div class="relative overflow-hidden">
-  <div class="h-3 w-full absolute top-0 left-0" [style.backgroundColor]="event.color || '#3b82f6'"></div>
+<div class="relative overflow-hidden flex flex-col">
+  <div class="h-3 w-full shrink-0" [style.backgroundColor]="event.color || '#3b82f6'"></div>
 
-  <mat-dialog-content class="!pt-8 !pb-6 !px-6">
+  <mat-dialog-content class="!pt-5 !pb-6 !px-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
     <div class="mb-5">
       <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 m-0 leading-tight">
         {{ event.eventName }}
@@ -19,7 +19,12 @@
         <div class="flex flex-col mt-0.5">
           @if (event.isAllDay) {
             <span class="font-medium">Egész napos</span>
-            <span class="text-sm text-gray-500">{{ event.fromDate | date:'yyyy. MM. dd.' }}</span>
+            <span class="text-sm text-gray-500">
+              {{ event.fromDate | date:'yyyy. MM. dd.' }}
+              @if ((event.fromDate | date:'yyyy.MM.dd') !== (event.toDate | date:'yyyy.MM.dd')) {
+                - {{ event.toDate | date:'yyyy. MM. dd.' }}
+              }
+            </span>
           } @else {
             <span class="font-medium">
               {{ event.fromDate | date:'HH:mm' }} - {{ event.toDate | date:'HH:mm' }}
@@ -48,14 +53,15 @@
         </div>
       }
 
-      @if (event.attendees && event.attendees.length > 0) {
+      @if (attendees().length > 0) {
         <div class="flex items-start gap-3">
           <mat-icon class="text-gray-400 mt-0.5">group</mat-icon>
           <div class="flex flex-col w-full">
-            <span class="font-medium mb-1">Résztvevők ({{ event.attendees.length }} fő)</span>
+            <span class="font-medium mb-1">Résztvevők ({{ attendees().length }} fő)</span>
             
-            <div class="flex flex-col gap-1.5 mt-1">
-              @for (attendee of event.attendees; track attendee.userId) {
+            <div class="flex flex-col gap-1.5 mt-2 py-1 max-h-52 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+              
+              @for (attendee of attendees(); track attendee.userId) {
                 <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded border border-gray-100 dark:border-gray-700">
                   <div class="flex items-center gap-2">
                     
@@ -85,6 +91,26 @@
         <div class="flex items-start gap-3 mt-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
           <mat-icon class="text-gray-400 shrink-0">subject</mat-icon>
           <p class="m-0 whitespace-pre-wrap text-sm">{{ event.description }}</p>
+        </div>
+      }
+
+      @if (event.groupId && currentUserAttendee(); as attendee) {
+        <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span class="font-medium text-blue-900 dark:text-blue-100">Részt veszel ezen az eseményen?</span>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button mat-flat-button 
+                    [color]="attendee.status === 'ACCEPTED' ? 'primary' : ''" 
+                    (click)="updateStatus('ACCEPTED')" 
+                    class="flex-1 sm:flex-none">
+              <mat-icon>check</mat-icon> Igen
+            </button>
+            <button mat-flat-button 
+                    [color]="attendee.status === 'DECLINED' ? 'warn' : ''" 
+                    (click)="updateStatus('DECLINED')" 
+                    class="flex-1 sm:flex-none">
+              <mat-icon>close</mat-icon> Nem
+            </button>
+          </div>
         </div>
       }
     </div>

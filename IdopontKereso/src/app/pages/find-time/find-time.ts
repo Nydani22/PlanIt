@@ -412,6 +412,10 @@ export class FindTime implements OnInit, OnDestroy {
       attendees: allAttendees
     };
 
+    if (this.searchMode === 'group' && this.selectedGroupId()) {
+      preFilledEvent.groupId = this.selectedGroupId();
+    }
+
     const dialogRef = this.dialog.open(EventDialogComponent, {
       width: '800px',
       maxWidth: '95vw',

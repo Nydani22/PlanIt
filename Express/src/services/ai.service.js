@@ -209,9 +209,14 @@ const fallbackModels = [
 const getModel = (modelName) => {
   return genAI.getGenerativeModel({ 
     model: modelName,
-    tools: [{
-      functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool]
-    }]
+    tools: [
+      {
+        functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool]
+      },
+      {
+        googleSearch: {} 
+      }
+    ]
   });
 };
 

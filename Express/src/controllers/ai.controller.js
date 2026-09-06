@@ -1,4 +1,4 @@
-const { generateAIContent } = require('../services/ai.service');
+const { generateAIContent, performWebSearch } = require('../services/ai.service');
 const eventService = require('../services/event.service');
 const groupService = require('../services/group.service');
 const freeBusyService = require('../services/freebusy.service');
@@ -37,7 +37,7 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
 
     SZIGORÚ SZABÁLYOK ÉS HATÁROK: 
     1. Te egy Naptár Asszisztens vagy. A feladatod az események kezelése és a naptár lekérdezése.
-    2. TILTOTT minden olyan kérés teljesítése, ami nem kapcsolódik a naptárhoz, de HA egy publikus esemény (pl. sportesemény, koncert, ünnep) időpontjára van szükség a naptárba rögzítéshez, KÖTELEZŐ használnod a beépített Google Keresést az időpont kiderítéséhez! Ne kérdezd meg a felhasználótól az időpontot, ha meg tudod keresni!
+    2. Ha a felhasználó egy nyilvános esemény (pl. Forma-1 futam, meccs, koncert) naptárba írását kéri, de nincs meg a kezdési időpont, KÖTELEZŐ használnod a 'searchWeb' eszközt a dátum és időpont felkutatására! Ne kérdezd meg a felhasználótól!
     3. Ha a felhasználó naptárfüggetlen kérdést tesz fel, KÖTELEZŐ udvariasan visszautasítanod.
     4. Ha új eseményt kér, használd a 'createEvents' eszközt!
     5. Ha módosítani akar: Keresd meg a fenti listában az esemény(ek) 'id'-jét, és használd az 'updateEvents' eszközt!
@@ -257,7 +257,40 @@ const handleAIChat = async (req, res) => {
 
         const result = await generateAIContent(contents);
         const response = await result.response;
-        const functionCalls = response.functionCalls();
+        let functionCalls = response.functionCalls();
+
+        const searchCall = functionCalls?.find(call => call.name === 'searchWeb');
+        if (searchCall) {
+            const query = searchCall.args.query;
+            const searchResult = await performWebSearch(query);
+
+            let followUpPrompt = '';
+
+            if (searchResult) {
+                followUpPrompt = `
+                Internetes keresési eredmény erre a kérdésre ("${query}"):
+                ${searchResult}
+
+                A fenti adatok alapján készítsd el az eseményt a naptárba a 'createEvents' eszközzel!`;
+            } else {
+                followUpPrompt = `
+                Sajnos az internetes keresés jelenleg nem érhető el vagy túllépte a lekérdezési kvótát a következő kérdésre: "${query}".
+                Kérlek, tájékoztasd a felhasználót udvariasan, hogy most nem sikerült automatikusan kideríteni az időpontot az internetről, és kérd meg, hogy adja meg ő maga a kezdési időpontot, hogy rögzíthesd a naptárba! Ne hívj meg újabb kereső eszközt!`;
+            }
+
+            contents.push(followUpPrompt);
+            const secondStepResult = await generateAIContent(contents);
+            const secondResponse = await secondStepResult.response;
+            functionCalls = secondResponse.functionCalls();
+
+            if (!functionCalls || functionCalls.length === 0) {
+                return res.json({
+                    success: true,
+                    action: 'message',
+                    message: secondResponse.text()
+                });
+            }
+        }
 
         if (functionCalls && functionCalls.length > 0) {
             const toolResults = await processToolCalls(functionCalls, userId);

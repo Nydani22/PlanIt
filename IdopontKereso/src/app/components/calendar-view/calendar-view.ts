@@ -4,7 +4,7 @@ import localeHu from '@angular/common/locales/hu';
 import { CalendarModule, CalendarEvent, CalendarView, CalendarEventTimesChangedEvent, CalendarDateFormatter } from 'angular-calendar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButton, MatButtonModule } from "@angular/material/button";
-import { Subject } from 'rxjs';
+import { catchError, Subject, switchMap, of } from 'rxjs';
 import { EventService } from '../../services/event/event.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { UserService } from '../../services/user/user.service';
@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { Group } from '../../models/group.model';
 import { EventDetailsDialog } from '../event-details-dialog/event-details-dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 registerLocaleData(localeHu);
 
@@ -50,6 +51,7 @@ export class CalendarViewComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackbarService = inject(SnackbarService);
   private calendarRefreshService = inject(CalendarRefreshService);
+  private loadEventsSubject = new Subject<{ start: Date, end: Date }>();
   view: CalendarView = CalendarView.Week;
   viewDate: Date = new Date();
   refresh = new Subject<void>();
@@ -101,6 +103,21 @@ export class CalendarViewComponent implements OnInit {
       
       this.refresh.next();
     });
+
+    this.loadEventsSubject.pipe(
+      switchMap(({ start, end }) =>
+        this.eventService.getEvents(start, end).pipe(
+          catchError(err => {
+            this.snackbarService.showError('Hiba történt az események betöltésekor.');
+            return of([]);
+          })
+        )
+      ),
+      takeUntilDestroyed()
+    ).subscribe((data: AppEvent[]) => {
+      this.events = this.expandEvents(data);
+      this.refresh.next();
+    });
   }
 
   ngOnInit(): void {
@@ -148,15 +165,7 @@ export class CalendarViewComponent implements OnInit {
     const currentViewDate = new Date(this.viewDate);
     const startDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() - 1, 1);
     const endDate = new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 2, 0, 23, 59, 59);
-    this.eventService.getEvents(startDate, endDate).subscribe({
-      next: (data: AppEvent[]) => {
-        this.events = this.expandEvents(data);
-        this.refresh.next();
-      },
-      error: (err) => {
-        this.snackbarService.showError('Hiba történt az események betöltésekor.');
-      }
-    });
+    this.loadEventsSubject.next({ start: startDate, end: endDate });
   }
 
   private expandEvents(events: AppEvent[]): CalendarEvent[] {

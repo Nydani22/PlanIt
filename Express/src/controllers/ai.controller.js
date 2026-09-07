@@ -27,8 +27,7 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
     - Felhasználó időzónája: ${timeZone || 'UTC'}
 
     SZIGORÚ IDŐZÓNA SZABÁLYOK: 
-    1. BEVITEL (Felhasználó -> Naptár): A felhasználó a saját helyi idejében adja meg az időpontokat. Az eszközök ('fromDate', 'toDate') viszont UTC-ben várják az ISO 8601 dátumokat! KÖTELEZŐ átszámolnod a felhasználó helyi idejét UTC-re, mielőtt beírod az eszközhívásba!
-    2. KIOLVASÁS (Naptár -> Felhasználó): A JSON-ben kapott események (start, end) UTC időzónában (Z) vannak! Amikor szöveges választ írsz a felhasználónak, KÖTELEZŐ ezeket az UTC időpontokat átszámolnod a felhasználó helyi idejére (${timeZone || 'UTC'})! SOHA ne mutasd a felhasználónak a nyers UTC időt!
+    A JSON-ben megkapott naptári események és a jelenlegi idő már a felhasználó helyi idejére vannak átalakítva, ezeket pontosan így olvasd fel! AZONBAN, ha az eszközökkel ('createEvents', 'updateEvents', 'findAvailableTime') létrehozol vagy keresel valamit, azok SZIGORÚAN UTC-ben várják az ISO 8601 dátumokat! KÖTELEZŐ átszámolnod a felhasználó helyi idejét UTC-re, mielőtt beírod az eszközhívásba!
 
     ESEMÉNYEK AZ ELMÚLT ÉS A KÖVETKEZŐ 90 NAPBAN (JSON formátumban):
     ${JSON.stringify(minimalEvents)}
@@ -50,7 +49,7 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
     11. Válaszgeneráláskor HASZNÁLJ bátran Markdown formázást! Emeld ki vastagon (**) a fontos információkat (pl. dátumokat, időpontokat), és használj markdown listákat (-), hogy átlátható és szép legyen a végeredmény!
 `;
 
-const processToolCalls = async (functionCalls, userId) => {
+const processToolCalls = async (functionCalls, userId, timeZone) => {
     const results = {
         savedEvents: [],
         updatedEvents: [],
@@ -152,8 +151,8 @@ const processToolCalls = async (functionCalls, userId) => {
                 const events = await eventService.getUserEvents(userId, startDate, endDate);
                 results.fetchedEventsSummary.push(...events.map(e => ({
                     title: e.eventName,
-                    start: e.fromDate,
-                    end: e.toDate
+                    start: new Date(e.fromDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }),
+                    end: new Date(e.toDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false })
                 })));
                 break;
 
@@ -247,9 +246,15 @@ const handleAIChat = async (req, res) => {
             [userId]
         );
 
-        const minimalEvents = windowEvents.map(e => ({ id: e._id, title: e.eventName, start: e.fromDate, end: e.toDate }));
+        const minimalEvents = windowEvents.map(e => ({ 
+            id: e._id, 
+            title: e.eventName, 
+            start: new Date(e.fromDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }), 
+            end: new Date(e.toDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }) 
+        }));
         const historyText = formatChatHistory(history);
-        const systemInstruction = buildSystemInstruction(minimalEvents, historyText, currentTime, timeZone);
+        const localNow = new Date().toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false });
+        const systemInstruction = buildSystemInstruction(minimalEvents, historyText, currentTime || localNow, timeZone);
 
         let contents = [systemInstruction + "\n\nFelhasználó kérése: " + (message || "Elemezd ezt a képet!")];
         if (file) {
@@ -294,7 +299,7 @@ const handleAIChat = async (req, res) => {
         }
 
         if (functionCalls && functionCalls.length > 0) {
-            const toolResults = await processToolCalls(functionCalls, userId);
+            const toolResults = await processToolCalls(functionCalls, userId, timeZone);
 
             const summaryPrompt = `
             A felhasználó kérése ez volt: "${message || 'Hangüzenet'}"

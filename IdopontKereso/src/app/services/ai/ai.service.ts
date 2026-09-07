@@ -29,11 +29,8 @@ export class AiService {
     }
 
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const currentLocalTime = new Date().toString();
-    
     formData.append('timeZone', timeZone);
-    formData.append('currentTime', currentLocalTime);
-
+    
     return this.http.post<AiResponse>(`${this.apiUrl}/chat`, formData);
-  } 
+  }
 }

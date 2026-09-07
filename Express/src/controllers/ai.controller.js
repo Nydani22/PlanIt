@@ -26,8 +26,9 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
     - Aktuális helyi idő: ${currentTime || new Date().toISOString()}
     - Felhasználó időzónája: ${timeZone || 'UTC'}
 
-    SZIGORÚ IDŐZÓNA SZABÁLY: 
-    A felhasználó a saját helyi idejében kéri az időpontokat. Az eszközök ('fromDate', 'toDate') viszont UTC-ben várják az ISO 8601 dátumokat! KÖTELEZŐ átszámolnod a felhasználó helyi idejét UTC-re, mielőtt beírod a JSON-ba!
+    SZIGORÚ IDŐZÓNA SZABÁLYOK: 
+    1. BEVITEL (Felhasználó -> Naptár): A felhasználó a saját helyi idejében adja meg az időpontokat. Az eszközök ('fromDate', 'toDate') viszont UTC-ben várják az ISO 8601 dátumokat! KÖTELEZŐ átszámolnod a felhasználó helyi idejét UTC-re, mielőtt beírod az eszközhívásba!
+    2. KIOLVASÁS (Naptár -> Felhasználó): A JSON-ben kapott események (start, end) UTC időzónában (Z) vannak! Amikor szöveges választ írsz a felhasználónak, KÖTELEZŐ ezeket az UTC időpontokat átszámolnod a felhasználó helyi idejére (${timeZone || 'UTC'})! SOHA ne mutasd a felhasználónak a nyers UTC időt!
 
     ESEMÉNYEK AZ ELMÚLT ÉS A KÖVETKEZŐ 90 NAPBAN (JSON formátumban):
     ${JSON.stringify(minimalEvents)}
@@ -307,7 +308,9 @@ const handleAIChat = async (req, res) => {
             - Talált SZABAD IDŐPONTOK: ${JSON.stringify(toolResults.fetchedTimeSlots)}
             - HIBÁK/MEGTAGADOTT MŰVELETEK: ${JSON.stringify(toolResults.actionErrors)}
             
-            Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy mit csináltál! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Ha a 'HIBÁK' mezőben látsz valamit (pl. jogosultsági probléma), KÖTELEZŐ elmondanod a felhasználónak! Használj Markdown formázást a kiemelésekhez!`;
+            Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy mit csináltál! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Ha a 'HIBÁK' mezőben látsz valamit (pl. jogosultsági probléma), KÖTELEZŐ elmondanod a felhasználónak! Használj Markdown formázást a kiemelésekhez!
+            
+            FIGYELEM: A fenti json adatokban az időpontok UTC-ben szerepelnek! KÖTELEZŐ átszámolnod őket a felhasználó helyi idejére (${timeZone || 'UTC'}), mielőtt kiírod neki!`;
             
             const secondResult = await generateAIContent(summaryPrompt);
 

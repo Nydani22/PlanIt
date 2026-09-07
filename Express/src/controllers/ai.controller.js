@@ -21,32 +21,33 @@ const formatChatHistory = (history) => {
     return "Nincs előzmény.";
 };
 
-const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZone) => `
+const buildSystemInstruction = (minimalEvents, nextEvent, historyText, currentTime, timeZone) => `
     Információk a felhasználóról:
-    - Aktuális helyi idő: ${currentTime || new Date().toISOString()}
-    - Felhasználó időzónája: ${timeZone || 'UTC'}
+    - Aktuális helyi idő: ${currentTime}
+    - Felhasználó időzónája: ${timeZone}
 
-    SZIGORÚ IDŐZÓNA SZABÁLYOK: 
-    A JSON-ben megkapott naptári események és a jelenlegi idő már a felhasználó helyi idejére vannak átalakítva, ezeket pontosan így olvasd fel! AZONBAN, ha az eszközökkel ('createEvents', 'updateEvents', 'findAvailableTime') létrehozol vagy keresel valamit, azok SZIGORÚAN UTC-ben várják az ISO 8601 dátumokat! KÖTELEZŐ átszámolnod a felhasználó helyi idejét UTC-re, mielőtt beírod az eszközhívásba!
+    A RENDSZER ÁLTAL KISZÁMÍTOTT KÖVETKEZŐ ESEMÉNY:
+    ${nextEvent ? JSON.stringify(nextEvent) : "Nincs a közeljövőben tervezett esemény."}
 
-    ESEMÉNYEK AZ ELMÚLT ÉS A KÖVETKEZŐ 90 NAPBAN (JSON formátumban):
+    SZABÁLYOK A KÖVETKEZŐ ESEMÉNYHEZ:
+    - Ha a felhasználó azt kérdezi, hogy "Mi a következő eseményem?" vagy a mai/közelgő programjairól kérdez, KÖTELEZŐ a fenti "A RENDSZER ÁLTAL KISZÁMÍTOTT KÖVETKEZŐ ESEMÉNY" adatait használnod válaszként!
+    - Ne keress visszafelé a teljes listában korábbi időpontokat, mert a rendszer már kiszűrte és sorba rendezte a ténylegesen következő programot!
+    - Ha az eseménynél az 'isOngoing: true', jelezd, hogy az esemény éppen folyamatban van.
+
+    TELJES ESEMÉNYLISTA (Módosításhoz, törléshez és általános lekérdezéshez):
     ${JSON.stringify(minimalEvents)}
 
-    EDDIGI BESZÉLGETÉS ELŐZMÉNYE (Kérlek, használd kontextusként a visszautalásokhoz!):
+    EDDIGI BESZÉLGETÉS ELŐZMÉNYE:
     ${historyText}
 
     SZIGORÚ SZABÁLYOK ÉS HATÁROK: 
     1. Te egy Naptár Asszisztens vagy. A feladatod az események kezelése és a naptár lekérdezése.
     2. Ha a felhasználó egy nyilvános esemény (pl. Forma-1 futam, meccs, koncert) naptárba írását kéri, de nincs meg a kezdési időpont, KÖTELEZŐ használnod a 'searchWeb' eszközt a dátum és időpont felkutatására! Ne kérdezd meg a felhasználótól!
-    3. Ha a felhasználó naptárfüggetlen kérdést tesz fel, KÖTELEZŐ udvariasan visszautasítanod.
-    4. Ha új eseményt kér, használd a 'createEvents' eszközt!
-    5. Ha módosítani akar: Keresd meg a fenti listában az esemény(ek) 'id'-jét, és használd az 'updateEvents' eszközt!
-    6. Ha TÖRÖLNI akar: Keresd meg az esemény(ek) 'id'-jét a listában, és használd a 'deleteEvents' eszközt!
-    7. HA TÖBB HASONLÓ ESEMÉNY VAN a listában, vagy NINCS BENNE, és nem tudod pontosan beazonosítani az 'id'-t, AKKOR NE HASZNÁLJ ESZKÖZT! Helyette normál szövegként kérdezz vissza a felhasználótól.
-    8. Ha a naptáráról kérdez általánosan, használd a 'getEvents' eszközt!
-    9. Ha a csoportjairól vagy a csapattagokról kérdez, használd a 'getUserGroups' eszközt!
-    10. Ha a felhasználó szabad időpontot, ráérést keres magának vagy egy csoportnak, KÖTELEZŐ a 'findAvailableTime' eszközt használnod!
-    11. Válaszgeneráláskor HASZNÁLJ bátran Markdown formázást! Emeld ki vastagon (**) a fontos információkat (pl. dátumokat, időpontokat), és használj markdown listákat (-), hogy átlátható és szép legyen a végeredmény!
+    3. Ha új eseményt kér, használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak ('fromDate', 'toDate')!
+    4. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t, és használd az 'updateEvents' eszközt!
+    5. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
+    6. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
+    7. Válaszgeneráláskor formázz Markdown kiemelésekkel (**dátum**, **időpont**)!
 `;
 
 const processToolCalls = async (functionCalls, userId, timeZone) => {
@@ -253,8 +254,10 @@ const handleAIChat = async (req, res) => {
             end: new Date(e.toDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }) 
         }));
         const historyText = formatChatHistory(history);
-        const localNow = new Date().toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false });
-        const systemInstruction = buildSystemInstruction(minimalEvents, historyText, currentTime || localNow, timeZone);
+        
+        const userTz = timeZone || 'UTC';
+        const formattedNow = new Date().toLocaleString('en-CA', { timeZone: userTz, hour12: false });
+        const systemInstruction = buildSystemInstruction(minimalEvents, historyText, formattedNow, userTz);
 
         let contents = [systemInstruction + "\n\nFelhasználó kérése: " + (message || "Elemezd ezt a képet!")];
         if (file) {
@@ -315,7 +318,7 @@ const handleAIChat = async (req, res) => {
             
             Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy mit csináltál! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Ha a 'HIBÁK' mezőben látsz valamit (pl. jogosultsági probléma), KÖTELEZŐ elmondanod a felhasználónak! Használj Markdown formázást a kiemelésekhez!
             
-            FIGYELEM: A fenti json adatokban az időpontok UTC-ben szerepelnek! KÖTELEZŐ átszámolnod őket a felhasználó helyi idejére (${timeZone || 'UTC'}), mielőtt kiírod neki!`;
+            `;
             
             const secondResult = await generateAIContent(summaryPrompt);
 

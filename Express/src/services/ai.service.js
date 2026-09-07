@@ -228,7 +228,7 @@ const getModel = (modelName) => {
 };
 
 const generateAIContent = async (contents) => {
-  const TIMEOUT_MS = 8000; 
+  const TIMEOUT_MS = 10000; 
 
   for (const modelName of fallbackModels) {
       try {

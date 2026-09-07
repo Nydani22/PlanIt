@@ -21,20 +21,17 @@ const formatChatHistory = (history) => {
     return "Nincs előzmény.";
 };
 
-const buildSystemInstruction = (minimalEvents, nextEvent, historyText, currentTime, timeZone) => `
+const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZone) => `
     Információk a felhasználóról:
     - Aktuális helyi idő: ${currentTime}
     - Felhasználó időzónája: ${timeZone}
 
-    A RENDSZER ÁLTAL KISZÁMÍTOTT KÖVETKEZŐ ESEMÉNY:
-    ${nextEvent ? JSON.stringify(nextEvent) : "Nincs a közeljövőben tervezett esemény."}
+    SZIGORÚ IDŐZÓNA ÉS DÁTUM SZABÁLYOK: 
+    1. A fenti 'Aktuális helyi idő' és a naptáresemények 'start' / 'end' mezői mind azonos formátumban (YYYY-MM-DD, HH:mm:ss) vannak, a felhasználó helyi idejében!
+    2. KÖVETKEZŐ ESEMÉNY VIZSGÁLATA: Egy esemény CSAK AKKOR lehet "következő", ha a 'start' dátuma és ideje SZIGORÚAN KÉSŐBBI, mint az 'Aktuális helyi idő' (${currentTime})! Olyan eseményt, amelynek a kezdési időpontja már elmúlt a mai napon, TILOS következő eseményként megjelölni! Ha a mai napon már nincs több kezdődő program, keresd meg a legelső olyan eseményt a következő napokból, ami még nem kezdődött el!
+    3. BEVITEL (Eszközök használatakor): Ha új eseményt hozol létre ('createEvents') vagy módosítasz ('updateEvents'), az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak! Számold át a helyi időt UTC-re az eszközhívás paramétereiben!
 
-    SZABÁLYOK A KÖVETKEZŐ ESEMÉNYHEZ:
-    - Ha a felhasználó azt kérdezi, hogy "Mi a következő eseményem?" vagy a mai/közelgő programjairól kérdez, KÖTELEZŐ a fenti "A RENDSZER ÁLTAL KISZÁMÍTOTT KÖVETKEZŐ ESEMÉNY" adatait használnod válaszként!
-    - Ne keress visszafelé a teljes listában korábbi időpontokat, mert a rendszer már kiszűrte és sorba rendezte a ténylegesen következő programot!
-    - Ha az eseménynél az 'isOngoing: true', jelezd, hogy az esemény éppen folyamatban van.
-
-    TELJES ESEMÉNYLISTA (Módosításhoz, törléshez és általános lekérdezéshez):
+    ESEMÉNYEK AZ ELMÚLT ÉS A KÖVETKEZŐ 90 NAPBAN:
     ${JSON.stringify(minimalEvents)}
 
     EDDIGI BESZÉLGETÉS ELŐZMÉNYE:

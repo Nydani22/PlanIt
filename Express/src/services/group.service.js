@@ -51,10 +51,17 @@ exports.updateGroup = async (groupId, userId, updateData) => {
 };
 
 exports.deleteGroup = async (groupId, userId) => {
-    return await Group.findOneAndDelete({ 
+    const deletedGroup = await Group.findOneAndDelete({ 
         _id: groupId, 
         members: { $elemMatch: { userId: userId, role: 'OWNER' } } 
     });
+
+    if (deletedGroup) {
+        await Event.deleteMany({ groupId: groupId });
+        await Invitation.deleteMany({ groupId: groupId });
+    }
+
+    return deletedGroup;
 };
 
 

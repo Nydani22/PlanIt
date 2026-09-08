@@ -3,6 +3,9 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { encryptToken } = require('../utils/encryption.util');
 const Event = require('../models/Event.model');
+const Group = require('../models/Group.model');
+const groupService = require('./group.service');
+const Invitation = require('../models/Invitation.model');
 
 exports.getUserById = async (id) => {
   return await User.findById(id).select('-password');
@@ -35,6 +38,28 @@ exports.updateUser = async (id, updateData) => {
 };
 
 exports.deleteUser = async (id) => {
+  const groupsToOwned = await Group.find({
+    members: { $elemMatch: { userId: id, role: 'OWNER' } }
+  });
+
+  for (const group of groupsToOwned) {
+    await groupService.deleteGroup(group._id, id);
+  }
+
+  await Event.deleteMany({ organizerId: id });
+  
+  await Event.updateMany(
+    { 'attendees.userId': id },
+    { $pull: { attendees: { userId: id } } }
+  );
+
+  await Invitation.deleteMany({ inviterId: id });
+
+  await Group.updateMany(
+    { 'members.userId': id },
+    { $pull: { members: { userId: id } } }
+  );
+  
   return await User.findByIdAndDelete(id);
 };
 

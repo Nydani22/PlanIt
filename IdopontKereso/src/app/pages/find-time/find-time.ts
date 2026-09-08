@@ -416,19 +416,13 @@ export class FindTime implements OnInit, OnDestroy {
       preFilledEvent.groupId = this.selectedGroupId();
     }
 
-    const dialogRef = this.dialog.open(EventDialogComponent, {
+    this.dialog.open(EventDialogComponent, {
       width: '800px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       restoreFocus: false,
       data: {
         event: preFilledEvent
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.snackbarService.showSuccess('Esemény sikeresen létrehozva!');
       }
     });
   }

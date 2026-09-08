@@ -4,6 +4,8 @@ const User = require('../models/User.model');
 const Group = require('../models/Group.model');
 const { encryptToken } = require('../utils/encryption.util');
 const { expandEventInWindow } = require('../utils/event.util');
+const notificationService = require('./notification.service');
+const emailService = require('./email.service');
 
 const CATEGORY_COLORS = {
   'WORK': '#3f51b5',
@@ -70,7 +72,33 @@ exports.createEvent = async (eventData, userId) => {
         allowOverlap
     });
 
-    return await newEvent.save();
+    const savedEvent = await newEvent.save();
+
+    if (groupId) {
+        try {
+            const group = await Group.findById(groupId).populate('members.userId', 'email fullName userName');
+            
+            if (group) {
+                for (const member of group.members) {
+                    const user = member.userId;
+                    
+                    if (user && user.email && user._id.toString() !== userId.toString()) {
+                        
+                        emailService.sendNewGroupEventEmail(
+                            user.email, 
+                            user.fullName || user.userName, 
+                            savedEvent, 
+                            group.groupName
+                        ).catch(err => console.error("Email küldési hiba a csoportos eseménynél:", err));
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Hiba a csoporttagok értesítésekor:", err.message);
+        }
+    }
+
+    return savedEvent;
 };
 
 exports.getUserEvents = async (userId, startDate, endDate) => {
@@ -174,11 +202,45 @@ exports.deleteEvent = async (eventId, userId) => {
 };
 
 exports.updateAttendeeStatus = async (eventId, userId, newStatus) => {
-    return await Event.findOneAndUpdate(
+    const updatedEvent = await Event.findOneAndUpdate(
         { _id: eventId, 'attendees.userId': userId },
         { $set: { 'attendees.$.status': newStatus } },
         { returnDocument: 'after', runValidators: true }
     );
+
+    if (!updatedEvent) return null;
+
+    if (updatedEvent.groupId) {
+        const group = await Group.findById(updatedEvent.groupId);
+        
+        if (group) {
+            const user = await User.findById(userId).select('fullName userName');
+            const memberName = user ? (user.fullName || user.userName) : 'Egy csapattag';
+
+            const adminsAndOwner = group.members.filter(m => 
+                (m.role === 'ADMIN' || m.role === 'OWNER') && 
+                m.userId.toString() !== userId.toString()
+            );
+
+            let statusText = newStatus;
+            if (newStatus === 'ACCEPTED') statusText = 'részt fog venni';
+            if (newStatus === 'DECLINED') statusText = 'nem tud részt venni';
+            if (newStatus === 'PENDING') statusText = 'még bizonytalan';
+
+            for (const admin of adminsAndOwner) {
+                const targetId = admin.userId._id ? admin.userId._id : admin.userId;
+                await notificationService.createNotification({
+                    recipientId: targetId,
+                    senderId: userId,
+                    groupId: updatedEvent.groupId,
+                    type: 'EVENT_UPDATE',
+                    message: `${memberName} jelezte, hogy ${statusText} a(z) "${updatedEvent.eventName}" eseményen.`
+                });
+            }
+        }
+    }
+
+    return updatedEvent;
 };
 
 exports.cancelEventInstance = async (eventId, userId, dateToCancel) => {

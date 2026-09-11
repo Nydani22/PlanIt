@@ -3,7 +3,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const createEventsTool = {
   name: "createEvents",
-  description: "Létrehoz egy vagy több eseményt a felhasználó naptárában. Akkor használd, ha a felhasználó időponto(ka)t akar rögzíteni. Ha egy képen több esemény/műszak van, KÖTELEZŐ mindet beletenni a listába!",
+  description: "Létrehoz egy vagy több ÚJ eseményt a felhasználó naptárában. FONTOS: Szinkronizáláskor (képek, órarendek feldolgozásakor) CSAK a naptárban még egyáltalán nem szereplő, teljesen új eseményeket tedd ebbe a listába! Ha az esemény már létezik (azonos néven és napon), de más időpontban, ne ezt az eszközt használd, hanem az 'updateEvents'-t!",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -74,7 +74,7 @@ const createEventsTool = {
 
 const updateEventsTool = {
   name: "updateEvents",
-  description: "Módosítja vagy áthelyezi egy vagy TÖBB meglévő esemény adatait. Ha a felhasználó egyszerre több esemény (pl. 'az összes csütörtöki') eltolását kéri, az összeset tedd bele a listába! A módosítandó események 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned!",
+  description: "Módosítja vagy áthelyezi egy fős esemény adatait. Használd ezt szinkronizáláskor is, ha egy a naptárban már meglévő esemény (pl. egy adott napi műszak) időpontja megváltozott az új listán/képen! CSOPORTOS ESEMÉNYEKET (ahol isGroupEvent: true) SZIGORÚAN TILOS MÓDOSÍTANI VELE! A módosítandó események 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned!",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -147,7 +147,7 @@ const getEventsTool = {
 
 const deleteEventsTool = {
   name: "deleteEvents",
-  description: "Töröl egy vagy TÖBB meglévő eseményt a naptárból. Akkor használd, ha a felhasználó események törlését, eltávolítását vagy lemondását kéri. A törlendő események 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned!",
+  description: "Töröl egy vagy TÖBB meglévő eseményt a naptárból. Használd ezt szinkronizáláskor is, ha egy a naptárban szereplő esemény (pl. egy adott napi műszak) az új listán/képen már nem szerepel (szabadnap lett)! A törlendő események 'eventId'-jét a rendszerutasításban kapott eseménylistából kell kikeresned! CSOPORTOS ESEMÉNYEKET (isGroupEvent: true) TILOS TÖRÖLNI!",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -194,6 +194,34 @@ const findAvailableTimeTool = {
   }
 };
 
+const syncScheduleTool = {
+  name: "syncSchedule",
+  description: "Ezt használd KÖTELEZŐEN, ha a felhasználó egy beosztás (pl. havi/heti munkabeosztás, órarend) szinkronizálását kéri! Ne a create/update/delete eszközöket hívd meg külön, hanem csak olvasd le a képről az ÖSSZES eseményt, és küldd be ide. A szerver automatikusan megoldja a duplikációk szűrését és a frissítéseket.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      periodStart: { type: "STRING", description: "A beküldött beosztás legelső napjának kezdete ISO 8601 (UTC)." },
+      periodEnd: { type: "STRING", description: "A beküldött beosztás legutolsó napjának vége ISO 8601 (UTC)." },
+      targetEventName: { type: "STRING", description: "Az események egységes neve (pl. 'Munka', 'Órarend')." },
+      shifts: {
+        type: "ARRAY",
+        description: "A képről/szövegből leolvasott összes műszak vagy esemény.",
+        items: {
+          type: "OBJECT",
+          properties: {
+            eventName: { type: "STRING" },
+            fromDate: { type: "STRING", description: "Kezdés ISO 8601 (UTC)." },
+            toDate: { type: "STRING", description: "Befejezés ISO 8601 (UTC)." },
+            category: { type: "STRING", description: "Pl. 'WORK', 'STUDY'" }
+          },
+          required: ["eventName", "fromDate", "toDate"]
+        }
+      }
+    },
+    required: ["periodStart", "periodEnd", "targetEventName", "shifts"]
+  }
+};
+
 const searchWebTool = {
   name: "searchWeb",
   description: "Keress az interneten nyilvános események (pl. Forma-1, focimeccs, koncertek, ünnepek) hivatalos dátuma és kezdési időpontja után.",
@@ -221,7 +249,7 @@ const getModel = (modelName) => {
     model: modelName,
     tools: [
       {
-        functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool, searchWebTool]
+        functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool, searchWebTool,syncScheduleTool]
       }
     ]
   });

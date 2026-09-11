@@ -40,11 +40,14 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
     SZIGORÚ SZABÁLYOK ÉS HATÁROK: 
     1. Te egy Naptár Asszisztens vagy. A feladatod az események kezelése és a naptár lekérdezése.
     2. Ha a felhasználó egy nyilvános esemény (pl. Forma-1 futam, meccs, koncert) naptárba írását kéri, de nincs meg a kezdési időpont, KÖTELEZŐ használnod a 'searchWeb' eszközt a dátum és időpont felkutatására! Ne kérdezd meg a felhasználótól!
-    3. Ha új eseményt kér, használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak ('fromDate', 'toDate')!
-    4. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t, és használd az 'updateEvents' eszközt!
-    5. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
-    6. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
-    7. Válaszgeneráláskor formázz Markdown kiemelésekkel (**dátum**, **időpont**)!
+    3. SZINKRONIZÁLÁS (Képek, beosztások): 
+       - Ha a felhasználó egy beosztás szinkronizálását kéri, KÖTELEZŐ a 'syncSchedule' eszközt használnod! 
+       - Ne ellenőrizgesd a meglévő eseményeket, csak olvasd le az új listát pontosan (számold át UTC-re), és add át a 'syncSchedule' eszköznek. A szerver megoldja a frissítést és a törlést!
+    4. Ha új eseményt kér (és még nincs a naptárban), használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak ('fromDate', 'toDate')!
+    5. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t. FIGYELEM: Csoportos eseményeket (ahol isGroupEvent: true) TILOS MÓDOSÍTANOD ÉS TÖRÖLNÖD! Ilyen kérés esetén ne használj eszközt, hanem udvariasan tájékoztasd a felhasználót, hogy a csoportos események adatait csak a naptár felületén lehet megváltoztatni. Csak személyes eseményeknél használd az 'updateEvents' vagy 'deleteEvents' eszközt!
+    6. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
+    7. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
+    8. Válaszgeneráláskor formázz Markdown kiemelésekkel (**dátum**, **időpont**)!
 `;
 
 const processToolCalls = async (functionCalls, userId, timeZone) => {
@@ -130,8 +133,18 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
             case 'updateEvents':
                 for (const updateArgs of call.args.updates) {
                     const { eventId, ...updateData } = updateArgs;
-                    const updated = await eventService.updateEvent(eventId, userId, updateData);
-                    results.updatedEvents.push(updated);
+                    
+                    const existingEvent = await eventService.getEventById(eventId, userId);
+                    
+                    if (existingEvent && existingEvent.groupId) {
+                        results.actionErrors.push(`A(z) '${existingEvent.eventName}' esemény csoportos, így az AI nem módosíthatja.`);
+                        continue;
+                    }
+                    
+                    if (existingEvent) {
+                        const updated = await eventService.updateEvent(eventId, userId, updateData);
+                        results.updatedEvents.push(updated);
+                    }
                 }
                 results.hasModification = true;
                 break;
@@ -142,6 +155,73 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                     results.deletedIds.push(eventId);
                 }
                 results.hasModification = true;
+                break;
+
+            case 'syncSchedule':
+                const { periodStart, periodEnd, targetEventName, shifts } = call.args;
+                
+                const EventModel = require('../models/Event.model');
+                const existingEvents = await EventModel.find({
+                    organizerId: userId,
+                    groupId: { $exists: false },
+                    fromDate: { $gte: new Date(periodStart) },
+                    toDate: { $lte: new Date(periodEnd) }
+                });
+
+                const relevantExistingEvents = existingEvents.filter(e => 
+                    e.eventName.toLowerCase().includes(targetEventName.toLowerCase())
+                );
+
+                const processedIds = new Set();
+                let createdCount = 0;
+                let updatedCount = 0;
+
+                for (const shift of shifts) {
+                    const shiftStart = new Date(shift.fromDate);
+                    const shiftEnd = new Date(shift.toDate);
+
+                    const existingMatch = relevantExistingEvents.find(e => 
+                        !processedIds.has(e._id.toString()) &&
+                        e.fromDate.getFullYear() === shiftStart.getFullYear() &&
+                        e.fromDate.getMonth() === shiftStart.getMonth() &&
+                        e.fromDate.getDate() === shiftStart.getDate()
+                    );
+
+                    if (existingMatch) {
+                        processedIds.add(existingMatch._id.toString());
+                        if (existingMatch.fromDate.getTime() !== shiftStart.getTime() || 
+                            existingMatch.toDate.getTime() !== shiftEnd.getTime()) {
+                            
+                            await eventService.updateEvent(existingMatch._id, userId, {
+                                fromDate: shiftStart,
+                                toDate: shiftEnd,
+                                eventName: shift.eventName,
+                                category: shift.category
+                            });
+                            updatedCount++;
+                        }
+                    } else {
+                        await eventService.createEvent({
+                            ...shift,
+                            category: shift.category,
+                            isAllDay: false,
+                            attendees: [{ userId: userId, status: 'ACCEPTED', attendanceType: 'REQUIRED' }]
+                        }, userId);
+                        createdCount++;
+                    }
+                }
+
+                let deletedCount = 0;
+                for (const oldEvent of relevantExistingEvents) {
+                    if (!processedIds.has(oldEvent._id.toString())) {
+                        await eventService.deleteEvent(oldEvent._id, userId);
+                        deletedCount++;
+                        results.deletedIds.push(oldEvent._id);
+                    }
+                }
+
+                results.hasModification = true;
+                results.actionErrors.push(`Szinkronizáció kész: ${createdCount} új létrehozva, ${updatedCount} frissítve, ${deletedCount} régi törölve.`);
                 break;
 
             case 'getEvents':
@@ -247,6 +327,7 @@ const handleAIChat = async (req, res) => {
         const minimalEvents = windowEvents.map(e => ({ 
             id: e._id, 
             title: e.eventName, 
+            isGroupEvent: !!e.groupId,
             start: new Date(e.fromDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }), 
             end: new Date(e.toDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }) 
         }));

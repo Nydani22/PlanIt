@@ -173,8 +173,6 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 );
 
                 const processedIds = new Set();
-                let createdCount = 0;
-                let updatedCount = 0;
 
                 for (const shift of shifts) {
                     const shiftStart = new Date(shift.fromDate);
@@ -190,38 +188,40 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                     if (existingMatch) {
                         processedIds.add(existingMatch._id.toString());
                         if (existingMatch.fromDate.getTime() !== shiftStart.getTime() || 
-                            existingMatch.toDate.getTime() !== shiftEnd.getTime()) {
+                            existingMatch.toDate.getTime() !== shiftEnd.getTime() ||
+                            existingMatch.location !== shift.location ||
+                            existingMatch.description !== shift.description) {
                             
-                            await eventService.updateEvent(existingMatch._id, userId, {
+                            const updatedEvent = await eventService.updateEvent(existingMatch._id, userId, {
                                 fromDate: shiftStart,
                                 toDate: shiftEnd,
                                 eventName: shift.eventName,
-                                category: shift.category
+                                category: shift.category,
+                                location: shift.location || existingMatch.location,
+                                description: shift.description || existingMatch.description,
+                                isAllDay: shift.isAllDay || false
                             });
-                            updatedCount++;
+                            results.updatedEvents.push(updatedEvent);
                         }
                     } else {
-                        await eventService.createEvent({
+                        const newEvent = await eventService.createEvent({
                             ...shift,
                             category: shift.category,
-                            isAllDay: false,
+                            isAllDay: shift.isAllDay || false,
                             attendees: [{ userId: userId, status: 'ACCEPTED', attendanceType: 'REQUIRED' }]
                         }, userId);
-                        createdCount++;
+                        results.savedEvents.push(newEvent);
                     }
                 }
 
-                let deletedCount = 0;
                 for (const oldEvent of relevantExistingEvents) {
                     if (!processedIds.has(oldEvent._id.toString())) {
                         await eventService.deleteEvent(oldEvent._id, userId);
-                        deletedCount++;
                         results.deletedIds.push(oldEvent._id);
                     }
                 }
 
                 results.hasModification = true;
-                results.actionErrors.push(`Szinkronizáció kész: ${createdCount} új létrehozva, ${updatedCount} frissítve, ${deletedCount} régi törölve.`);
                 break;
 
             case 'getEvents':

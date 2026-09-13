@@ -212,7 +212,18 @@ const syncScheduleTool = {
             eventName: { type: "STRING" },
             fromDate: { type: "STRING", description: "Kezdés ISO 8601 (UTC)." },
             toDate: { type: "STRING", description: "Befejezés ISO 8601 (UTC)." },
-            category: { type: "STRING", description: "Pl. 'WORK', 'STUDY'" }
+            category: { 
+              type: "STRING", 
+              description: "Az esemény kategóriája. KÖTELEZŐEN csak a megadott listából választhatsz egyet, ami a legjobban illik! Ha bizonytalan vagy, használd az 'OTHER' értéket.",
+              enum: [
+                "WORK", "MEETING", "PERSONAL", "FAMILY", "IMPORTANT", 
+                "HOLIDAY", "HEALTH", "STUDY", "SPORTS", "FINANCE", 
+                "CELEBRATION", "TRAVEL", "OTHER"
+              ]
+            },
+            location: { type: "STRING", description: "Helyszín, ha szerepel a beosztáson (pl. terem, épület)." },
+            description: { type: "STRING", description: "Bármilyen extra megjegyzés vagy leírás a műszakhoz/órához." },
+            isAllDay: { type: "BOOLEAN", description: "Igaz, ha a beosztás szerint az adott nap egész napos (pl. 'Szabadság' vagy 'Ünnep')." }
           },
           required: ["eventName", "fromDate", "toDate"]
         }

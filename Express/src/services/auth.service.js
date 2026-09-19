@@ -79,21 +79,30 @@ exports.loginUser = async (email, password) => {
 };
 
 exports.refreshTokens = async (oldRefreshToken) => {
+    console.log(`[AUTH SERVICE] Keresés az adatbázisban a kapott régi tokenre...`);
     const savedToken = await RefreshToken.findOne({ token: oldRefreshToken });
+    
     if (!savedToken) {
+        console.error('[AUTH SERVICE Hiba] A token nem található az adatbázisban! Lehetséges ok: egy párhuzamos hálózati kérés (race condition) már beváltotta és törölte ezt a tokent.');
         throw new Error('Érvénytelen vagy már felhasznált token');
     }
 
     return new Promise((resolve, reject) => {
         jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
             if (err) {
+                console.error(`[AUTH SERVICE Hiba] JWT Verifikáció elhasalt: ${err.message}`);
                 await RefreshToken.deleteOne({ token: oldRefreshToken });
                 return reject(new Error('Lejárt/Hibás token'));
             }
 
+            console.log(`[AUTH SERVICE] JWT érvényes, felhasználó azonosítása (ID: ${decoded.id})...`);
             const user = await User.findById(decoded.id);
-            if (!user) return reject(new Error('Felhasználó nem található'));
+            if (!user) {
+                console.error('[AUTH SERVICE Hiba] A dekódolt tokenhez nem tartozik felhasználó az adatbázisban.');
+                return reject(new Error('Felhasználó nem található'));
+            }
 
+            console.log(`[AUTH SERVICE] Régi token törlése és újak generálása...`);
             await RefreshToken.deleteOne({ token: oldRefreshToken });
             const tokens = await generateTokens(user);
             resolve(tokens);

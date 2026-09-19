@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,21 +23,19 @@ import { NotificationService } from '../../services/notification/notification.se
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './navbar.scss',
 })
-export class Navbar implements OnInit {
+export class Navbar {
   authService = inject(AuthService);
   router = inject(Router);
   notificationService = inject(NotificationService);
 
   @Output() menuToggled = new EventEmitter<void>();
 
-  ngOnInit() {
-    this.checkAndInitNotifications();
-  }
-
-  checkAndInitNotifications() {
-    if (this.authService.getToken()) {
-      this.notificationService.initNotifications();
-    }
+  constructor() {
+    effect(() => {
+      if (this.authService.isLoggedIn()) {
+        this.notificationService.initNotifications();
+      }
+    });
   }
 
   logout() {

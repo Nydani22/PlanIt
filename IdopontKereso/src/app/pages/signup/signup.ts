@@ -8,7 +8,6 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { NotificationService } from '../../services/notification/notification.service';
-import { AuthResponse } from '../../models/auth.model';
 import { ErrorStateMatcher } from '@angular/material/core';
 
 
@@ -89,16 +88,9 @@ export class Signup {
       this.errorMessage.set('');
       
       this.authService.register(userData).subscribe({
-        next: (response: AuthResponse) => {
+        next: () => {
           this.snackbarService.showSuccess('Sikeres regisztráció!');
-          
-          if (response.accessToken) {
-            this.authService.setToken(response.accessToken);
-          }
-          this.notificationService.initNotifications();
-          
           const redirectUrl = localStorage.getItem('redirectAfterLogin');
-          
           if (redirectUrl) {
             localStorage.removeItem('redirectAfterLogin');
             this.router.navigateByUrl(redirectUrl);

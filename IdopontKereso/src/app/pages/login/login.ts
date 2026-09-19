@@ -68,15 +68,9 @@ export class Login implements OnInit {
     this.authService.login(this.loginForm.value)
     .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe({
-      next: (response: AuthResponse) => {
+      next: () => {
         this.isLoading.set(false);
-        
-        this.authService.setToken(response.accessToken);
-        
-        this.notificationService.initNotifications();
-        
         const redirectUrl = localStorage.getItem('redirectAfterLogin');
-        
         if (redirectUrl) {
           localStorage.removeItem('redirectAfterLogin');
           this.router.navigateByUrl(redirectUrl);

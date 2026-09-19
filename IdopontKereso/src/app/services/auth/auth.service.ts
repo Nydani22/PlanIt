@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { PLATFORM_ID, inject, Injectable } from '@angular/core';
+import { PLATFORM_ID, inject, Injectable, signal } from '@angular/core';
 import { Observable, BehaviorSubject, throwError, firstValueFrom } from 'rxjs';
 import { tap, catchError, filter, take } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
@@ -14,8 +14,13 @@ export class AuthService {
   private http = inject(HttpClient);
   private isRefreshing = false;
   private refreshTokenSubject = new BehaviorSubject<AuthResponse | null>(null);
-  
+  readonly isLoggedIn = signal<boolean>(this.hasValidInitialToken());
   private platformId = inject(PLATFORM_ID);
+
+  private hasValidInitialToken(): boolean {
+    const token = this.getToken();
+    return !!token && token !== 'undefined' && this.isTokenValid(token);
+  }
 
   private isTokenValid(token: string): boolean {
     try {
@@ -53,7 +58,7 @@ export class AuthService {
   }
 
   register(userData: RegisterData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData).pipe(
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData, { withCredentials: true }).pipe(
       tap((res: AuthResponse) => {
         if (res && res.accessToken) {
           this.setToken(res.accessToken);
@@ -101,6 +106,7 @@ export class AuthService {
     if (isPlatformBrowser(this.platformId)) {
       if (token && token !== 'undefined' && typeof token === 'string' && token.length > 10) {
         localStorage.setItem('token', token);
+        this.isLoggedIn.set(true);
       }
     }
   }
@@ -135,10 +141,12 @@ export class AuthService {
       this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
         next: () => {
           localStorage.removeItem('token');
+          this.isLoggedIn.set(false);
           window.location.href = '/login';
         },
         error: () => {
           localStorage.removeItem('token');
+          this.isLoggedIn.set(false);
           window.location.href = '/login';
         }
       });

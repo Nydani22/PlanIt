@@ -48,6 +48,9 @@ exports.login = async (req, res) => {
 };
 
 exports.refresh = async (req, res) => {
+    const timestamp = new Date().toISOString();
+    console.log(`\n[${timestamp}] [REFRESH START] Új token frissítési kérelem érkezett.`);
+    
     const oldRefreshToken = req.cookies.refreshToken;
     const isProduction = process.env.NODE_ENV === 'production';
     
@@ -58,11 +61,13 @@ exports.refresh = async (req, res) => {
     };
 
     if (!oldRefreshToken) {
+        console.error(`[${timestamp}] [REFRESH ERROR] Nincs refresh token a cookie-ban. (Okok: a böngésző eldobta a SameSite/Secure beállítás miatt, a frontend nem küldött 'withCredentials: true'-t, vagy lejárt a cookie.)`);
         res.clearCookie('refreshToken', cookieOptions);
         return res.status(401).json({ message: 'Nincs refresh token' });
     }
 
     try {
+        console.log(`[${timestamp}] [REFRESH PROCESSING] Token jelen van a cookie-ban, adatbázis ellenőrzés indul...`);
         const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens(oldRefreshToken);
 
         res.cookie('refreshToken', newRefreshToken, {
@@ -70,8 +75,10 @@ exports.refresh = async (req, res) => {
             maxAge: ONE_WEEK
         });
 
+        console.log(`[${timestamp}] [REFRESH SUCCESS] Sikeres token forgatás.`);
         res.json({ accessToken });
     } catch (err) {
+        console.error(`[${timestamp}] [REFRESH FAILED] Hiba a frissítés során: ${err.message}`);
         res.clearCookie('refreshToken', cookieOptions);
         res.status(403).json({ message: err.message });
     }

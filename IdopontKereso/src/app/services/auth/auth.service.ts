@@ -35,7 +35,11 @@ export class AuthService {
   async initAuth(): Promise<boolean> {
     const token = this.getToken();
     
-    if (token && token !== 'undefined' && this.isTokenValid(token)) {
+    if (!token || token === 'undefined') {
+      return true;
+    }
+
+    if (this.isTokenValid(token)) {
       return true;
     }
 
@@ -43,7 +47,7 @@ export class AuthService {
       await firstValueFrom(this.refreshToken());
       return true;
     } catch (error) {
-      console.warn('Munkamenet lejárt, vagy nincs érvényes süti a böngészőben.');
+      console.warn('Munkamenet lejárt vagy a szerver nem elérhető.');
       return true;
     }
   }
@@ -85,16 +89,8 @@ export class AuthService {
       }),
       catchError((err) => {
         this.isRefreshing = false;
-        
         if (err.status === 401 || err.status === 403) {
-          if (isPlatformBrowser(this.platformId)) {
-            localStorage.removeItem('token');
-            
-            const currentPath = window.location.pathname;
-            if (currentPath !== '/login' && currentPath !== '/register') {
-              window.location.href = '/login';
-            }
-          }
+          this.logout();
         }
         return throwError(() => err);
       })

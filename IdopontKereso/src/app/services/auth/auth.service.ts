@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { PLATFORM_ID, inject, Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, throwError, firstValueFrom, timer } from 'rxjs';
-import { tap, catchError, filter, take, retry } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError, firstValueFrom } from 'rxjs';
+import { tap, catchError, filter, take } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
@@ -35,11 +35,7 @@ export class AuthService {
   async initAuth(): Promise<boolean> {
     const token = this.getToken();
     
-    if (!token || token === 'undefined') {
-      return true;
-    }
-
-    if (this.isTokenValid(token)) {
+    if (token && token !== 'undefined' && this.isTokenValid(token)) {
       return true;
     }
 
@@ -47,13 +43,13 @@ export class AuthService {
       await firstValueFrom(this.refreshToken());
       return true;
     } catch (error) {
-      console.warn('Munkamenet lejárt vagy a szerver nem elérhető.');
+      console.warn('Munkamenet lejárt, vagy nincs érvényes süti a böngészőben.');
       return true;
     }
   }
 
   register(userData: RegisterData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData).pipe(
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData, { withCredentials: true }).pipe(
       tap((res: AuthResponse) => {
         if (res && res.accessToken) {
           this.setToken(res.accessToken);

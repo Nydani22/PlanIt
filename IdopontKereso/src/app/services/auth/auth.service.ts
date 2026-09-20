@@ -5,6 +5,7 @@ import { tap, catchError, filter, take } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/api/auth`;
   private http = inject(HttpClient);
   private isRefreshing = false;
+  private router = inject(Router);
   private refreshTokenSubject = new BehaviorSubject<AuthResponse | null>(null);
   readonly isLoggedIn = signal<boolean>(this.hasValidInitialToken());
   private platformId = inject(PLATFORM_ID);
@@ -142,12 +144,12 @@ export class AuthService {
         next: () => {
           localStorage.removeItem('token');
           this.isLoggedIn.set(false);
-          window.location.href = '/login';
+          this.router.navigate(['/login']);
         },
         error: () => {
           localStorage.removeItem('token');
           this.isLoggedIn.set(false);
-          window.location.href = '/login';
+          this.router.navigate(['/login']);
         }
       });
     }

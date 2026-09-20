@@ -6,10 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
-import { NotificationService } from '../../services/notification/notification.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
-import { AuthResponse } from '../../models/auth.model';
 
 @Component({
   selector: 'app-login',
@@ -27,7 +25,6 @@ export class Login implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private notificationService=inject(NotificationService);
   private destroyRef = inject(DestroyRef);
 
   constructor() {

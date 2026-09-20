@@ -7,7 +7,6 @@ import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
-import { NotificationService } from '../../services/notification/notification.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 
 
@@ -38,39 +37,41 @@ export class Signup {
   private authService = inject(AuthService);
   private router = inject(Router);
   private snackbarService = inject(SnackbarService);
-  private notificationService = inject(NotificationService);
   passMatcher = new PasswordErrorStateMatcher();
   registerForm: FormGroup;
   errorMessage = signal('');
 
   constructor() {
-  this.registerForm = this.fb.group({
-    userName: ['', [
-      Validators.required,
-      Validators.pattern('^[a-zA-Z0-9_-]{3,20}$')
-    ]],
-    fullName: ['', [
-      Validators.required, 
-      Validators.pattern('^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+(?:\\s+[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+)+$')
-    ]],
-    email: ['', [
-      Validators.required, 
-      Validators.pattern('^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$')
-    ]],
-    password: ['', [
-      Validators.required, 
-      Validators.minLength(6),
-      Validators.pattern('^(?=.*[a-z])(?=.*\\d).+$')
-    ]],
-    password2: ['', [
-      Validators.required, 
-      Validators.minLength(6)
-    ]],
-    role: ['user', Validators.required]
-  }, { validators: passwordMatchValidator });
-}
+    this.registerForm = this.fb.group({
+      userName: ['', [
+        Validators.required,
+        Validators.pattern('^[a-zA-Z0-9_-]{3,20}$')
+      ]],
+      fullName: ['', [
+        Validators.required, 
+        Validators.pattern('^[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+(?:\\s+[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ\\-\\.]+)+$')
+      ]],
+      email: ['', [
+        Validators.required, 
+        Validators.pattern('^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$')
+      ]],
+      password: ['', [
+        Validators.required, 
+        Validators.minLength(6),
+        Validators.pattern('^(?=.*[a-z])(?=.*\\d).+$')
+      ]],
+      password2: ['', [
+        Validators.required, 
+        Validators.minLength(6)
+      ]],
+      role: ['user', Validators.required]
+    }, { validators: passwordMatchValidator });
+  }
 
+  
+  isLoading = signal(false);
   hide = signal(true);
+
   clickEvent(event: MouseEvent) {
     this.hide.set(!this.hide());
     event.stopPropagation();
@@ -86,9 +87,11 @@ export class Signup {
     if (this.registerForm.valid) {
       const { password2, ...userData } = this.registerForm.value;
       this.errorMessage.set('');
+      this.isLoading.set(true);
       
       this.authService.register(userData).subscribe({
         next: () => {
+          this.isLoading.set(false);
           this.snackbarService.showSuccess('Sikeres regisztráció!');
           const redirectUrl = localStorage.getItem('redirectAfterLogin');
           if (redirectUrl) {
@@ -99,6 +102,7 @@ export class Signup {
           }
         },
         error: (err) => {
+          this.isLoading.set(false);
           console.error('Hiba történt:', err);
           const msg = err.error?.message || 'Hiba a regisztráció során';
           this.errorMessage.set(msg);

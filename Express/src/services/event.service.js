@@ -79,11 +79,18 @@ exports.createEvent = async (eventData, userId) => {
             const group = await Group.findById(groupId).populate('members.userId', 'email fullName userName');
             
             if (group) {
+                const attendeeUserIds = finalAttendees.map(a => a.userId.toString());
+
                 for (const member of group.members) {
                     const user = member.userId;
-                    
-                    if (user && user.email && user._id.toString() !== userId.toString()) {
-                        
+                    const memberIdString = user._id.toString();
+
+                    if (
+                        user && 
+                        user.email && 
+                        memberIdString !== userId.toString() &&
+                        attendeeUserIds.includes(memberIdString)
+                    ) {
                         emailService.sendNewGroupEventEmail(
                             user.email, 
                             user.fullName || user.userName, 

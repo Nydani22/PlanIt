@@ -21,7 +21,7 @@ export class AuthService {
 
   private hasValidInitialToken(): boolean {
     const token = this.getToken();
-    return !!token && token !== 'undefined' && this.isTokenValid(token);
+    return !!token && token !== 'undefined';
   }
 
   private isTokenValid(token: string): boolean {
@@ -41,12 +41,13 @@ export class AuthService {
   
   async initAuth(): Promise<boolean> {
     const token = this.getToken();
-    
     if (!token || token === 'undefined') {
+      this.isLoggedIn.set(false);
       return true;
     }
 
     if (this.isTokenValid(token)) {
+      this.isLoggedIn.set(true);
       return true;
     }
 
@@ -55,6 +56,7 @@ export class AuthService {
       return true;
     } catch (error) {
       console.warn('Munkamenet lejárt vagy a szerver nem elérhető.');
+      this.logout(); 
       return true;
     }
   }

@@ -8,7 +8,7 @@
       <p class="text-gray-500 dark:text-gray-400 text-lg">Adatok betöltése...</p>
     </div>
   } @else {
-    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="flex flex-col">
+    <form [formGroup]="profileForm" class="flex flex-col">
       
       <mat-card class="mb-6">
         <mat-card-header class="p-4 pb-2">
@@ -86,7 +86,6 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Naptár Beállítások Kártya -->
       <mat-card class="mb-6">
         <mat-card-header class="p-4 pb-2">
           <mat-card-title class="text-xl">Naptár Beállítások</mat-card-title>
@@ -149,7 +148,6 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Megjelenés Kártya -->
       <mat-card class="mb-6">
         <mat-card-header class="p-4 pb-2">
           <mat-card-title class="text-xl">Megjelenés (Helyi beállítás)</mat-card-title>
@@ -168,13 +166,20 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Mentés gomb külön egy sorban jobb oldalon -->
-      <div class="flex justify-end mt-2 px-2">
-        <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid" class="px-8 py-2.5 rounded-lg text-[15px]">
-          Mentés
-        </button>
-      </div>
-
+      <mat-card class="mb-6 border-red-500 border-2">
+        <mat-card-header class="p-4 pb-2">
+          <mat-card-title class="text-red-600 dark:text-red-400">Fiók törlése</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="px-4 pt-2">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full pb-2">
+            <p class="m-0 text-gray-700 dark:text-gray-300">Biztosan törölni szeretnéd a profilodat? A fiók törlése végleges, az adataid nem visszaállíthatók.</p>
+            <button mat-raised-button color="warn" class="self-end sm:self-auto flex items-center whitespace-nowrap" type="button" (click)="deleteProfile()">
+              <mat-icon class="mr-1">delete_forever</mat-icon>
+              Fiók törlése
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </form>
   }
 </div>

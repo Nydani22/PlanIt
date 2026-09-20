@@ -17,6 +17,8 @@ import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-
 import { MatDialog } from '@angular/material/dialog';
 import { TokenResponse, User } from '../../models/user.model';
 import { MatCardModule } from '@angular/material/card';
+import { debounceTime } from 'rxjs/internal/operators/debounceTime';
+import { filter } from 'rxjs/internal/operators/filter';
 
 export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -54,6 +56,7 @@ export class Profil implements OnInit {
     this.initForm();
     this.setupThemeListener();
     this.loadUserData();
+    this.setupAutoSave();
   }
 
   private initForm(): void {
@@ -123,6 +126,41 @@ export class Profil implements OnInit {
     });
   }
 
+
+  deleteProfile(): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      restoreFocus: false,
+      autoFocus: false,
+      data: {
+        title: 'Fiók végleges törlése',
+        message: 'Biztosan törölni szeretnéd a fiókodat? Ez a művelet végleges és nem visszavonható!',
+        confirmText: 'Fiók törlése',
+        cancelText: 'Mégsem',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((isConfirmed: boolean) => {
+      if (isConfirmed) {
+        const userId = this.authService.getCurrentUserId();
+        if (!userId) return;
+
+        this.userService.deleteUser(userId).subscribe({
+          next: () => {
+            this.snackbarService.showSuccess('Fiókodat sikeresen töröltük.');
+            this.authService.logout();
+          },
+          error: (err) => {
+            this.snackbarService.showError('Hiba történt a fiók törlése során.');
+            console.error(err);
+          }
+        });
+      }
+    });
+  }
+
   copyToClipboard(): void {
     const feedUrl = this.calendarFeedUrl();
     
@@ -148,6 +186,15 @@ export class Profil implements OnInit {
     });
   }
 
+  private setupAutoSave(): void {
+    this.profileForm.valueChanges.pipe(
+      debounceTime(1000),
+      filter(() => this.profileForm.valid)
+    ).subscribe(() => {
+      this.saveProfileData();
+    });
+  }
+
   private loadUserData(): void {
     const userId = this.authService.getCurrentUserId();
     if (!userId) {
@@ -168,7 +215,7 @@ export class Profil implements OnInit {
           userName: user.userName,
           email: user.email,
           settings: user.settings
-        });
+        }, { emitEvent: false });
         
         this.isLoading.set(false);
       },
@@ -179,7 +226,7 @@ export class Profil implements OnInit {
     });
   }
 
-  onSubmit(): void {
+  private saveProfileData(): void {
     if (this.profileForm.invalid) return;
 
     const formValues = this.profileForm.getRawValue();
@@ -195,7 +242,7 @@ export class Profil implements OnInit {
 
     this.userService.updateUser(userId, updateData).subscribe({
       next: () => {
-        this.snackbarService.showSuccess('Beállítások sikeresen elmentve!');
+        this.snackbarService.showSuccess('Sikeres mentés!');
       },
       error: (err) => console.error('Hiba a mentés során', err)
     });

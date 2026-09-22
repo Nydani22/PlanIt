@@ -98,6 +98,8 @@ export class AuthService {
       }),
       catchError((err) => {
         this.isRefreshing = false;
+        this.refreshTokenSubject.error(err);
+        this.refreshTokenSubject = new BehaviorSubject<AuthResponse | null>(null);
         if (err.status === 401 || err.status === 403) {
           this.logout();
         }

@@ -10,9 +10,13 @@ exports.register = async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: isProduction,
-            sameSite: isProduction ? 'None' : 'Lax',
+            sameSite: 'Lax',
             maxAge: ONE_WEEK
         };
+
+        if (isProduction) {
+            cookieOptions.domain = '.useplanit.hu';
+        }
 
         res.cookie('refreshToken', refreshToken, cookieOptions);
 
@@ -35,9 +39,13 @@ exports.login = async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: isProduction,
-            sameSite: isProduction ? 'None' : 'Lax',
+            sameSite: 'Lax',
             maxAge: ONE_WEEK
         };
+
+        if (isProduction) {
+            cookieOptions.domain = '.useplanit.hu';
+        }
 
         res.cookie('refreshToken', refreshToken, cookieOptions);
 
@@ -57,8 +65,12 @@ exports.refresh = async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? 'None' : 'Lax'
+        sameSite: 'Lax'
     };
+
+    if (isProduction) {
+        cookieOptions.domain = '.useplanit.hu';
+    }
 
     if (!oldRefreshToken) {
         console.error(`[${timestamp}] [REFRESH ERROR] Nincs refresh token a cookie-ban. (Okok: a böngésző eldobta a SameSite/Secure beállítás miatt, a frontend nem küldött 'withCredentials: true'-t, vagy lejárt a cookie.)`);
@@ -89,8 +101,12 @@ exports.logout = async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? 'None' : 'Lax'
+        sameSite: 'Lax'
     };
+
+    if (isProduction) {
+        cookieOptions.domain = '.useplanit.hu';
+    }
 
     try {
         const refreshToken = req.cookies.refreshToken;

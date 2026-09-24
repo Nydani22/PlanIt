@@ -28,7 +28,7 @@ async function syncExternalCalendars(userId, externalCalendars) {
                     
                     if (event.type === 'VEVENT') {
                         let uid = event.uid;
-                        const APP_DOMAIN = 'useplanit.netlify.app';
+                        const APP_DOMAIN = 'useplanit.hu';
 
                         if (uid && uid.includes(`@${APP_DOMAIN}`)) {
                             uid = uid.split('@')[0]; 

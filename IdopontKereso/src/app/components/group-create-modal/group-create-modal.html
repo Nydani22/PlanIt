@@ -1,12 +1,17 @@
-<h2 mat-dialog-title class="m-0 font-bold">
+<h2 mat-dialog-title class="m-0 font-bold text-xl pt-6 px-6 pb-2 text-gray-800 dark:text-white">
   {{ isEditMode() ? 'Csoport szerkesztése' : 'Új csoport létrehozása' }}
 </h2>
 
+<p class="px-6 text-sm text-gray-500 dark:text-gray-400 mb-2">
+  {{ isEditMode() ? 'Módosítsd a csoport adatait az alábbi űrlapon.' : 'Hozz létre egy új csoportot, hogy a meghívott tagokkal közösen kezelhessétek az eseményeket!' }}
+</p>
+
 <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
-  <mat-dialog-content class="mat-typography sm:p-6 pb-2">
-    <div class="flex flex-col gap-4 mt-2">
+  <mat-dialog-content class="mat-typography px-6 pb-2">
+    <div class="flex flex-col gap-5 mt-2">
       
       <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-icon matPrefix class="mr-3 text-gray-400">label</mat-icon>
         <mat-label>Csoport neve</mat-label>
         <input matInput formControlName="groupName" placeholder="Pl. Családi események" required>
         @if (groupForm.get('groupName')?.hasError('required')) {
@@ -19,13 +24,13 @@
       
       <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
         <mat-label>Leírás (opcionális)</mat-label>
-        <textarea matInput formControlName="description" rows="4" placeholder="Miről szól ez a csoport?"></textarea>
+        <textarea matInput formControlName="description" rows="3" placeholder="Miről szól ez a csoport?"></textarea>
       </mat-form-field>
 
     </div>
   </mat-dialog-content>
 
-  <mat-dialog-actions align="end" class="p-4 sm:px-6 sm:pb-6 pt-0">
+  <mat-dialog-actions align="end" class="px-6 pb-6 pt-4">
     <button mat-button type="button" (click)="onCancel()" [disabled]="isSubmitting()">Mégsem</button>
     <button mat-flat-button color="primary" type="submit" [disabled]="groupForm.invalid || isSubmitting()">
       @if (isSubmitting()) {

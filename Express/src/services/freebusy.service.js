@@ -31,7 +31,10 @@ exports.findAvailableTimeSlots = (params, events) => {
       if (event.allowOverlap) continue;
       
       if (event.fromDate < checkEnd && event.toDate > checkStart) {
-        const eventUsers = event.attendees.map(a => a.userId.toString());
+        const eventUsers = event.attendees
+          .filter(a => a.status !== 'DECLINED')
+          .map(a => a.userId.toString());
+          
         eventUsers.push(event.organizerId.toString());
 
         if (requiredAttendees.some(reqId => eventUsers.includes(reqId))) {

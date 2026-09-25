@@ -268,9 +268,19 @@ exports.generateICalStringByToken = async (token) => {
         return null;
     }
     
-    const events = await Event.find({ 
-        organizerId: user._id, 
-        isExternal: false 
+    const events = await Event.find({
+        $or: [
+            { organizerId: user._id },
+            { 
+                attendees: { 
+                    $elemMatch: { 
+                        userId: user._id, 
+                        status: { $in: ['ACCEPTED', 'PENDING'] } 
+                    } 
+                } 
+            }
+        ],
+        isExternal: false
     });
 
     const calendar = ical({ 

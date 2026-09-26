@@ -18,11 +18,11 @@
               class="flex items-center justify-center leading-none m-0 p-0">
               <mat-icon>person</mat-icon>
           </button>
-          <a routerLink="/" class="flex items-center justify-center h-12 mr-2 cursor-pointer outline-none"
-            [class.hidden]="authService.isLoggedIn()">
-            <img src="/images/logo.png" alt="PlanIt Logo" class="h-full p-2 w-auto object-contain">
-          </a>
         }
+        <a routerLink="/" class="flex items-center justify-center h-12 mr-2 cursor-pointer outline-none"
+          [class.hidden]="authService.isLoggedIn()">
+          <img src="/images/logo.png" alt="PlanIt Logo" class="h-full p-2 w-auto object-contain">
+        </a>
       </li>
       <li class="flex gap-2">
         @if (authService.isLoggedIn()) {

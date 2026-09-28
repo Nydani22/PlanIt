@@ -1,22 +1,17 @@
-<!-- A Fő konténer: A flex biztosítja, hogy ha a Navbar látható, a tartalom alatta legyen -->
 <div class="flex flex-col h-screen w-full bg-gray-50 dark:bg-gray-900">
   
-  <!-- A Navbar MINDIG a DOM-ban van, így a logó már betöltve vár. Csak a Landing Page-en rejtjük el. -->
   <div [class.hidden]="isLandingPage()" class="shrink-0 z-50 relative">
     <app-navbar (menuToggled)="toggleSidebar()"></app-navbar>
   </div>
 
-  <!-- A tartalom terület kezelése -->
   @if (isLandingPage()) {
     
-    <!-- LANDING PAGE NÉZET: Visszaadjuk neki a natív ablakméretet és görgetést -->
     <div class="w-full min-h-screen">
       <router-outlet></router-outlet>
     </div>
     
   } @else {
     
-    <!-- ALKALMAZÁS NÉZET: A Sidenav Container, ami kitölti a Navbar alatti maradék helyet (flex-1) -->
     <div class="flex-1 overflow-hidden relative">
       <mat-sidenav-container class="w-full h-full bg-transparent">
         
@@ -29,7 +24,6 @@
           <div class="flex flex-col h-full p-4 overflow-hidden">
             
             @if (isGroupsRoute()) {
-              <!-- CSOPORTOK MENÜ -->
               <div class="flex flex-col h-full">
                 <div class="flex justify-between items-center mb-4 shrink-0">
                   <h2 class="text-lg font-bold m-0 text-gray-800 dark:text-gray-100">Csoportjaim</h2>
@@ -63,7 +57,6 @@
               </div>
               
             } @else if (isProfileRoute()) {
-              <!-- PROFIL MENÜ -->
               <div class="flex flex-col h-full overflow-hidden">
                 <div class="shrink-0 p-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl mb-4 transition-all">
                   <div class="flex justify-between items-center mb-3">
@@ -143,7 +136,6 @@
               </div>
               
             } @else {
-              <!-- ALAPÉRTELMEZETT (NAPTÁR) MENÜ -->
               <div class="flex flex-col gap-4">
                 <button (click)="openEventDialog()" class="w-full py-3 px-4 bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold rounded-xl transition-colors shadow-sm flex items-center"> 
                   <mat-icon>add</mat-icon>

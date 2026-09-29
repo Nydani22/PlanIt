@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { PLATFORM_ID, inject, Injectable, signal } from '@angular/core';
 import { Observable, BehaviorSubject, throwError, firstValueFrom } from 'rxjs';
-import { tap, catchError, filter, take } from 'rxjs/operators';
+import { tap, catchError, filter, take, finalize, shareReplay } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
@@ -13,9 +13,8 @@ import { Router } from '@angular/router';
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/api/auth`;
   private http = inject(HttpClient);
-  private isRefreshing = false;
   private router = inject(Router);
-  private refreshTokenSubject = new BehaviorSubject<AuthResponse | null>(null);
+  private refreshReq$: Observable<AuthResponse> | null = null;
   readonly isLoggedIn = signal<boolean>(this.hasValidInitialToken());
   private platformId = inject(PLATFORM_ID);
 
@@ -80,32 +79,27 @@ export class AuthService {
   }
 
   refreshToken(): Observable<AuthResponse> {
-    if (this.isRefreshing) {
-      return this.refreshTokenSubject.pipe(
-        filter(token => token !== null),
-        take(1)
-      ) as Observable<AuthResponse>;
+    if (this.refreshReq$) {
+      return this.refreshReq$;
     }
 
-    this.isRefreshing = true;
-    this.refreshTokenSubject.next(null);
-
-    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
+    this.refreshReq$ = this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true }).pipe(
       tap((res: AuthResponse) => {
-        this.isRefreshing = false;
         this.setToken(res.accessToken);
-        this.refreshTokenSubject.next(res);
       }),
       catchError((err) => {
-        this.isRefreshing = false;
-        this.refreshTokenSubject.error(err);
-        this.refreshTokenSubject = new BehaviorSubject<AuthResponse | null>(null);
         if (err.status === 401 || err.status === 403) {
           this.logout();
         }
         return throwError(() => err);
-      })
+      }),
+      finalize(() => {
+        this.refreshReq$ = null;
+      }),
+      shareReplay(1)
     );
+
+    return this.refreshReq$;
   }
 
   setToken(token: string | null | undefined): void {

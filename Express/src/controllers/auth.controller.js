@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: isProduction,
-            sameSite: 'Lax',
+            sameSite: isProduction ? 'none' : 'Lax',
             maxAge: ONE_WEEK
         };
 
@@ -39,7 +39,7 @@ exports.login = async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: isProduction,
-            sameSite: 'Lax',
+            sameSite: isProduction ? 'none' : 'Lax',
             maxAge: ONE_WEEK
         };
 
@@ -65,7 +65,7 @@ exports.refresh = async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'Lax'
+        sameSite: isProduction ? 'none' : 'Lax'
     };
 
     if (isProduction) {
@@ -101,7 +101,7 @@ exports.logout = async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'Lax'
+        sameSite: isProduction ? 'none' : 'Lax'
     };
 
     if (isProduction) {

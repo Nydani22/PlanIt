@@ -122,7 +122,6 @@ exports.requestPasswordReset = async (email) => {
 };
 
 exports.refreshTokens = async (oldRefreshToken) => {
-    console.log(`[AUTH SERVICE] Keresés az adatbázisban a kapott régi tokenre...`);
     const savedToken = await RefreshToken.findOne({ token: oldRefreshToken });
     
     if (!savedToken) {
@@ -138,14 +137,12 @@ exports.refreshTokens = async (oldRefreshToken) => {
                 return reject(new Error('Lejárt/Hibás token'));
             }
 
-            console.log(`[AUTH SERVICE] JWT érvényes, felhasználó azonosítása (ID: ${decoded.id})...`);
             const user = await User.findById(decoded.id);
             if (!user) {
                 console.error('[AUTH SERVICE Hiba] A dekódolt tokenhez nem tartozik felhasználó az adatbázisban.');
                 return reject(new Error('Felhasználó nem található'));
             }
 
-            console.log(`[AUTH SERVICE] Régi token törlése és újak generálása...`);
             await RefreshToken.deleteOne({ token: oldRefreshToken });
             const tokens = await generateTokens(user);
             resolve(tokens);

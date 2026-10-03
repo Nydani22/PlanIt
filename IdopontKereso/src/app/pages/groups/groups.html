@@ -3,8 +3,62 @@
     <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 m-0">Csoportkezelő</h2>
   </div>
   @if (groupState.isLoading()) {
-    <div class="flex justify-center items-center h-64">
-      <p class="text-gray-500 dark:text-gray-400 text-lg">Csoportok betöltése...</p>
+    <div class="w-full max-w-3xl mx-auto min-w-0 flex flex-col animate-pulse mt-2">
+      
+      <mat-card class="mb-6 border-none shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4 p-5">
+          <div class="flex-1 min-w-0 w-full flex flex-col gap-2">
+            <div class="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+            <div class="h-5 bg-gray-200 dark:bg-gray-800/80 rounded w-3/4 mt-1"></div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="mb-6 border-none shadow-sm">
+        <mat-card-header class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full mb-4 gap-4 p-4 pb-0">
+          
+          <mat-card-title class="m-0 text-xl w-48 shrink-0">
+            <div class="h-7 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
+          </mat-card-title>
+          
+          <div class="w-full sm:w-72 shrink-0">
+            <div class="h-[56px] bg-gray-200 dark:bg-gray-800/80 rounded-md w-full"></div>
+          </div>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="flex flex-col gap-4 mt-2">
+            <div class="flex items-center justify-between p-3 border border-gray-100 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 min-h-[84px]">
+              <div class="flex items-center gap-3">
+                <div class="h-6 w-6 bg-gray-300 dark:bg-gray-600 rounded-full shrink-0"></div>
+                <div class="flex flex-col gap-2">
+                  <div class="h-5 bg-gray-300 dark:bg-gray-600 rounded w-32"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-800/80 rounded w-24"></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                
+                <div class="h-6 w-25 bg-gray-300 dark:bg-gray-600 rounded-full shrink-0"></div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="border-red-200 dark:border-red-900/50 border-2 shadow-sm bg-transparent">
+        <mat-card-header>
+          <mat-card-title>
+            <div class="h-6 bg-red-200 dark:bg-red-800/50 rounded w-48 mb-2"></div>
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="pt-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full min-h-[36px]">
+            <div class="h-5 bg-gray-200 dark:bg-gray-800/80 rounded w-full sm:w-2/3"></div>
+            <div class="h-[36px] bg-red-200 dark:bg-red-800/50 rounded w-40 self-end sm:self-auto shrink-0"></div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
     </div>
   } @else if (groupState.myGroups().length === 0) {
     <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm max-w-3xl mx-auto">

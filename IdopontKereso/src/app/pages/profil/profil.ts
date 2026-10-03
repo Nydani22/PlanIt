@@ -62,6 +62,26 @@ export class Profil implements OnInit {
   isLoading = signal(true);
   isCopied = signal(false);
   isSavingPassword = signal(false);
+
+  hideCurrent = signal(true);
+  hideNew = signal(true);
+  hideConfirm = signal(true);
+
+  clickEventCurrent(event: MouseEvent) {
+    this.hideCurrent.set(!this.hideCurrent());
+    event.stopPropagation();
+  }
+
+  clickEventNew(event: MouseEvent) {
+    this.hideNew.set(!this.hideNew());
+    event.stopPropagation();
+  }
+
+  clickEventConfirm(event: MouseEvent) {
+    this.hideConfirm.set(!this.hideConfirm());
+    event.stopPropagation();
+  }
+
   ngOnInit(): void {
     this.initForm();
     this.setupThemeListener();

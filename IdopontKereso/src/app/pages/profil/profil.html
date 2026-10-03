@@ -175,12 +175,18 @@
             
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Jelenlegi jelszó</mat-label>
-              <input matInput type="password" formControlName="currentPassword">
+              <input matInput [type]="hideCurrent() ? 'password' : 'text'" formControlName="currentPassword">
+              <button mat-icon-button matSuffix (click)="clickEventCurrent($event)" type="button">
+                <mat-icon>{{hideCurrent() ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Új jelszó</mat-label>
-              <input matInput type="password" formControlName="newPassword" [errorStateMatcher]="passMatcher">
+              <input matInput [type]="hideNew() ? 'password' : 'text'" formControlName="newPassword">
+              <button mat-icon-button matSuffix (click)="clickEventNew($event)" type="button">
+                <mat-icon>{{hideNew() ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
               
               @if (passwordForm.get('newPassword')?.hasError('required')) {
                 <mat-error>Ez a mező kötelező!</mat-error>
@@ -193,7 +199,11 @@
 
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Új jelszó megerősítése</mat-label>
-              <input matInput type="password" formControlName="confirmPassword" [errorStateMatcher]="passMatcher">
+              <input matInput [type]="hideConfirm() ? 'password' : 'text'" formControlName="confirmPassword" [errorStateMatcher]="passMatcher">
+              <button mat-icon-button matSuffix (click)="clickEventConfirm($event)" type="button">
+                <mat-icon>{{hideConfirm() ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+
               @if (passwordForm.hasError('passwordMismatch') && passwordForm.get('confirmPassword')?.touched) {
                 <mat-error>A két jelszó nem egyezik meg!</mat-error>
               }

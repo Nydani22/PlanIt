@@ -10,9 +10,10 @@ import { FindTime } from './pages/find-time/find-time';
 import { LandingPage } from './pages/landing-page/landing-page';
 import { ForgotPassword } from './pages/forgot-password/forgot-password';
 import { ResetPassword } from './pages/reset-password/reset-password';
+import { landingGuard } from './services/auth/landing.guard';
 
 export const routes: Routes = [
-    { path: '', component: LandingPage },
+    { path: '', component: LandingPage, canActivate: [landingGuard] },
     { path: 'home', component: Home, canActivate: [authGuard] },
     { path: 'login', component: Login },
     { path: 'register', component: Signup},
@@ -24,5 +25,3 @@ export const routes: Routes = [
     { path: 'reset-password/:token', component: ResetPassword },
     { path: '**', redirectTo: '', pathMatch: 'full' }
 ];
-
-//home, find-time, profil, groups

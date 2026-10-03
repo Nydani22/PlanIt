@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { PLATFORM_ID, inject, Injectable, signal } from '@angular/core';
-import { Observable, BehaviorSubject, throwError, firstValueFrom } from 'rxjs';
-import { tap, catchError, filter, take, finalize, shareReplay } from 'rxjs/operators';
+import { Observable, throwError, firstValueFrom } from 'rxjs';
+import { tap, catchError, finalize, shareReplay } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
@@ -68,6 +68,14 @@ export class AuthService {
         }
       })
     );
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword });
+  }
+
+  requestPasswordReset(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
   }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {

@@ -96,6 +96,35 @@ exports.refresh = async (req, res) => {
     }
 };
 
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'E-mail cím megadása kötelező!' });
+        }
+        
+        await authService.requestPasswordReset(email);
+        
+        res.status(200).json({ message: 'Visszaállítási link elküldve.' });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) {
+            return res.status(400).json({ message: 'A token és az új jelszó megadása kötelező!' });
+        }
+        await authService.resetPasswordWithToken(token, newPassword);
+        res.status(200).json({ message: 'Jelszó sikeresen megváltoztatva.' });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 exports.logout = async (req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {

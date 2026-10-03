@@ -53,6 +53,22 @@ exports.update = async (req, res) => {
     }
 };
 
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'A jelenlegi és az új jelszó megadása kötelező!' });
+    }
+
+    await userService.updatePassword(req.params.id, currentPassword, newPassword);
+
+    res.status(200).json({ message: 'Jelszó sikeresen frissítve.' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 exports.delete = async (req, res) => {
   try {
     const deletedUser = await userService.deleteUser(req.params.id);

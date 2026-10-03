@@ -87,9 +87,9 @@ export class App implements OnInit {
       const isOpen = this.isSidebarOpen();
       const url = this.router.url;
       
-      const isExcludedPage = url === '/' || url.startsWith('/login') || url.startsWith('/register') || url.startsWith('/join');
+      const isAppPage = url.startsWith('/home') || url.startsWith('/find-time') || url.startsWith('/profil') || url.startsWith('/groups');
 
-      if (!isExcludedPage) {
+      if (isAppPage) {
         localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
       }
     });
@@ -123,7 +123,7 @@ export class App implements OnInit {
       this.isProfileRoute.set(currentUrl.includes('/profil'));
       this.isLandingPage.set(currentUrl === '/' || currentUrl === '');
 
-      const isAuthPage = currentUrl.startsWith('/login') || currentUrl.startsWith('/register') || currentUrl.startsWith('/join');
+      const isAuthPage = currentUrl.startsWith('/login') || currentUrl.startsWith('/register') || currentUrl.startsWith('/join') || currentUrl.startsWith('/forgot-password') || currentUrl.startsWith('/reset-password');
       
       if (!isAuthPage && this.authService.getCurrentUserId()) {
         this.loadUserStats();
@@ -237,12 +237,9 @@ export class App implements OnInit {
   }
 
   private checkRoute(url: string) {
-    const isExcludedPage = url === '/' || 
-                           url.startsWith('/login') || 
-                           url.startsWith('/register') || 
-                           url.startsWith('/join');
+    const isAppPage = url.startsWith('/home') || url.startsWith('/find-time') || url.startsWith('/profil') || url.startsWith('/groups');
 
-    if (isExcludedPage) {
+    if (!isAppPage) {
       this.isSidebarOpen.set(false);
     } else if (this.previousUrl.startsWith('/login') || this.previousUrl.startsWith('/register')) {
       this.isSidebarOpen.set(true);
@@ -264,12 +261,9 @@ export class App implements OnInit {
   private getInitialSidebarState(currentUrl?: string): boolean {
     const path = currentUrl || (typeof window !== 'undefined' ? window.location.pathname : '');
     
-    const isExcluded = path === '/' || path === '' ||
-                       path.startsWith('/login') || 
-                       path.startsWith('/register') || 
-                       path.startsWith('/join');
-                       
-    if (isExcluded) {
+    const isAppPage = path.startsWith('/home') || path.startsWith('/find-time') || path.startsWith('/profil') || path.startsWith('/groups');
+
+    if (!isAppPage) {
       return false;
     }
 

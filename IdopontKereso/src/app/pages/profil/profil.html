@@ -166,6 +166,53 @@
         </mat-card-content>
       </mat-card>
 
+      <mat-card class="mb-6">
+        <mat-card-header class="p-4 pb-2">
+          <mat-card-title class="text-xl">Jelszó Módosítása</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="px-4">
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="flex flex-col gap-2 pt-2">
+            
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Jelenlegi jelszó</mat-label>
+              <input matInput type="password" formControlName="currentPassword">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Új jelszó</mat-label>
+              <input matInput type="password" formControlName="newPassword" [errorStateMatcher]="passMatcher">
+              
+              @if (passwordForm.get('newPassword')?.hasError('required')) {
+                <mat-error>Ez a mező kötelező!</mat-error>
+              } @else if (passwordForm.get('newPassword')?.hasError('minlength')) {
+                <mat-error>A jelszónak legalább 6 karakternek kell lennie!</mat-error>
+              } @else if (passwordForm.get('newPassword')?.hasError('pattern')) {
+                <mat-error>Tartalmaznia kell legalább egy kisbetűt és egy számot!</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Új jelszó megerősítése</mat-label>
+              <input matInput type="password" formControlName="confirmPassword" [errorStateMatcher]="passMatcher">
+              @if (passwordForm.hasError('passwordMismatch') && passwordForm.get('confirmPassword')?.touched) {
+                <mat-error>A két jelszó nem egyezik meg!</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="flex justify-end mt-2 pb-4">
+              <button mat-raised-button color="primary" type="submit" [disabled]="passwordForm.invalid || isSavingPassword()">
+                @if (isSavingPassword()) {
+                  Mentés folyamatban...
+                } @else {
+                  Jelszó frissítése
+                }
+              </button>
+            </div>
+            
+          </form>
+        </mat-card-content>
+      </mat-card>
+
       <mat-card class="mb-6 border-red-500 border-2">
         <mat-card-header class="p-4 pb-2">
           <mat-card-title class="text-red-600 dark:text-red-400">Fiók törlése</mat-card-title>

@@ -37,6 +37,26 @@ exports.updateUser = async (id, updateData) => {
   return updatedUser;
 };
 
+exports.updatePassword = async (id, currentPassword, newPassword) => {
+  const user = await User.findById(id);
+  if (!user) {
+    throw new Error('Felhasználó nem található');
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new Error('A megadott jelenlegi jelszó helytelen.');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  user.password = hashedPassword;
+  await user.save();
+
+  return true;
+};
+
 exports.deleteUser = async (id) => {
   const groupsToOwned = await Group.find({
     members: { $elemMatch: { userId: id, role: 'OWNER' } }

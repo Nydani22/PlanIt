@@ -78,6 +78,49 @@ exports.loginUser = async (email, password) => {
     return await generateTokens(user);
 };
 
+exports.resetPasswordWithToken = async (token, newPassword) => {
+    const user = await User.findOne({ 
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: Date.now() } 
+    });
+
+    if (!user) {
+        throw new Error('A jelszóvisszaállító link érvénytelen vagy lejárt.');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+};
+
+exports.requestPasswordReset = async (email) => {
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new Error('Nincs regisztrálva fiók ezzel az e-mail címmel.');
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; 
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    try {
+      await emailService.sendPasswordResetEmail(user.email, user.fullName, resetUrl);
+    } catch (error) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      console.error('Hiba az e-mail küldésekor:', error);
+      throw new Error('Nem sikerült elküldeni a visszaállító e-mailt.');
+    }
+};
+
 exports.refreshTokens = async (oldRefreshToken) => {
     console.log(`[AUTH SERVICE] Keresés az adatbázisban a kapott régi tokenre...`);
     const savedToken = await RefreshToken.findOne({ token: oldRefreshToken });

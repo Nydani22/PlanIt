@@ -30,6 +30,14 @@ export class TimeRangeErrorMatcher implements ErrorStateMatcher {
   }
 }
 
+export class PasswordErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const isSubmitted = form && form.submitted;
+    const isInvalid = !!(control && control.invalid) || !!(form && form.hasError('passwordMismatch'));
+    return !!(isInvalid && (control?.dirty || control?.touched || isSubmitted));
+  }
+}
+
 @Component({
   selector: 'app-profil',
   standalone: true,
@@ -47,11 +55,13 @@ export class Profil implements OnInit {
   private dialog = inject(MatDialog);
   calendarFeedUrl = signal<string>('Nincs még token generálva');
   timeRangeMatcher = new TimeRangeErrorMatcher();
+  passMatcher = new PasswordErrorStateMatcher();
   profileForm!: FormGroup;
+  passwordForm!: FormGroup;
   
   isLoading = signal(true);
   isCopied = signal(false);
-
+  isSavingPassword = signal(false);
   ngOnInit(): void {
     this.initForm();
     this.setupThemeListener();
@@ -79,6 +89,50 @@ export class Profil implements OnInit {
         hourSegments: [2]
       }, { validators: this.timeRangeValidator }),
       localTheme: [this.themeService.currentTheme()] 
+    });
+
+    this.passwordForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(6), Validators.pattern('^(?=.*[a-z])(?=.*\\d).+$')]],
+      confirmPassword: ['', Validators.required]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+
+  private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const newPassword = group.get('newPassword')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+    return newPassword === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  changePassword(): void {
+    if (this.passwordForm.invalid) return;
+
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) return;
+
+    this.isSavingPassword.set(true);
+    const formValues = this.passwordForm.value;
+
+    this.userService.updatePassword(userId, {
+      currentPassword: formValues.currentPassword,
+      newPassword: formValues.newPassword
+    }).subscribe({
+      next: () => {
+        this.snackbarService.showSuccess('A jelszavad sikeresen frissült!');
+        this.passwordForm.reset();
+        
+        Object.keys(this.passwordForm.controls).forEach(key => {
+          this.passwordForm.get(key)?.setErrors(null);
+        });
+        
+        this.isSavingPassword.set(false);
+      },
+      error: (err) => {
+        this.snackbarService.showError('Hiba történt. Ellenőrizd a jelenlegi jelszavadat!');
+        console.error(err);
+        this.isSavingPassword.set(false);
+      }
     });
   }
 

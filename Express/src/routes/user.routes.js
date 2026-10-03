@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 router.get('/me', userController.getCurrentUser);
 router.post('/regenerate-feed-token', userController.regenerateFeedToken);
+router.put('/:id/password', userController.updatePassword);
 router.get('/:id', userController.findOne);
 router.put('/:id', userController.update);
 router.delete('/:id', userController.delete);

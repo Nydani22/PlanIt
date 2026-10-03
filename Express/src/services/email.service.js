@@ -56,6 +56,60 @@ exports.sendWelcomeEmail = async (userEmail, userName) => {
 };
 
 
+exports.sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+      
+      <div style="background-color: #fcd34d; padding: 30px; text-align: center;">
+        <h1 style="margin: 0; color: #78350f; font-size: 28px; letter-spacing: -0.5px;">Jelszó Visszaállítása</h1>
+      </div>
+      
+      <div style="padding: 30px; background-color: #ffffff;">
+        <h2 style="margin-top: 0; color: #1e293b; font-size: 20px;">Kedves ${userName || 'Felhasználó'}!</h2>
+        <p style="color: #475569; font-size: 16px;">Kaptunk egy kérést a <strong>useplanit</strong> fiókod jelszavának visszaállítására.</p>
+        
+        <p style="color: #475569; font-size: 16px;">Az alábbi gombra kattintva megadhatod az új jelszavadat. <strong>Ez a link biztonsági okokból 15 perc múlva lejár.</strong></p>
+        
+        <div style="text-align: center; margin: 35px 0 35px 0;">
+          <a href="${resetUrl}" style="background-color: #fcd34d; color: #78350f; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Új jelszó megadása</a>
+        </div>
+
+        <div style="background-color: #f8fafc; border-left: 4px solid #ef4444; padding: 15px; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0; color: #334155; font-size: 14px;">
+            <strong>Figyelem:</strong> Ha nem te kérted a jelszó visszaállítását, kérjük, hagyd figyelmen kívül ezt a levelet. A fiókod adatai biztonságban vannak, és a jelszavad nem fog megváltozni.
+          </p>
+        </div>
+      </div>
+      
+      <div style="background-color: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0; font-size: 14px; color: #64748b;">Üdvözlettel,<br/><strong style="color: #475569;">A useplanit csapata</strong></p>
+      </div>
+
+    </div>
+  `;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'UsePlanIt <noreply@useplanit.hu>', 
+      to: [userEmail],
+      subject: 'Jelszó visszaállítása - UsePlanIt',
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('Hiba a jelszóvisszaállító email küldésekor a Resend oldalon:', error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Váratlan hiba a jelszóvisszaállító email szolgáltatásban:', error);
+    return { success: false, error };
+  }
+};
+
+
 exports.sendEventReminderEmail = async (userEmail, userName, event) => {
   const timeZoneOpts = { timeZone: 'Europe/Budapest' };
   

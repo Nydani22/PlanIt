@@ -36,14 +36,14 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <mat-form-field appearance="outline">
           <mat-label>Keresés kezdete</mat-label>
-          <input matInput [matDatepicker]="startPicker" [(ngModel)]="searchParams.searchStart">
+          <input matInput [matDatepicker]="startPicker" [(ngModel)]="searchParams.searchStart" (ngModelChange)="resetResults()">
           <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
           <mat-datepicker #startPicker></mat-datepicker>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Keresés vége</mat-label>
-          <input matInput [matDatepicker]="endPicker" [(ngModel)]="searchParams.searchEnd">
+          <input matInput [matDatepicker]="endPicker" [(ngModel)]="searchParams.searchEnd" (ngModelChange)="resetResults()">
           <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
           <mat-datepicker #endPicker></mat-datepicker>
         </mat-form-field>
@@ -52,52 +52,6 @@
 
     <hr class="border-t border-gray-100 dark:border-gray-700">
 
-    <div class="flex flex-col">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Napi aktív időszak</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Határozd meg, hogy egy napon belül mettől meddig tarthat az esemény (pl. munkaidő 9-től 17-ig).</p>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <mat-form-field appearance="outline">
-          <mat-label>Nap kezdete (óra)</mat-label>
-          <input matInput type="number" min="0" max="23" [(ngModel)]="searchParams.startHour">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Nap vége (óra)</mat-label>
-          <input matInput type="number" min="0" max="24" [(ngModel)]="searchParams.endHour">
-        </mat-form-field>
-      </div>      
-      @if (searchParams.endHour !== null && searchParams.startHour !== null && searchParams.endHour <= searchParams.startHour) {
-        <div class="text-sm text-amber-600 dark:text-amber-500 mt-1 flex items-center gap-1 font-medium bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
-          <mat-icon>info</mat-icon>
-          Mivel a nap vége kisebb vagy egyenlő a kezdetével, az aktív időszak másnapra nyúlik át!
-        </div>
-      }
-    </div>
-
-    <hr class="border-t border-gray-100 dark:border-gray-700">
-
-    <div class="flex flex-col">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Engedélyezett napok</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Jelöld ki a hét azon napjait, amikor a találkozó létrejöhet.</p>
-      <mat-button-toggle-group 
-        [(ngModel)]="searchParams.allowedDays" 
-        multiple 
-        hideMultipleSelectionIndicator="true">
-        
-        @for (day of weekDays; track day.value) { 
-          <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
-            <span class="hidden sm:inline">{{ day.label }}</span>
-            <span class="sm:hidden">{{ day.label | slice:0:2 }}</span>
-          </mat-button-toggle> 
-        }
-        
-      </mat-button-toggle-group>
-    </div>
-  </div>
-
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 flex flex-col gap-6">
-    
     <div class="flex flex-col">
       <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Időtartam beállítása</label>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Milyen hosszú legyen maga a találkozó vagy esemény?</p>
@@ -112,48 +66,113 @@
         <mat-label>Mennyiség</mat-label>
         <input matInput type="number" min="1" 
               [step]="durationUnit === 'minutes' ? 15 : (durationUnit === 'hours' ? 0.5 : 1)" 
-              [(ngModel)]="durationValue">
+              [(ngModel)]="durationValue" (ngModelChange)="resetResults()">
         @if (durationUnit === 'days') {
           <mat-hint class="text-sm text-gray-500 dark:text-gray-400 mb-3">Többnapos blokk keresése (a megadott időszakon belül egybefüggő napok).</mat-hint>
         }
       </mat-form-field>
     </div>
-    
-    <hr class="border-t border-gray-100 dark:border-gray-700">
 
-    <div class="flex flex-col">
-      <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-lg">Puffer idő beállítása</label>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Biztosíts extra szabadidőt a résztvevőknek az esemény előtt vagy után (pl. utazásra, felkészülésre).</p>
-      
-      <mat-button-toggle-group [(ngModel)]="bufferType" hideSingleSelectionIndicator="true" class="mb-5">
-        <mat-button-toggle value="symmetric" class="flex-1 px-0 min-w-0 text-center">
-          <span class="hidden sm:inline">Ugyanannyi előtte/utána</span>
-          <span class="sm:hidden">Ugyanannyi</span>
-        </mat-button-toggle>
-        <mat-button-toggle value="before" class="flex-1 px-0 min-w-0 text-center">Csak előtte</mat-button-toggle>
-        <mat-button-toggle value="after" class="flex-1 px-0 min-w-0 text-center">Csak utána</mat-button-toggle>
-        <mat-button-toggle value="custom" class="flex-1 px-0 min-w-0 text-center">Egyéni</mat-button-toggle>
-      </mat-button-toggle-group>
+    <mat-accordion class="mt-2">
+      <mat-expansion-panel 
+        class="bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-700 shadow-none" 
+        [expanded]="isAdvancedOpen" 
+        (opened)="isAdvancedOpen = true; saveState()" 
+        (closed)="isAdvancedOpen = false; saveState()">
+        
+        <mat-expansion-panel-header class="px-4">
+          <mat-panel-title class="font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <mat-icon>settings</mat-icon>
+            Haladó beállítások (Puffer, Szabad napok)
+          </mat-panel-title>
+        </mat-expansion-panel-header>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        @if (bufferType !== 'custom') {
-          <mat-form-field appearance="outline" class="md:col-span-2">
-            <mat-label>Puffer idő (perc)</mat-label>
-            <input matInput type="number" min="0" step="5" [(ngModel)]="sharedBufferMinutes">
-          </mat-form-field>
-        } @else {
-          <mat-form-field appearance="outline">
-            <mat-label>Puffer idő előtte (perc)</mat-label>
-            <input matInput type="number" min="0" step="5" [(ngModel)]="searchParams.bufferBeforeMinutes">
-          </mat-form-field>
+        <div class="flex flex-col gap-6 pt-4">
+          
+          <div class="flex flex-col">
+            <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-base">Napi aktív időszak</label>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Határozd meg, hogy egy napon belül mettől meddig tarthat az esemény (pl. munkaidő 9-től 17-ig).</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <mat-form-field appearance="outline">
+                <mat-label>Nap kezdete (óra)</mat-label>
+                <input matInput type="number" min="0" max="23" [(ngModel)]="searchParams.startHour" (ngModelChange)="resetResults()">
+              </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Puffer idő utána (perc)</mat-label>
-            <input matInput type="number" min="0" step="5" [(ngModel)]="searchParams.bufferAfterMinutes">
-          </mat-form-field>
-        }
-      </div>
-    </div>
+              <mat-form-field appearance="outline">
+                <mat-label>Nap vége (óra)</mat-label>
+                <input matInput type="number" min="0" max="24" [(ngModel)]="searchParams.endHour" (ngModelChange)="resetResults()">
+              </mat-form-field>
+            </div>      
+            @if (searchParams.endHour !== null && searchParams.startHour !== null && searchParams.endHour <= searchParams.startHour) {
+              <div class="text-sm text-amber-600 dark:text-amber-500 mt-1 flex items-center gap-1 font-medium bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
+                <mat-icon>info</mat-icon>
+                Mivel a nap vége kisebb vagy egyenlő a kezdetével, az aktív időszak másnapra nyúlik át!
+              </div>
+            }
+          </div>
+
+          <hr class="border-t border-gray-200 dark:border-gray-600">
+
+          <div class="flex flex-col">
+            <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-base">Engedélyezett napok</label>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Jelöld ki a hét azon napjait, amikor a találkozó létrejöhet.</p>
+            <mat-button-toggle-group 
+              [(ngModel)]="searchParams.allowedDays" 
+              (ngModelChange)="resetResults()"
+              multiple 
+              hideMultipleSelectionIndicator="true">
+              
+              @for (day of weekDays; track day.value) { 
+                <mat-button-toggle [value]="day.value" class="flex-1 px-0 min-w-0 text-center">
+                  <span class="hidden sm:inline">{{ day.label }}</span>
+                  <span class="sm:hidden">{{ day.label | slice:0:2 }}</span>
+                </mat-button-toggle> 
+              }
+              
+            </mat-button-toggle-group>
+          </div>
+
+          <hr class="border-t border-gray-200 dark:border-gray-600">
+
+          <div class="flex flex-col pb-2">
+            <label class="font-semibold mb-1 text-gray-900 dark:text-gray-100 text-base">Puffer idő beállítása</label>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Biztosíts extra szabadidőt a résztvevőknek az esemény előtt vagy után (pl. utazásra, felkészülésre).</p>
+            
+            <mat-button-toggle-group [(ngModel)]="bufferType" (ngModelChange)="resetResults()" hideSingleSelectionIndicator="true" class="mb-5">
+              <mat-button-toggle value="symmetric" class="flex-1 px-0 min-w-0 text-center">
+                <span class="hidden sm:inline">Ugyanannyi előtte/utána</span>
+                <span class="sm:hidden">Egyenlő</span>
+              </mat-button-toggle>
+              <mat-button-toggle value="before" class="flex-1 px-0 min-w-0 text-center">Csak előtte</mat-button-toggle>
+              <mat-button-toggle value="after" class="flex-1 px-0 min-w-0 text-center">Csak utána</mat-button-toggle>
+              <mat-button-toggle value="custom" class="flex-1 px-0 min-w-0 text-center">Egyéni</mat-button-toggle>
+            </mat-button-toggle-group>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @if (bufferType !== 'custom') {
+                <mat-form-field appearance="outline" class="md:col-span-2">
+                  <mat-label>Puffer idő (perc)</mat-label>
+                  <input matInput type="number" min="0" step="5" [(ngModel)]="sharedBufferMinutes" (ngModelChange)="resetResults()">
+                </mat-form-field>
+              } @else {
+                <mat-form-field appearance="outline">
+                  <mat-label>Előtte (perc)</mat-label>
+                  <input matInput type="number" min="0" step="5" [(ngModel)]="searchParams.bufferBeforeMinutes" (ngModelChange)="resetResults()">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Utána (perc)</mat-label>
+                  <input matInput type="number" min="0" step="5" [(ngModel)]="searchParams.bufferAfterMinutes" (ngModelChange)="resetResults()">
+                </mat-form-field>
+              }
+            </div>
+          </div>
+          
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+
   </div>
 
  @if (searchMode === 'group' && selectedGroupMembers().length > 0) {
@@ -161,7 +180,7 @@
       
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <label class="font-semibold text-gray-900 dark:text-gray-100 text-lg m-0">
-          Résztvevők (jelöld meg azokat, akinek kötelező a részvétel)
+          Résztvevők 
         </label>
         
         <div class="relative w-full sm:w-64 shrink-0">
@@ -173,18 +192,21 @@
         </div>
       </div>
 
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        A ki nem választott személyeket a rendszer "opcionális" résztvevőként kezeli, így a szabad időpontjaik növelhetik a találat pontszámát, de ütközésük nem zárja ki az időpontot.
-      </p>
+      <div class="text-sm text-gray-500 dark:text-gray-400 mb-5 bg-gray-50 dark:bg-gray-700/30 p-3 rounded-md border border-gray-100 dark:border-gray-700">
+        <ul class="list-disc pl-4 space-y-1 m-0">
+          <li><strong>Kötelező (zöld):</strong> Akinek kötelezően ott kell lennie az eseményen, annál a rendszer szigorúan figyeli a naptárütközéseket (csak nekik is megfelelő időpontot ajánl).</li>
+          <li><strong>Opcionális (szürke):</strong> A ki nem választott személyeknél a rendszer nem figyeli az ütközéseket (nem zárja ki miattuk az időpontot), de ha ráérnek, az előnyt jelent az időpontok rangsorolásánál.</li>
+        </ul>
+      </div>
 
       <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg mb-6 border border-gray-200 dark:border-gray-700">
         <div class="pr-4">
           <div class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Opcionális résztvevők kihagyása a meghívóból</div>
           <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Ha bekapcsolod, az esemény létrehozásakor az opcionális személyek nem kerülnek be a listába. A rendszer továbbra is keresi a velük közös szabad időt, de az esemény rejtve marad előlük.
+            Ha bekapcsolod, akkor az esemény létrehozásakor az opcionális személyek nem kerülnek be a listába és az esemény rejtve marad előlük.
           </div>
         </div>
-        <mat-slide-toggle [(ngModel)]="hideFromOptional" color="primary" class="shrink-0"></mat-slide-toggle>
+        <mat-slide-toggle [(ngModel)]="hideFromOptional" (ngModelChange)="resetResults()" color="primary" class="shrink-0"></mat-slide-toggle>
       </div>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

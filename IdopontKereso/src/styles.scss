@@ -75,12 +75,17 @@ body .cal-day-view .cal-drag-over .cal-hour-segment {
 
 :root {
   @include mat.tooltip-overrides((
-    container-color: #374151,
-    supporting-text-color: #f9fafb,
+    container-color: #e5e7eb,
+    supporting-text-color: var(--cal-bg),
     container-shape: 8px,
     supporting-text-size: 13px,
     supporting-text-weight: 500,
     supporting-text-line-height: 1.5
+  ));
+
+  @include mat.expansion-overrides((
+    container-elevation-shadow: none,
+    container-shape: 8px,
   ));
 
   @include mat.sidenav-overrides((
@@ -115,6 +120,13 @@ body .cal-day-view .cal-drag-over .cal-hour-segment {
   color-scheme: dark;
 
   @include mat.all-component-colors($my-dark-theme);
+
+  @include mat.expansion-overrides((
+    container-background-color: var(--cal-bg),
+    header-text-color: #ffffff,
+    container-text-color: #e5e7eb,
+    header-indicator-color: #9ca3af
+  ));
 
   @include mat.tooltip-overrides((
     container-color: #111827,

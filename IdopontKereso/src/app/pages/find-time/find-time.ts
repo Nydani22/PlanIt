@@ -21,6 +21,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { HttpErrorResponse } from '@angular/common/http';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 export interface GroupMemberViewItem {
   id: string;
@@ -32,7 +33,7 @@ export interface GroupMemberViewItem {
   standalone: true,
   imports: [DatePipe, SlicePipe, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatDatepickerModule, MatNativeDateModule,
-    MatCheckboxModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatSlideToggleModule],
+    MatCheckboxModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatSlideToggleModule, MatExpansionModule],
   templateUrl: './find-time.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./find-time.scss']
@@ -53,6 +54,7 @@ export class FindTime implements OnInit, OnDestroy {
   searchMode: 'self' | 'group' = 'self';
   attendeeSearchTerm: string = '';
   hideFromOptional: boolean = false;
+  isAdvancedOpen: boolean = false;
 
   weekDays = [
     { value: 1, label: 'Hétfő' },
@@ -73,9 +75,9 @@ export class FindTime implements OnInit, OnDestroy {
     optionalAttendees: [] as string[],
     bufferBeforeMinutes: 0,
     bufferAfterMinutes: 0,
-    startHour: 9,
-    endHour: 17,
-    allowedDays: [1, 2, 3, 4, 5]
+    startHour: 0,
+    endHour: 24,
+    allowedDays: [1, 2, 3, 4, 5, 6, 0]
   };
 
   selectedGroupMembers = signal<GroupMemberViewItem[]>([]);
@@ -163,7 +165,7 @@ export class FindTime implements OnInit, OnDestroy {
         
         if (parsed.durationUnit) this.durationUnit = parsed.durationUnit;
         if (parsed.durationValue !== undefined) this.durationValue = parsed.durationValue;
-        
+        if (parsed.isAdvancedOpen !== undefined) this.isAdvancedOpen = parsed.isAdvancedOpen;
       } catch (e) {
         console.error('Hiba a mentett beállítások betöltésekor', e);
       }
@@ -179,15 +181,15 @@ export class FindTime implements OnInit, OnDestroy {
       sharedBufferMinutes: this.sharedBufferMinutes,
       durationUnit: this.durationUnit,
       durationValue: this.durationValue,
-      hideFromOptional: this.hideFromOptional
+      hideFromOptional: this.hideFromOptional,
+      isAdvancedOpen: this.isAdvancedOpen
     };
     sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(stateToSave));
   }
 
   onSearchModeChange(mode: 'self' | 'group') {
     this.searchMode = mode;
-    this.availableSlots.set([]);
-    this.errorMessage.set('');
+    this.resetResults();
     
     if (mode === 'self') {
       this.searchParams.requiredAttendees = [this.currentUserId];
@@ -205,7 +207,8 @@ export class FindTime implements OnInit, OnDestroy {
 
   onGroupSelected(groupId: string) {
     this.selectedGroupId.set(groupId);
-    
+    this.resetResults();
+
     const selectedGroup = this.groups().find(g => g._id === groupId);
     
     if (selectedGroup && selectedGroup.members) {
@@ -232,6 +235,7 @@ export class FindTime implements OnInit, OnDestroy {
   }
 
   toggleCardRequirement(memberId: string) {
+    this.resetResults();
     const isCurrentlyRequired = this.searchParams.requiredAttendees.includes(memberId);
     
     if (!isCurrentlyRequired) {
@@ -257,6 +261,7 @@ export class FindTime implements OnInit, OnDestroy {
 
   onDurationUnitChange(unit: 'minutes' | 'hours' | 'days') {
     this.durationUnit = unit;
+    this.resetResults();
     
     if (unit === 'hours') {
       this.durationValue = 1;
@@ -292,9 +297,16 @@ export class FindTime implements OnInit, OnDestroy {
 
     this.saveState();
 
-    if (this.searchMode === 'group' && this.searchParams.requiredAttendees.length === 0) {
-      this.errorMessage.set('Kérlek, válassz ki egy csoportot!');
-      return;
+    if (this.searchMode === 'group') {
+      if (!this.selectedGroupId()) {
+        this.errorMessage.set('Kérlek, válassz ki egy csoportot!');
+        return;
+      }
+      
+      if (this.searchParams.requiredAttendees.length === 0) {
+        this.errorMessage.set('Legalább egy kötelező résztvevőt meg kell jelölnöd!');
+        return;
+      }
     }
 
     if (this.searchMode === 'self') {
@@ -382,6 +394,15 @@ export class FindTime implements OnInit, OnDestroy {
         this.isLoading.set(false);
       }
     });
+  }
+
+  resetResults() {
+    if (this.availableSlots().length > 0) {
+      this.availableSlots.set([]);
+    }
+    if (this.errorMessage()) {
+      this.errorMessage.set('');
+    }
   }
 
   selectSlot(slot: TimeSlot) {

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { GroupstateService } from './groupstate.service';
+import { GroupStateService } from './groupstate.service';
 
-describe('GroupstateService', () => {
-  let service: GroupstateService;
+describe('GroupStateService', () => {
+  let service: GroupStateService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(GroupstateService);
+    service = TestBed.inject(GroupStateService);
   });
 
   it('should be created', () => {

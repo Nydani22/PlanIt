@@ -15,6 +15,13 @@ export class GroupStateService {
   selectedGroupId = signal<string>('');
   isLoading = signal<boolean>(true);
 
+  resetState(): void {
+    this.myGroups.set([]);
+    this.selectedGroupId.set('');
+    this.searchQuery.set('');
+    this.isLoading.set(false);
+  }
+
   private openCreateModalSource = new Subject<void>();
   openCreateModal$ = this.openCreateModalSource.asObservable();
 
@@ -45,6 +52,8 @@ export class GroupStateService {
       },
       error: (err: HttpErrorResponse) => {
         console.error('Hiba a csoportok lekérésekor', err);
+        this.myGroups.set([]);
+        this.selectedGroupId.set('');
         this.isLoading.set(false);
       }
     });

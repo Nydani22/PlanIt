@@ -37,4 +37,8 @@ export class CalendarRefreshService {
   triggerRefresh() {
     this.refreshSource.next();
   }
+  
+  resetState() {
+    this.selectedDate.set(new Date());
+  }
 }

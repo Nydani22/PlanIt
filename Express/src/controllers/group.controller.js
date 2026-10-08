@@ -1,4 +1,5 @@
 const groupService = require('../services/group.service');
+const Group = require('../models/Group.model'); // ÚJ IMPORT a kontrolleres ellenőrzésekhez
 
 exports.createGroup = async (req, res) => {
     try {
@@ -68,7 +69,19 @@ exports.deleteGroup = async (req, res) => {
 
 exports.generateInvite = async (req, res) => {
     try {
-        const token = await groupService.generateInvite(req.params.id, req.user.id);
+        const userId = req.user.id;
+        const groupId = req.params.id;
+
+        const group = await Group.findOne({ 
+            _id: groupId, 
+            members: { $elemMatch: { userId: userId, role: { $in: ['OWNER', 'ADMIN'] } } } 
+        });
+
+        if (!group) {
+            return res.status(403).json({ message: 'Nincs jogosultságod meghívót generálni ehhez a csoporthoz!' });
+        }
+
+        const token = await groupService.generateInvite(groupId, userId);
         res.status(201).json({ token });
     } catch (error) {
         res.status(403).json({ message: error.message });
@@ -113,11 +126,45 @@ exports.updateMemberRole = async (req, res) => {
 
 exports.removeMember = async (req, res) => {
     try {
-        const adminId = req.user.id;
+        const requesterId = req.user.id;
         const groupId = req.params.id;
         const memberId = req.params.memberId;
 
-        const updatedGroup = await groupService.removeMember(groupId, adminId, memberId);
+        const group = await Group.findOne({ 
+            _id: groupId, 
+            'members.userId': requesterId 
+        });
+
+        if (!group) {
+            return res.status(403).json({ message: 'A csoport nem található, vagy nem vagy tagja!' });
+        }
+
+        const requester = group.members.find(m => m.userId.toString() === requesterId.toString());
+        const targetMember = group.members.find(m => m.userId.toString() === memberId.toString());
+
+        if (!targetMember) {
+            return res.status(404).json({ message: 'A célzott tag nem található a csoportban!' });
+        }
+
+        const isSelfLeave = requesterId.toString() === memberId.toString();
+
+        if (!isSelfLeave) {
+            if (!['OWNER', 'ADMIN'].includes(requester.role)) {
+                return res.status(403).json({ message: 'Nincs jogosultságod más tagok eltávolításához!' });
+            }
+            if (targetMember.role === 'OWNER') {
+                return res.status(403).json({ message: 'A csoport készítőjét nem lehet eltávolítani!' });
+            }
+            if (requester.role === 'ADMIN' && targetMember.role === 'ADMIN') {
+                return res.status(403).json({ message: 'Admin nem távolíthat el egy másik Admint!' });
+            }
+        } else {
+            if (requester.role === 'OWNER') {
+                return res.status(403).json({ message: 'Tulajdonosként nem léphetsz ki!' });
+            }
+        }
+
+        const updatedGroup = await groupService.removeMember(groupId, requesterId, memberId, isSelfLeave);
         res.status(200).json(updatedGroup);
     } catch (error) {
         res.status(400).json({ message: error.message });

@@ -30,22 +30,6 @@ exports.createEvent = async (eventData, userId) => {
         groupId, sendNotification, allowOverlap 
     } = eventData;
 
-    if (groupId) {
-        const group = await Group.findById(groupId);
-        if (!group) {
-            const error = new Error('A megadott csoport nem létezik.');
-            error.statusCode = 404;
-            throw error;
-        }
-        
-        const isMember = group.members.some(m => m.userId.toString() === userId.toString());
-        if (!isMember) {
-            const error = new Error('Nincs jogosultságod eseményt létrehozni ebben a csoportban!');
-            error.statusCode = 403;
-            throw error;
-        }
-    }
-
     let finalAttendees = [];
     
     if (attendees && Array.isArray(attendees) && attendees.length > 0) {
@@ -168,24 +152,6 @@ exports.updateEvent = async (eventId, userId, updateData) => {
         throw new Error('Esemény nem található');
     }
 
-    let hasPermission = event.organizerId.toString() === userId.toString();
-
-    if (!hasPermission && event.groupId) {
-        const group = await Group.findById(event.groupId);
-        if (group) {
-            const member = group.members.find(m => m.userId.toString() === userId.toString());
-            if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
-                hasPermission = true;
-            }
-        }
-    }
-
-    if (!hasPermission) {
-        const error = new Error('Nincs jogosultságod az esemény módosításához.');
-        error.statusCode = 403;
-        throw error;
-    }
-
     if (updateData.category && updateData.category !== event.category && !updateData.color) {
         updateData.color = CATEGORY_COLORS[updateData.category] || CATEGORY_COLORS['OTHER'];
     }
@@ -198,29 +164,6 @@ exports.updateEvent = async (eventId, userId, updateData) => {
 };
 
 exports.deleteEvent = async (eventId, userId) => {
-    const event = await Event.findById(eventId);
-    if (!event) {
-        throw new Error('Esemény nem található');
-    }
-
-    let hasPermission = event.organizerId.toString() === userId.toString();
-
-    if (!hasPermission && event.groupId) {
-        const group = await Group.findById(event.groupId);
-        if (group) {
-            const member = group.members.find(m => m.userId.toString() === userId.toString());
-            if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
-                hasPermission = true;
-            }
-        }
-    }
-
-    if (!hasPermission) {
-        const error = new Error('Nincs jogosultságod az esemény törléséhez.');
-        error.statusCode = 403;
-        throw error;
-    }
-
     return await Event.findByIdAndDelete(eventId);
 };
 
@@ -273,7 +216,6 @@ exports.cancelEventInstance = async (eventId, userId, dateToCancel) => {
         { returnDocument: 'after', runValidators: true }
     );
 };
-
 
 exports.generateICalStringByToken = async (token) => {
     const encryptedSearchToken = encryptToken(token);

@@ -34,7 +34,6 @@ exports.getGroupById = async (groupId, userId) => {
     }).populate('members.userId', '_id userName fullName email');
 };
 
-
 exports.updateGroup = async (groupId, userId, updateData) => {
     return await Group.findOneAndUpdate(
         {
@@ -60,16 +59,7 @@ exports.deleteGroup = async (groupId, userId) => {
     return deletedGroup;
 };
 
-
-
 exports.generateInvite = async (groupId, userId) => {
-    const group = await Group.findOne({ 
-        _id: groupId, 
-        members: { $elemMatch: { userId: userId, role: { $in: ['OWNER', 'ADMIN'] } } } 
-    });
-
-    if (!group) throw new Error('Nincs jogosultságod meghívót generálni ehhez a csoporthoz!');
-
     const token = crypto.randomBytes(20).toString('hex');
     
     const expiresAt = new Date();
@@ -95,7 +85,6 @@ exports.getInviteInfo = async (token) => {
 
     return invitation.groupId;
 };
-
 
 exports.joinWithInvite = async (token, userId) => {
     const invitation = await Invitation.findOne({ token });
@@ -196,36 +185,8 @@ exports.updateMemberRole = async (groupId, requesterId, targetMemberId, newRole)
     return await group.populate('members.userId', '_id userName fullName email');
 };
 
-exports.removeMember = async (groupId, requesterId, targetMemberId) => {
-    const group = await Group.findOne({ 
-        _id: groupId, 
-        'members.userId': requesterId 
-    });
-
-    if (!group) throw new Error('A csoport nem található, vagy nem vagy tagja!');
-
-    const requester = group.members.find(m => m.userId.toString() === requesterId.toString());
-    const targetMember = group.members.find(m => m.userId.toString() === targetMemberId.toString());
-
-    if (!targetMember) throw new Error('A célzott tag nem található a csoportban!');
-
-    const isSelfLeave = requesterId.toString() === targetMemberId.toString();
-
-    if (!isSelfLeave) {
-        if (!['OWNER', 'ADMIN'].includes(requester.role)) {
-            throw new Error('Nincs jogosultságod más tagok eltávolításához!');
-        }
-        if (targetMember.role === 'OWNER') {
-            throw new Error('A csoport készítőjét nem lehet eltávolítani!');
-        }
-        if (requester.role === 'ADMIN' && targetMember.role === 'ADMIN') {
-            throw new Error('Admin nem távolíthat el egy másik Admint!');
-        }
-    } else {
-        if (requester.role === 'OWNER') {
-            throw new Error('Tulajdonosként nem léphetsz ki!');
-        }
-    }
+exports.removeMember = async (groupId, requesterId, targetMemberId, isSelfLeave) => {
+    const group = await Group.findById(groupId);
 
     group.members = group.members.filter(m => m.userId.toString() !== targetMemberId.toString());
     await group.save();

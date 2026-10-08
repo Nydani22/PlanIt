@@ -406,8 +406,6 @@ export class FindTime implements OnInit, OnDestroy {
   }
 
   selectSlot(slot: TimeSlot) {
-    console.log('Kiválasztott időpont:', slot);
-
     const requiredUsers: Attendee[] = this.searchParams.requiredAttendees.map(userId => ({
       userId: userId,
       status: 'PENDING',               

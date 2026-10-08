@@ -194,7 +194,6 @@ export class Groups implements OnInit {
 
   removeMember(memberId: string) {
     if (!this.isAdmin() && !this.isOwner()) return; 
-
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '600px',
       maxWidth: '90vw',
@@ -202,23 +201,24 @@ export class Groups implements OnInit {
       autoFocus: false,
       data: {
         title: 'Tag eltávolítása',
-        message: 'Biztosan el akarod távolítani ezt a tagot a csoportból?',
+        message: 'Biztosan el szeretnéd távolítani ezt a tagot a csoportból?',
         confirmText: 'Eltávolítás',
         cancelText: 'Mégsem',
         color: 'warn'
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === true) {
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
         this.groupService.removeMember(this.groupState.selectedGroupId(), memberId).subscribe({
-          next: () => {
+          next: (updatedGroup) => {
+            this.group.set(updatedGroup);
             this.groupState.loadGroups();
             this.snackbarService.showSuccess('Tag sikeresen eltávolítva!');
-          }, 
+          },
           error: (err) => {
-            console.error(err);
-            this.snackbarService.showError('Nem sikerült eltávolítani a tagot.');
+            console.error('Hiba tag eltávolításakor:', err);
+            this.snackbarService.showError('Hiba történt a tag eltávolítása során.');
           }
         });
       }

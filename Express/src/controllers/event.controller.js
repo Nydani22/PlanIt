@@ -1,6 +1,7 @@
 const eventService = require('../services/event.service');
 const freeBusyService = require('../services/freebusy.service');
 const Group = require('../models/Group.model');
+const Event = require('../models/Event.model');
 
 exports.createEvent = async (req, res) => {
     try {
@@ -53,7 +54,6 @@ exports.generateICalFeed = async (req, res) => {
     }
 };
 
-
 exports.getUserEvents = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -101,11 +101,28 @@ exports.update = async (req, res) => {
         const userId = req.user.id;
         const eventId = req.params.id;
         
-        const updatedEvent = await eventService.updateEvent(eventId, userId, req.body);
-        
-        if (!updatedEvent) {
-            return res.status(404).json({ message: 'Esemény nem található, vagy nem te vagy a szervezője.' });
+        const eventToUpdate = await Event.findById(eventId);
+        if (!eventToUpdate) {
+            return res.status(404).json({ message: 'Esemény nem található.' });
         }
+
+        let hasPermission = eventToUpdate.organizerId.toString() === userId.toString();
+
+        if (!hasPermission && eventToUpdate.groupId) {
+            const group = await Group.findById(eventToUpdate.groupId);
+            if (group) {
+                const member = group.members.find(m => m.userId.toString() === userId.toString());
+                if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
+                    hasPermission = true;
+                }
+            }
+        }
+
+        if (!hasPermission) {
+            return res.status(403).json({ message: 'Nincs jogosultságod az esemény módosításához.' });
+        }
+        
+        const updatedEvent = await eventService.updateEvent(eventId, userId, req.body);
         
         res.status(200).json(updatedEvent);
     } catch (error) {
@@ -118,11 +135,28 @@ exports.delete = async (req, res) => {
         const userId = req.user.id;
         const eventId = req.params.id;
         
-        const deletedEvent = await eventService.deleteEvent(eventId, userId);
-        
-        if (!deletedEvent) {
-            return res.status(404).json({ message: 'Esemény nem található, vagy nem te vagy a szervezője.' });
+        const eventToDelete = await Event.findById(eventId);
+        if (!eventToDelete) {
+            return res.status(404).json({ message: 'Esemény nem található.' });
         }
+
+        let hasPermission = eventToDelete.organizerId.toString() === userId.toString();
+
+        if (!hasPermission && eventToDelete.groupId) {
+            const group = await Group.findById(eventToDelete.groupId);
+            if (group) {
+                const member = group.members.find(m => m.userId.toString() === userId.toString());
+                if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
+                    hasPermission = true;
+                }
+            }
+        }
+
+        if (!hasPermission) {
+            return res.status(403).json({ message: 'Nincs jogosultságod az esemény törléséhez.' });
+        }
+        
+        await eventService.deleteEvent(eventId, userId);
         
         res.status(200).json({ message: 'Esemény sikeresen törölve.' });
     } catch (error) {
@@ -159,14 +193,19 @@ exports.cancelInstance = async (req, res) => {
         const { dateToCancel } = req.body;
         
         if (!dateToCancel) {
-            return res.status(400).json({ message: 'A törölni kívánt dátum (dateToCancel) megadása kötelező!' });
+            return res.status(400).json({ message: 'A törölni kívánt dátum megadása kötelező!' });
+        }
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({ message: 'Esemény nem található.' });
+        }
+
+        if (event.organizerId.toString() !== userId.toString()) {
+            return res.status(403).json({ message: 'Csak a szervező mondhat le ismétlődő eseménypéldányt.' });
         }
 
         const updatedEvent = await eventService.cancelEventInstance(eventId, userId, dateToCancel);
-        
-        if (!updatedEvent) {
-            return res.status(404).json({ message: 'Esemény nem található, vagy nem te vagy a szervezője.' });
-        }
         
         res.status(200).json(updatedEvent);
     } catch (error) {
@@ -174,14 +213,33 @@ exports.cancelInstance = async (req, res) => {
     }
 };
 
-
-
 exports.getEventsForTimeSearch = async (req, res) => {
   try {
+    const userId = req.user.id;
     const searchParams = req.body; 
     const { searchStart, searchEnd, requiredAttendees = [], optionalAttendees = [] } = searchParams;
 
     const allAttendeeIds = [...new Set([...requiredAttendees, ...optionalAttendees])];
+
+    if (!(allAttendeeIds.length === 1 && allAttendeeIds[0] === userId.toString())) {
+        const userGroups = await Group.find({ 'members.userId': userId });
+        
+        const allowedUserIds = new Set();
+        allowedUserIds.add(userId.toString());
+
+        userGroups.forEach(group => {
+            group.members.forEach(m => allowedUserIds.add(m.userId.toString()));
+        });
+
+        const hasUnauthorizedAccess = allAttendeeIds.some(id => !allowedUserIds.has(id));
+
+        if (hasUnauthorizedAccess) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Nincs jogosultságod lekérdezni olyan felhasználók foglaltságát, akikkel nem vagy közös csoportban!' 
+            });
+        }
+    }
 
     const expandedEvents = await eventService.getExpandedEventsForUsers(
       searchStart, 

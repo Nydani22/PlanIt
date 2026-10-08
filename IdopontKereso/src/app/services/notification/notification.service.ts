@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { io, Socket } from 'socket.io-client';
 import { AuthService } from '../auth/auth.service';
@@ -8,7 +8,7 @@ import { Notification } from '../../models/notification.model';
 @Injectable({
   providedIn: 'root'
 })
-export class NotificationService {
+export class NotificationService implements OnDestroy {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private socket: Socket | null = null;
@@ -17,7 +17,16 @@ export class NotificationService {
   notifications = signal<Notification[]>([]);
   unreadCount = signal<number>(0);
 
-  
+  resetState() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    
+    this.notifications.set([]);
+    this.unreadCount.set(0);
+  }
+
   initNotifications() {
     const userId = this.authService.getCurrentUserId();
     if (!userId) return;
@@ -64,5 +73,9 @@ export class NotificationService {
         this.notifications.update(notifs => notifs.map(n => ({ ...n, isRead: true })));
         this.unreadCount.set(0);
       });
+  }
+
+  ngOnDestroy() {
+    this.resetState();
   }
 }

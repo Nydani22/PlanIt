@@ -1,11 +1,14 @@
 import { HttpClient } from '@angular/common/http';
-import { PLATFORM_ID, inject, Injectable, signal } from '@angular/core';
+import { PLATFORM_ID, inject, Injectable, signal, Injector } from '@angular/core';
 import { Observable, throwError, firstValueFrom } from 'rxjs';
 import { tap, catchError, finalize, shareReplay } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment'; 
 import { AuthResponse, LoginCredentials, RegisterData } from '../../models/auth.model';
 import { Router } from '@angular/router';
+import { NotificationService } from '../notification/notification.service';
+import { CalendarRefreshService } from '../calendarRefresh/calendar-refresh.service';
+import { GroupStateService } from '../groupstate/groupstate.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +20,9 @@ export class AuthService {
   private refreshReq$: Observable<AuthResponse> | null = null;
   readonly isLoggedIn = signal<boolean>(this.hasValidInitialToken());
   private platformId = inject(PLATFORM_ID);
+  private injector = inject(Injector);
+  private groupState = inject(GroupStateService);
+  private calendarRefreshService = inject(CalendarRefreshService);
 
   private hasValidInitialToken(): boolean {
     const token = this.getToken();
@@ -147,17 +153,24 @@ export class AuthService {
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
-        next: () => {
-          localStorage.removeItem('token');
-          this.isLoggedIn.set(false);
-          this.router.navigate(['/login']);
-        },
-        error: () => {
-          localStorage.removeItem('token');
-          this.isLoggedIn.set(false);
-          this.router.navigate(['/login']);
-        }
+        next: () => this.handleClientLogout(),
+        error: () => this.handleClientLogout()
       });
     }
+  }
+
+  private handleClientLogout(): void {
+    localStorage.removeItem('token');
+    sessionStorage.clear(); 
+    
+    this.isLoggedIn.set(false);
+    
+    this.calendarRefreshService.resetState();
+    const notificationService = this.injector.get(NotificationService);
+    notificationService.resetState();
+    
+    this.groupState.resetState();
+    
+    this.router.navigate(['/login']);
   }
 }

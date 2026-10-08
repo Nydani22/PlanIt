@@ -24,7 +24,7 @@ exports.markAsRead = async (notificationId, userId) => {
     return await Notification.findOneAndUpdate(
         { _id: notificationId, recipientId: userId },
         { isRead: true },
-        { new: true }
+        { returnDocument: 'after' }
     );
 };
 

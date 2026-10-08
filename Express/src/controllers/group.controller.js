@@ -22,17 +22,11 @@ exports.getUserGroups = async (req, res) => {
 
 exports.getGroupById = async (req, res) => {
     try {
-        let group;
-        
-        if (req.user && req.user.id) {
-            group = await groupService.getGroupById(req.params.id, req.user.id);
-        }
+        const group = await groupService.getGroupById(req.params.id, req.user.id);
 
         if (!group) {
-            group = await groupService.getGroupByIdPublic(req.params.id);
+            return res.status(403).json({ message: 'Nincs jogosultságod a csoport adatainak lekéréséhez, vagy a csoport nem létezik.' });
         }
-
-        if (!group) return res.status(404).json({ message: 'A csoport már nem létezik.' });
         
         res.status(200).json(group);
     } catch (error) {

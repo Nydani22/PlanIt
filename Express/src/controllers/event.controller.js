@@ -1,9 +1,28 @@
 const eventService = require('../services/event.service');
 const freeBusyService = require('../services/freebusy.service');
+const Group = require('../models/Group.model');
 
 exports.createEvent = async (req, res) => {
     try {
         const userId = req.user.id; 
+        const { groupId } = req.body;
+
+        if (groupId) {
+            const group = await Group.findById(groupId);
+            if (!group) {
+                return res.status(404).json({ message: 'A megadott csoport nem létezik.' });
+            }
+            
+            const currentMember = group.members.find(m => m.userId.toString() === userId.toString());
+            
+            if (!currentMember) {
+                return res.status(403).json({ message: 'Nincs jogosultságod eseményt létrehozni ebben a csoportban!' });
+            }
+
+            if (currentMember.role !== 'ADMIN' && currentMember.role !== 'OWNER') {
+                return res.status(403).json({ message: 'Csoporteseményt csak adminok vagy a tulajdonos hozhatnak létre!' });
+            }
+        }
         
         const event = await eventService.createEvent(req.body, userId);
         

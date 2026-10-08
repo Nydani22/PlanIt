@@ -50,14 +50,9 @@ export class Join implements OnInit {
       next: (groupInfo: GroupInviteInfo) => {
         if (userId && groupInfo && groupInfo._id) {
           
-          this.groupService.getGroupById(groupInfo._id).subscribe({
-            next: (group: Group) => {
-              
-              const isMember = group.members.some((m: GroupMember) => {
-                const memberUserId = typeof m.userId === 'string' ? m.userId : m.userId?._id;
-                return memberUserId === userId;
-                
-              });
+          this.groupService.getGroups().subscribe({
+            next: (myGroups: Group[]) => {
+              const isMember = myGroups.some((g: Group) => g._id === groupInfo._id);
               
               this.isAlreadyMember.set(isMember);
               this.isCheckingStatus.set(false);

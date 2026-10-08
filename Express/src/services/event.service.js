@@ -30,6 +30,22 @@ exports.createEvent = async (eventData, userId) => {
         groupId, sendNotification, allowOverlap 
     } = eventData;
 
+    if (groupId) {
+        const group = await Group.findById(groupId);
+        if (!group) {
+            const error = new Error('A megadott csoport nem létezik.');
+            error.statusCode = 404;
+            throw error;
+        }
+        
+        const isMember = group.members.some(m => m.userId.toString() === userId.toString());
+        if (!isMember) {
+            const error = new Error('Nincs jogosultságod eseményt létrehozni ebben a csoportban!');
+            error.statusCode = 403;
+            throw error;
+        }
+    }
+
     let finalAttendees = [];
     
     if (attendees && Array.isArray(attendees) && attendees.length > 0) {

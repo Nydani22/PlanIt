@@ -34,10 +34,6 @@ exports.getGroupById = async (groupId, userId) => {
     }).populate('members.userId', '_id userName fullName email');
 };
 
-exports.getGroupByIdPublic = async (groupId) => {
-    return await Group.findById(groupId)
-        .populate('members.userId', '_id userName fullName email');
-};
 
 exports.updateGroup = async (groupId, userId, updateData) => {
     return await Group.findOneAndUpdate(

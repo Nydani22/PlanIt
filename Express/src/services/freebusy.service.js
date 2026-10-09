@@ -25,7 +25,7 @@ exports.findAvailableTimeSlots = (params, events) => {
 
   const checkCollisions = (checkStart, checkEnd) => {
     let isRequiredBusy = false;
-    let busyOptionalCount = 0;
+    const busyOptionalUsers = new Set();
 
     for (const event of events) {
       if (event.allowOverlap) continue;
@@ -41,12 +41,16 @@ exports.findAvailableTimeSlots = (params, events) => {
           isRequiredBusy = true;
           break;
         }
+        
         optionalAttendees.forEach(optId => {
-          if (eventUsers.includes(optId)) busyOptionalCount++;
+          if (eventUsers.includes(optId)) {
+            busyOptionalUsers.add(optId);
+          }
         });
       }
     }
-    return { isRequiredBusy, busyOptionalCount };
+
+    return { isRequiredBusy, busyOptionalCount: busyOptionalUsers.size };
   };
 
   while (currentDay <= endDay) {
@@ -117,7 +121,6 @@ exports.findAvailableTimeSlots = (params, events) => {
   });
 
   filteredSlots.sort((a, b) => {
-    if (b.availableOptionalCount !== a.availableOptionalCount) return b.availableOptionalCount - a.availableOptionalCount;
     return a.start.getTime() - b.start.getTime();
   });
 

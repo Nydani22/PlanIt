@@ -61,8 +61,11 @@ function expandEventInWindow(event, searchStart, searchEnd) {
         organizerId: event.organizerId,
         category: event.category,
         attendees: event.attendees,
-        fromDate: startDate, 
-        toDate: new Date(startDate.getTime() + durationMs)
+        fromDate: startDate,
+        toDate: new Date(startDate.getTime() + durationMs),
+        color: event.color,
+        allowOverlap: event.allowOverlap,
+        sendNotification: event.sendNotification
       });
     }
   }

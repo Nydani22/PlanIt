@@ -6,7 +6,11 @@ const Event = require('../models/Event.model');
 exports.createEvent = async (req, res) => {
     try {
         const userId = req.user.id; 
-        const { groupId } = req.body;
+        const { groupId, fromDate, toDate } = req.body;
+
+        if (fromDate && toDate && new Date(toDate) <= new Date(fromDate)) {
+            return res.status(400).json({ message: 'A befejezés időpontjának később kell lennie, mint a kezdésnek!' });
+        }
 
         if (groupId) {
             const group = await Group.findById(groupId);
@@ -100,6 +104,12 @@ exports.update = async (req, res) => {
     try {
         const userId = req.user.id;
         const eventId = req.params.id;
+
+        if (req.body.fromDate && req.body.toDate) {
+            if (new Date(req.body.toDate) <= new Date(req.body.fromDate)) {
+                return res.status(400).json({ message: 'A befejezés időpontjának később kell lennie, mint a kezdésnek!' });
+            }
+        }
         
         const eventToUpdate = await Event.findById(eventId);
         if (!eventToUpdate) {

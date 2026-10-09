@@ -111,13 +111,11 @@ exports.findAvailableTimeSlots = (params, events) => {
     currentDay.setDate(currentDay.getDate() + 1);
   }
 
-  const startLimitDate = new Date(searchStart);
-  startLimitDate.setHours(0, 0, 0, 0);
-  const startLimitMs = startLimitDate.getTime();
-  const endLimitMs = endDay.getTime();
+  const exactStartLimitMs = new Date(searchStart).getTime();
+  const exactEndLimitMs = new Date(searchEnd).getTime();
 
   const filteredSlots = availableSlots.filter(slot => {
-    return slot.start.getTime() >= startLimitMs && slot.end.getTime() <= endLimitMs;
+    return slot.start.getTime() >= exactStartLimitMs && slot.end.getTime() <= exactEndLimitMs;
   });
 
   filteredSlots.sort((a, b) => {

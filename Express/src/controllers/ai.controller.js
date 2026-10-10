@@ -52,9 +52,9 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
 
 const processToolCalls = async (functionCalls, userId, timeZone) => {
     const results = {
-        savedEvents: [],
-        updatedEvents: [],
-        deletedIds: [],
+        pendingCreations: [],
+        pendingUpdates: [],
+        pendingDeletions: [],
         fetchedEventsSummary: [],
         fetchedGroupsSummary: [],
         fetchedTimeSlots: [],
@@ -121,11 +121,10 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                     delete newEventPayload.groupName;
                     delete newEventPayload.optionalAttendees;
 
-                    const saved = await eventService.createEvent(newEventPayload, userId);
-                    results.savedEvents.push(saved);
+                    results.pendingCreations.push(newEventPayload);
                 }
                 
-                if (results.savedEvents.length > 0) {
+                if (results.pendingCreations.length > 0) {
                     results.hasModification = true;
                 }
             break;
@@ -142,91 +141,203 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                     }
                     
                     if (existingEvent) {
-                        const updated = await eventService.updateEvent(eventId, userId, updateData);
-                        results.updatedEvents.push(updated);
+                        results.pendingUpdates.push({ eventId, ...updateData });
+                        results.hasModification = true;
                     }
                 }
-                results.hasModification = true;
                 break;
 
             case 'deleteEvents':
+                case 'deleteEvents':
                 for (const eventId of call.args.eventIds) {
-                    await eventService.deleteEvent(eventId, userId);
-                    results.deletedIds.push(eventId);
+                    const existingEvent = await eventService.getEventById(eventId, userId);
+                    if (existingEvent) {
+                        results.pendingDeletions.push({
+                            eventId: eventId,
+                            eventName: existingEvent.eventName,
+                            fromDate: existingEvent.fromDate
+                        });
+                        results.hasModification = true;
+                    }
                 }
-                results.hasModification = true;
                 break;
 
             case 'syncSchedule':
-                const { periodStart, periodEnd, targetEventName, shifts } = call.args;
+                const { targetEventName, shifts } = call.args;
+                
+                if (!shifts || shifts.length === 0) {
+                    break;
+                }
+
+                const shiftStartTimes = shifts.map(s => new Date(s.fromDate).getTime());
+                const shiftEndTimes = shifts.map(s => new Date(s.toDate).getTime());
+                
+                const minDate = new Date(Math.min(...shiftStartTimes));
+                const maxDate = new Date(Math.max(...shiftEndTimes));
+                
+                minDate.setDate(minDate.getDate() - 2);
+                maxDate.setDate(maxDate.getDate() + 2);
                 
                 const EventModel = require('../models/Event.model');
                 const existingEvents = await EventModel.find({
                     organizerId: userId,
                     groupId: { $exists: false },
-                    fromDate: { $gte: new Date(periodStart) },
-                    toDate: { $lte: new Date(periodEnd) }
+                    fromDate: { $gte: minDate },
+                    toDate: { $lte: maxDate }
                 });
 
-                const relevantExistingEvents = existingEvents.filter(e => 
-                    e.eventName.toLowerCase().includes(targetEventName.toLowerCase())
-                );
-
                 const processedIds = new Set();
+                
+                const normalizeStr = (str) => {
+                    if (!str) return '';
+                    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/gi, '').toLowerCase();
+                };
+                
+                const targetNorm = normalizeStr(targetEventName);
 
-                for (const shift of shifts) {
-                    const shiftStart = new Date(shift.fromDate);
-                    const shiftEnd = new Date(shift.toDate);
+                const toCompareStr = (dateObj) => {
+                    const d = new Date(dateObj);
+                    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}T${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+                };
 
-                    const existingMatch = relevantExistingEvents.find(e => 
-                        !processedIds.has(e._id.toString()) &&
-                        e.fromDate.getFullYear() === shiftStart.getFullYear() &&
-                        e.fromDate.getMonth() === shiftStart.getMonth() &&
-                        e.fromDate.getDate() === shiftStart.getDate()
-                    );
+                const toDateStr = (dateObj) => {
+                    const d = new Date(dateObj);
+                    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+                };
+
+                const uniqueShifts = [];
+                const shiftSignatures = new Set();
+                
+                for (const s of shifts) {
+                    const sig = `${normalizeStr(s.eventName)}_${toCompareStr(s.fromDate)}`;
+                    if (!shiftSignatures.has(sig)) {
+                        shiftSignatures.add(sig);
+                        uniqueShifts.push(s);
+                    }
+                }
+
+                const shiftEventNorms = [...new Set(uniqueShifts.map(s => normalizeStr(s.eventName)))];
+
+                for (const shift of uniqueShifts) {
+                    const shiftStartStr = toCompareStr(shift.fromDate);
+                    const shiftEndStr = toCompareStr(shift.toDate);
+                    const shiftDateStr = toDateStr(shift.fromDate);
+                    
+                    const shiftNameClean = shift.eventName.trim().toLowerCase();
+                    const shiftNameNorm = normalizeStr(shift.eventName);
+                    let existingMatch = null;
+
+                    existingMatch = existingEvents.find(e => {
+                        if (processedIds.has(e._id.toString())) return false;
+                        return e.eventName.trim().toLowerCase() === shiftNameClean &&
+                               toCompareStr(e.fromDate) === shiftStartStr &&
+                               toCompareStr(e.toDate) === shiftEndStr;
+                    });
+
+                    if (!existingMatch) {
+                        existingMatch = existingEvents.find(e => {
+                            if (processedIds.has(e._id.toString())) return false;
+                            return e.eventName.trim().toLowerCase() === shiftNameClean &&
+                                   toDateStr(e.fromDate) === shiftDateStr;
+                        });
+                    }
+
+                    if (!existingMatch) {
+                        existingMatch = existingEvents.find(e => {
+                            if (processedIds.has(e._id.toString())) return false;
+                            if (toCompareStr(e.fromDate) === shiftStartStr && toCompareStr(e.toDate) === shiftEndStr) {
+                                const oldNorm = normalizeStr(e.eventName);
+                                return oldNorm.includes(shiftNameNorm) || shiftNameNorm.includes(oldNorm);
+                            }
+                            return false;
+                        });
+                    }
+
+                    if (!existingMatch) {
+                        existingMatch = existingEvents.find(e => {
+                            if (processedIds.has(e._id.toString())) return false;
+                            if (toDateStr(e.fromDate) === shiftDateStr) {
+                                const oldNorm = normalizeStr(e.eventName);
+                                return oldNorm.includes(shiftNameNorm) || shiftNameNorm.includes(oldNorm);
+                            }
+                            return false;
+                        });
+                    }
 
                     if (existingMatch) {
                         processedIds.add(existingMatch._id.toString());
-                        if (existingMatch.fromDate.getTime() !== shiftStart.getTime() || 
-                            existingMatch.toDate.getTime() !== shiftEnd.getTime() ||
-                            existingMatch.location !== shift.location ||
-                            existingMatch.description !== shift.description) {
+                        
+                        const oldNorm = normalizeStr(existingMatch.eventName);
+                        const newNorm = shiftNameNorm;
+                        
+                        const oldLocation = (existingMatch.location || '').trim();
+                        const newLocation = (shift.location && shift.location.trim() !== '') ? shift.location.trim() : oldLocation;
+                        
+                        const oldDescription = (existingMatch.description || '').trim();
+                        const newDescription = (shift.description && shift.description.trim() !== '') ? shift.description.trim() : oldDescription;
+                        
+                        const oldIsAllDay = Boolean(existingMatch.isAllDay);
+                        const newIsAllDay = Boolean(shift.isAllDay);
+
+                        const timeChanged = toCompareStr(existingMatch.fromDate) !== shiftStartStr || 
+                                            toCompareStr(existingMatch.toDate) !== shiftEndStr;
+
+                        if (timeChanged || 
+                            oldNorm !== newNorm ||
+                            oldLocation !== newLocation ||
+                            oldDescription !== newDescription ||
+                            oldIsAllDay !== newIsAllDay) {
                             
-                            const updatedEvent = await eventService.updateEvent(existingMatch._id, userId, {
-                                fromDate: shiftStart,
-                                toDate: shiftEnd,
+                            results.pendingUpdates.push({
+                                eventId: existingMatch._id,
+                                organizerId: existingMatch.organizerId,
+                                groupId: existingMatch.groupId,
+                                isExternal: existingMatch.isExternal,
+                                fromDate: shift.fromDate,
+                                toDate: shift.toDate,
                                 eventName: shift.eventName,
-                                category: shift.category,
-                                location: shift.location || existingMatch.location,
-                                description: shift.description || existingMatch.description,
-                                isAllDay: shift.isAllDay || false
+                                category: shift.category || existingMatch.category,
+                                location: newLocation,
+                                description: newDescription,
+                                isAllDay: newIsAllDay
                             });
-                            results.updatedEvents.push(updatedEvent);
                         }
                     } else {
-                        const newEvent = await eventService.createEvent({
+                        results.pendingCreations.push({
                             ...shift,
-                            category: shift.category,
+                            category: shift.category || 'WORK',
                             isAllDay: shift.isAllDay || false,
                             attendees: [{ userId: userId, status: 'ACCEPTED', attendanceType: 'REQUIRED' }]
-                        }, userId);
-                        results.savedEvents.push(newEvent);
+                        });
                     }
                 }
 
-                for (const oldEvent of relevantExistingEvents) {
+                for (const oldEvent of existingEvents) {
                     if (!processedIds.has(oldEvent._id.toString())) {
-                        await eventService.deleteEvent(oldEvent._id, userId);
-                        results.deletedIds.push(oldEvent._id);
+                        const oldNorm = normalizeStr(oldEvent.eventName);
+                        
+                        const isDuplicateOrCancelled = 
+                            shiftEventNorms.some(norm => oldNorm.includes(norm) || norm.includes(oldNorm)) || 
+                            (targetNorm && oldNorm.includes(targetNorm));
+
+                        if (isDuplicateOrCancelled) {
+                            results.pendingDeletions.push({
+                                eventId: oldEvent._id,
+                                eventName: oldEvent.eventName,
+                                fromDate: oldEvent.fromDate
+                            });
+                        }
                     }
                 }
 
-                results.hasModification = true;
+                if (results.pendingCreations.length > 0 || results.pendingUpdates.length > 0 || results.pendingDeletions.length > 0) {
+                    results.hasModification = true;
+                }
                 break;
-
+                
             case 'getEvents':
-                const { startDate, endDate } = call.args;
-                const events = await eventService.getUserEvents(userId, startDate, endDate);
+                const { startDate: startD, endDate: endD } = call.args;
+                const events = await eventService.getUserEvents(userId, startD, endD);
                 results.fetchedEventsSummary.push(...events.map(e => ({
                     title: e.eventName,
                     start: new Date(e.fromDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }),
@@ -383,29 +494,29 @@ const handleAIChat = async (req, res) => {
             const toolResults = await processToolCalls(functionCalls, userId, timeZone);
 
             const summaryPrompt = `
-            A felhasználó kérése ez volt: "${message || 'Hangüzenet'}"
+            A felhasználó kérése ez volt: "${message ? message : (file ? 'Feltöltött egy képet/beosztást szinkronizálásra.' : 'Nincs megadva szöveges kérés.')}"
             
-            Az alábbi műveleteket hajtottam végre a háttérben:
-            - Létrehozva: ${toolResults.savedEvents.length} db
-            - Módosítva: ${toolResults.updatedEvents.length} db
-            - Törölve: ${toolResults.deletedIds.length} db
+            Az alábbi műveleteket készítettem elő jóváhagyásra (még nincsenek elmentve!):
+            - Létrehozásra vár (Új): ${toolResults.pendingCreations.length} db
+            - Módosításra vár: ${toolResults.pendingUpdates.length} db
+            - Törlésre vár: ${toolResults.pendingDeletions.length} db
             - Lekérdezett események (ha volt): ${JSON.stringify(toolResults.fetchedEventsSummary)}
             - Lekérdezett csoportok (ha volt): ${JSON.stringify(toolResults.fetchedGroupsSummary)}
             - Talált SZABAD IDŐPONTOK: ${JSON.stringify(toolResults.fetchedTimeSlots)}
             - HIBÁK/MEGTAGADOTT MŰVELETEK: ${JSON.stringify(toolResults.actionErrors)}
             
-            Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy mit csináltál! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Ha a 'HIBÁK' mezőben látsz valamit (pl. jogosultsági probléma), KÖTELEZŐ elmondanod a felhasználónak! Használj Markdown formázást a kiemelésekhez!
-            
+            Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy miket JAVASOLSZ végrehajtani! Emeld ki egyértelműen, hogy ezek még csak tervezetek, és a felületen tudja őket átnézni/jóváhagyni a mentéshez! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Ha a 'HIBÁK' mezőben látsz valamit (pl. jogosultsági probléma), KÖTELEZŐ elmondanod a felhasználónak! Használj Markdown formázást a kiemelésekhez!
             `;
             
             const secondResult = await generateAIContent(summaryPrompt);
 
             return res.json({
                 success: true,
-                action: toolResults.hasModification ? 'updateEvent' : 'message',
+                action: toolResults.hasModification ? 'reviewRequired' : 'message',
                 message: secondResult.response.text(),
-                events: [...toolResults.savedEvents, ...toolResults.updatedEvents],
-                deletedIds: toolResults.deletedIds
+                pendingCreations: toolResults.pendingCreations,
+                pendingUpdates: toolResults.pendingUpdates,
+                pendingDeletions: toolResults.pendingDeletions
             });
         }
 

@@ -81,3 +81,11 @@
     </div>
   </div>
 }
+
+
+@if (showReviewModal()) {
+  <app-ai-review-dialog 
+    [data]="reviewData()" 
+    (closeDialog)="onReviewClosed($event)">
+  </app-ai-review-dialog>
+}

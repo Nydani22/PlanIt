@@ -202,7 +202,7 @@ export class EventDialogComponent implements OnInit {
       if (ev.attendees && ev.attendees.length > 1) {
         this.hideTimeSteps.set(true);
       }
-    } else if (!ev._id && ev.attendees && ev.attendees.length > 0) {
+    } else if (!ev._id && ev.attendees && ev.attendees.length > 1) {
       this.hideTimeSteps.set(true);
     }
   }

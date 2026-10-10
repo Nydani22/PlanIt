@@ -11,6 +11,7 @@ import { ChatMessage } from '../../models/ai.model';
 import { CalendarRefreshService } from '../../services/calendarRefresh/calendar-refresh.service';
 import { SnackbarService } from '../../services/snackbar/snackbar.service';
 import { MarkdownModule } from 'ngx-markdown';
+import { AiReviewDialogComponent } from '../ai-review-dialog/ai-review-dialog';
 
 @Component({
   selector: 'app-ai-chat',
@@ -23,7 +24,8 @@ import { MarkdownModule } from 'ngx-markdown';
     MatInputModule, 
     MatFormFieldModule,
     MatProgressSpinnerModule,
-    MarkdownModule
+    MarkdownModule,
+    AiReviewDialogComponent
   ],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss']
@@ -32,6 +34,8 @@ export class AiChatComponent {
   private aiService = inject(AiService);
   private calendarRefreshService = inject(CalendarRefreshService);
   private snackbarService = inject(SnackbarService);
+  showReviewModal = signal(false);
+  reviewData = signal<any>(null);
 
   messages = signal<ChatMessage[]>([
     { sender: 'ai', text: 'Szia! Miben segíthetek? Tölts fel egy képet egy meghívóról vagy órarendről, vagy csak írd le az időpontot, és beírom a naptáradba!' }
@@ -49,8 +53,6 @@ export class AiChatComponent {
   isRecording = signal(false);
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
-
-
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -123,15 +125,7 @@ export class AiChatComponent {
     this.scrollToBottom();
 
     this.aiService.sendMessage(text, file || undefined, recentHistory).subscribe({
-      next: (res) => {
-        this.messages.update(msgs => [...msgs, { sender: 'ai', text: res.message }]);
-        this.isLoading.set(false);
-        this.scrollToBottom();
-        
-        if (res.action === 'createEvent' || res.action === 'updateEvent' || res.action === 'deleteEvent') {
-          this.calendarRefreshService.triggerRefresh();
-        }
-      },
+      next: (res) => this.handleAiResponse(res),
       error: (err) => {
         this.messages.update(msgs => [...msgs, { sender: 'ai', text: 'Hiba történt a kapcsolódás során. Kérlek próbáld újra!' }]);
         this.isLoading.set(false);
@@ -193,21 +187,42 @@ export class AiChatComponent {
       }));
 
     this.aiService.sendMessage('', audioFile, recentHistory).subscribe({
-      next: (res) => {
-        this.messages.update(msgs => [...msgs, { sender: 'ai', text: res.message }]);
-        this.isLoading.set(false);
-        this.scrollToBottom();
-        
-        if (res.action === 'createEvent' || res.action === 'updateEvent' || res.action === 'deleteEvent') {
-          this.calendarRefreshService.triggerRefresh();
-        }
-      },
+      next: (res) => this.handleAiResponse(res),
       error: (err) => {
         this.messages.update(msgs => [...msgs, { sender: 'ai', text: 'Hiba történt a kapcsolódás során. Kérlek próbáld újra!' }]);
         this.isLoading.set(false);
         this.scrollToBottom();
       }
     });
+  }
+
+  private handleAiResponse(res: any) {
+    this.messages.update(msgs => [...msgs, { sender: 'ai', text: res.message }]);
+    this.isLoading.set(false);
+    this.scrollToBottom();
+
+    if (res.action === 'reviewRequired') {
+      this.reviewData.set({
+        creations: res.pendingCreations,
+        updates: res.pendingUpdates,
+        deletions: res.pendingDeletions
+      });
+      this.showReviewModal.set(true); 
+
+    } else if (res.action === 'createEvent' || res.action === 'updateEvent' || res.action === 'deleteEvent') {
+      this.calendarRefreshService.triggerRefresh();
+    }
+  }
+
+  onReviewClosed(result: boolean) {
+    this.showReviewModal.set(false);
+    this.reviewData.set(null);
+
+    if (result) {
+      this.calendarRefreshService.triggerRefresh();
+      this.messages.update(msgs => [...msgs, { sender: 'ai', text: '✅ A naptárad frissült a módosításokkal!' }]);
+      this.scrollToBottom();
+    }
   }
 
   async toggleRecording() {

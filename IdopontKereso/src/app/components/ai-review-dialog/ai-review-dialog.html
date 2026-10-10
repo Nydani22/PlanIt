@@ -1,10 +1,7 @@
-<!-- Fekete áttetsző háttér (Backdrop) -->
 <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
   
-  <!-- Maga a Modális ablak -->
   <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
     
-    <!-- Fejléc (Header) -->
     <div class="p-6 sm:p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0 bg-gray-50/50 dark:bg-gray-800/30">
       <h2 class="font-bold text-xl text-gray-900 dark:text-gray-100 flex items-center gap-3 m-0">
         <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -17,13 +14,11 @@
       </button>
     </div>
 
-    <!-- Tartalom (Scrollable Content) -->
     <div class="flex-1 overflow-y-auto p-6 sm:p-8 flex flex-col gap-8 bg-white dark:bg-gray-900">
       <p class="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400 m-0">
         Kattints a <mat-icon class="scale-[0.8] inline-block text-blue-500 align-middle">edit</mat-icon> ceruza ikonra az események részleteinek megnyitásához és egyenkénti mentéséhez, vagy a <mat-icon class="scale-[0.8] inline-block text-red-500 align-middle">delete</mat-icon> kukára, ha elveted a javaslatot.
       </p>
 
-      <!-- Új események -->
       @if (creations().length > 0) {
         <div class="flex flex-col gap-4">
           <h3 class="text-green-600 dark:text-green-500 font-bold flex items-center gap-2 text-sm uppercase tracking-wider m-0">
@@ -54,7 +49,6 @@
         </div>
       }
 
-      <!-- Módosítások -->
       @if (updates().length > 0) {
         <div class="flex flex-col gap-4">
           <h3 class="text-blue-600 dark:text-blue-500 font-bold flex items-center gap-2 text-sm uppercase tracking-wider m-0">
@@ -85,7 +79,6 @@
         </div>
       }
 
-      <!-- Törlések -->
       @if (deletions().length > 0) {
         <div class="flex flex-col gap-4">
           <h3 class="text-red-600 dark:text-red-500 font-bold flex items-center gap-2 text-sm uppercase tracking-wider m-0">
@@ -117,7 +110,6 @@
       }
     </div>
 
-    <!-- Lábléc (Footer) -->
     <div class="p-6 bg-gray-50/80 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 shrink-0">
       <button mat-button (click)="close()" [disabled]="isLoading()" class="!px-6 !py-6 rounded-full font-medium">Bezárás</button>
       

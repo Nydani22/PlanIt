@@ -175,8 +175,7 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 const minDate = new Date(Math.min(...shiftStartTimes));
                 const maxDate = new Date(Math.max(...shiftEndTimes));
                 
-                minDate.setDate(minDate.getDate() - 2);
-                maxDate.setDate(maxDate.getDate() + 2);
+                maxDate.setDate(maxDate.getDate() + 1);
                 
                 const EventModel = require('../models/Event.model');
                 const existingEvents = await EventModel.find({

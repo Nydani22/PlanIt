@@ -289,6 +289,14 @@ exports.generateICalStringByToken = async (token) => {
                 freq: item.recurrence.frequency,
             };
             
+            if (item.recurrence.frequency === 'WEEKLY' && item.recurrence.daysOfWeek && item.recurrence.daysOfWeek.length > 0) {
+                const dayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                
+                repeating.byDay = item.recurrence.daysOfWeek
+                    .filter(d => d >= 0 && d <= 6)
+                    .map(d => dayMap[d]);
+            }
+
             if (item.recurrence.untilDate) {
                 repeating.until = item.recurrence.untilDate;
             }

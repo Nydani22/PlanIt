@@ -256,7 +256,11 @@ exports.generateICalStringByToken = async (token) => {
             description: item.description,
             location: item.location,
             allDay: item.isAllDay,
-            lastModified: item.updatedAt
+            lastModified: item.updatedAt,
+            url: item.externalCalendarUrl ? item.externalCalendarUrl : undefined,
+            categories: item.category ? [item.category] : undefined,
+            transparency: item.allowOverlap ? 'TRANSPARENT' : 'OPAQUE',
+            busystatus: item.allowOverlap ? 'FREE' : 'BUSY'
         };
 
         if (item.isAllDay) {
@@ -284,6 +288,13 @@ exports.generateICalStringByToken = async (token) => {
 
         const calEvent = calendar.createEvent(eventConfig);
 
+        if (item.sendNotification) {
+            calEvent.createAlarm({
+                type: 'display',
+                trigger: 900
+            });
+        }
+
         if (item.recurrence && item.recurrence.frequency !== 'NONE') {
             const repeating = {
                 freq: item.recurrence.frequency,
@@ -291,7 +302,7 @@ exports.generateICalStringByToken = async (token) => {
             
             if (item.recurrence.frequency === 'WEEKLY' && item.recurrence.daysOfWeek && item.recurrence.daysOfWeek.length > 0) {
                 const dayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                
+
                 repeating.byDay = item.recurrence.daysOfWeek
                     .filter(d => d >= 0 && d <= 6)
                     .map(d => dayMap[d]);
@@ -299,6 +310,10 @@ exports.generateICalStringByToken = async (token) => {
 
             if (item.recurrence.untilDate) {
                 repeating.until = item.recurrence.untilDate;
+            }
+
+            if (item.recurrence.cancelledDates && item.recurrence.cancelledDates.length > 0) {
+                repeating.exclude = item.recurrence.cancelledDates;
             }
 
             calEvent.repeating(repeating);

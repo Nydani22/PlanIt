@@ -258,7 +258,7 @@ exports.generateICalStringByToken = async (token) => {
             allDay: item.isAllDay,
             lastModified: item.updatedAt,
             url: item.externalCalendarUrl ? item.externalCalendarUrl : undefined,
-            categories: item.category ? [item.category] : undefined,
+            categories: item.category ? [{ name: item.category }] : undefined,
             transparency: item.allowOverlap ? 'TRANSPARENT' : 'OPAQUE',
             busystatus: item.allowOverlap ? 'FREE' : 'BUSY'
         };

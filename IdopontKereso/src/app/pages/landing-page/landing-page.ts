@@ -1,4 +1,4 @@
-import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, HostListener, inject, AfterViewInit } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, HostListener, inject, AfterViewInit, signal } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,15 +20,13 @@ export class LandingPage implements OnInit, AfterViewInit {
   private router = inject(Router);
   private isBrowser: boolean;
   private ticking = false;
+  isVideoLoaded = signal(false);
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit(): void {
-    if (this.isBrowser) {
-      AOS.init({ duration: 1000, once: true, offset: 100, easing: 'ease-in-out' });
-    }
     this.checkLoginStatus();
   }
 
@@ -39,16 +37,45 @@ export class LandingPage implements OnInit, AfterViewInit {
   }
 
   private async loadVideoAsBlob() {
+    const safetyTimeout = setTimeout(() => {
+      this.revealPage();
+    }, 2500);
+
     try {
       const response = await fetch('/videos/Calendar.mp4?ngsw-bypass=true');
-      const blob = await response.blob();
+      if (!response.ok) throw new Error(`Videó letöltési hiba: ${response.status}`);
       
+      const blob = await response.blob();
       const videoUrl = URL.createObjectURL(blob);
+      
+      const video = this.videoElement.nativeElement;
+      video.src = videoUrl;
 
-      this.videoElement.nativeElement.src = videoUrl;
+      video.onloadedmetadata = () => {
+        clearTimeout(safetyTimeout);
+        this.revealPage();
+      };
+
+      video.onerror = () => {
+        clearTimeout(safetyTimeout);
+        this.revealPage();
+      };
+      
     } catch (error) {
       console.error('Hiba a videó betöltésekor:', error);
+      clearTimeout(safetyTimeout);
+      this.revealPage();
     }
+  }
+
+  revealPage(): void {
+    if (this.isVideoLoaded()) return;
+    
+    this.isVideoLoaded.set(true);
+
+    setTimeout(() => {
+      AOS.init({ duration: 1000, once: true, offset: 100, easing: 'ease-in-out' });
+    }, 50);
   }
 
   checkLoginStatus(): void {
@@ -59,7 +86,7 @@ export class LandingPage implements OnInit, AfterViewInit {
 
   @HostListener('window:scroll')
   onWindowScroll() {
-    if (!this.isBrowser || !this.videoElement) return;
+    if (!this.isBrowser || !this.videoElement || !this.isVideoLoaded()) return;
 
     if (!this.ticking) {
       window.requestAnimationFrame(() => {
@@ -72,24 +99,16 @@ export class LandingPage implements OnInit, AfterViewInit {
 
   private updateVideoProgress() {
     const video = this.videoElement.nativeElement;
-    const section = document.getElementById('video-section'); // A konkrét szekciót figyeljük
+    const section = document.getElementById('video-section');
 
     if (video.readyState >= 2 && video.duration && section) {
       const rect = section.getBoundingClientRect();
-      
-      // Kiszámoljuk, mennyi van még hátra a szekcióból
       const scrollableDistance = rect.height - window.innerHeight;
-      
-      // Megnézzük, mennyit görgettünk lefelé a szekció tetejétől
       const scrolled = -rect.top;
 
-      // Százalékos arány (0-tól 1-ig)
       let scrollFraction = scrolled / scrollableDistance;
-
-      // Biztosítjuk, hogy az érték szigorúan 0 és 1 között maradjon
       scrollFraction = Math.max(0, Math.min(1, scrollFraction));
 
-      // Videó idejének frissítése
       video.currentTime = video.duration * scrollFraction;
     }
   }

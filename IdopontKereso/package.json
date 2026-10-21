@@ -33,12 +33,13 @@
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@scarf/scarf": "^1.4.0",
-    "angular-calendar": "^0.32.0",
+    "angular-calendar": "^0.32.2",
     "aos": "^2.3.4",
     "calendar-utils": "^0.12.4",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "marked": "^18.0.9",
+    "marked-katex-extension": "^5.1.13",
     "ngx-markdown": "^22.0.0",
     "positioning": "^3.0.1",
     "rxjs": "~7.8.0",
@@ -63,6 +64,15 @@
     "@hono/node-server": "^2.0.5",
     "undici": "^7.27.3",
     "esbuild": "^0.28.1",
-    "@babel/core": "^7.29.1"
+    "@babel/core": "^7.29.1",
+    "piscina": "^5.3.2",
+    "vite": "^8.3.5"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "@parcel/watcher@2.6.0": true,
+    "lmdb@3.5.6": true,
+    "msgpackr-extract@3.0.4": true,
+    "@scarf/scarf@1.4.0": true
   }
 }

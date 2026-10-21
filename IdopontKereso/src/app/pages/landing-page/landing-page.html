@@ -1,10 +1,14 @@
-<div class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans">
+<div [class.opacity-0]="!isVideoLoaded()" 
+     [class.pointer-events-none]="!isVideoLoaded()" 
+     class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans transition-opacity duration-300">
+  
   <section class="relative h-[300vh]" id="video-section">
     <div class="sticky top-0 h-screen w-full overflow-hidden bg-black">
       
       <video 
         #scrollVideo 
-        class="absolute inset-0 w-full h-full object-cover opacity-60 transition-all duration-75 ease-linear"
+        (loadedmetadata)="revealPage()"
+        class="absolute inset-0 w-full h-full object-cover opacity-60"
         muted 
         playsinline>
       </video>
@@ -95,5 +99,4 @@
 
     </div>
   </section>
-
 </div>

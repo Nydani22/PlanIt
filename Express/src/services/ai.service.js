@@ -233,18 +233,6 @@ const syncScheduleTool = {
   }
 };
 
-const searchWebTool = {
-  name: "searchWeb",
-  description: "Keress az interneten nyilvános események (pl. Forma-1, focimeccs, koncertek, ünnepek) hivatalos dátuma és kezdési időpontja után.",
-  parameters: {
-    type: "OBJECT",
-    properties: {
-      query: { type: "STRING", description: "Keresőkifejezés (pl. '2026 Forma 1 mai futam kezdés időpont')." }
-    },
-    required: ["query"]
-  }
-};
-
 
 const fallbackModels = [
   'gemini-flash-latest',
@@ -260,7 +248,7 @@ const getModel = (modelName) => {
     model: modelName,
     tools: [
       {
-        functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool, searchWebTool,syncScheduleTool]
+        functionDeclarations: [createEventsTool, updateEventsTool, getEventsTool, deleteEventsTool, getUserGroupsTool, findAvailableTimeTool, syncScheduleTool]
       }
     ]
   });
@@ -292,41 +280,7 @@ const generateAIContent = async (contents) => {
   throw new Error('Jelenleg minden AI modellünk leterhelt vagy elérhetetlen. Kérlek, próbáld újra egy picit később!');
 };
 
-const performWebSearch = async (query) => {
-  const TIMEOUT_MS = 5000;
-  const prompt = `Keresd meg az interneten: "${query}". Írd meg röviden a pontos dátumot, kezdési időpontot és a helyszínt magyar idő (CET/CEST) szerint!`;
-
-  for (const modelName of fallbackModels) {
-    try {
-      const searchModel = genAI.getGenerativeModel({
-        model: modelName,
-        tools: [{ googleSearch: {} }]
-      });
-
-      const response = await Promise.race([
-        searchModel.generateContent(prompt),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('TIMEOUT')), TIMEOUT_MS)
-        )
-      ]);
-
-      const text = response.response.text();
-      if (text) {
-        return text;
-      }
-    } catch (err) {
-      console.warn(`[WebSearch Váltás] Hiba a(z) ${modelName} modellnél:`, err.message || err);
-      continue;
-    }
-  }
-
-  console.error('Minden webes kereső modell sikertelen volt.');
-  return null;
-};
-
-
 module.exports = {
   generateAIContent,
-  performWebSearch,
   genAI
 };

@@ -1,4 +1,4 @@
-const { generateAIContent, performWebSearch } = require('../services/ai.service');
+const { generateAIContent } = require('../services/ai.service');
 const eventService = require('../services/event.service');
 const groupService = require('../services/group.service');
 const freeBusyService = require('../services/freebusy.service');
@@ -39,15 +39,14 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
 
     SZIGORÚ SZABÁLYOK ÉS HATÁROK: 
     1. Te egy Naptár Asszisztens vagy. A feladatod az események kezelése és a naptár lekérdezése.
-    2. Ha a felhasználó egy nyilvános esemény (pl. Forma-1 futam, meccs, koncert) naptárba írását kéri, de nincs meg a kezdési időpont, KÖTELEZŐ használnod a 'searchWeb' eszközt a dátum és időpont felkutatására! Ne kérdezd meg a felhasználótól!
-    3. SZINKRONIZÁLÁS (Képek, beosztások): 
+    2. SZINKRONIZÁLÁS (Képek, beosztások): 
        - Ha a felhasználó egy beosztás szinkronizálását kéri, KÖTELEZŐ a 'syncSchedule' eszközt használnod! 
        - Ne ellenőrizgesd a meglévő eseményeket, csak olvasd le az új listát pontosan (számold át UTC-re), és add át a 'syncSchedule' eszköznek. A szerver megoldja a frissítést és a törlést!
-    4. Ha új eseményt kér (és még nincs a naptárban), használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak ('fromDate', 'toDate')!
-    5. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t. FIGYELEM: Csoportos eseményeket (ahol isGroupEvent: true) TILOS MÓDOSÍTANOD ÉS TÖRÖLNÖD! Ilyen kérés esetén ne használj eszközt, hanem udvariasan tájékoztasd a felhasználót, hogy a csoportos események adatait csak a naptár felületén lehet megváltoztatni. Csak személyes eseményeknél használd az 'updateEvents' vagy 'deleteEvents' eszközt!
-    6. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
-    7. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
-    8. Válaszgeneráláskor formázz Markdown kiemelésekkel (**dátum**, **időpont**)!
+    3. Ha új eseményt kér (és még nincs a naptárban), használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak ('fromDate', 'toDate')!
+    4. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t. FIGYELEM: Csoportos eseményeket (ahol isGroupEvent: true) TILOS MÓDOSÍTANOD ÉS TÖRÖLNÖD! Ilyen kérés esetén ne használj eszközt, hanem udvariasan tájékoztasd a felhasználót, hogy a csoportos események adatait csak a naptár felületén lehet megváltoztatni. Csak személyes eseményeknél használd az 'updateEvents' vagy 'deleteEvents' eszközt!
+    5. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
+    6. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
+    7. Válaszgeneráláskor formázz Markdown kiemelésekkel (**dátum**, **időpont**)!
 `;
 
 const processToolCalls = async (functionCalls, userId, timeZone) => {
@@ -455,40 +454,7 @@ const handleAIChat = async (req, res) => {
         const result = await generateAIContent(contents);
         const response = await result.response;
         let functionCalls = response.functionCalls();
-
-        const searchCall = functionCalls?.find(call => call.name === 'searchWeb');
-        if (searchCall) {
-            const query = searchCall.args.query;
-            const searchResult = await performWebSearch(query);
-
-            let followUpPrompt = '';
-
-            if (searchResult) {
-                followUpPrompt = `
-                Internetes keresési eredmény erre a kérdésre ("${query}"):
-                ${searchResult}
-
-                A fenti adatok alapján készítsd el az eseményt a naptárba a 'createEvents' eszközzel!`;
-            } else {
-                followUpPrompt = `
-                Sajnos az internetes keresés jelenleg nem érhető el vagy túllépte a lekérdezési kvótát a következő kérdésre: "${query}".
-                Kérlek, tájékoztasd a felhasználót udvariasan, hogy most nem sikerült automatikusan kideríteni az időpontot az internetről, és kérd meg, hogy adja meg ő maga a kezdési időpontot, hogy rögzíthesd a naptárba! Ne hívj meg újabb kereső eszközt!`;
-            }
-
-            contents.push(followUpPrompt);
-            const secondStepResult = await generateAIContent(contents);
-            const secondResponse = await secondStepResult.response;
-            functionCalls = secondResponse.functionCalls();
-
-            if (!functionCalls || functionCalls.length === 0) {
-                return res.json({
-                    success: true,
-                    action: 'message',
-                    message: secondResponse.text()
-                });
-            }
-        }
-
+        
         if (functionCalls && functionCalls.length > 0) {
             const toolResults = await processToolCalls(functionCalls, userId, timeZone);
 

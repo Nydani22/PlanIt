@@ -414,37 +414,6 @@ export class EventDialogComponent implements OnInit {
     }
   }
 
-  onDelete() {
-    if (this.isEditMode() && this.data?.event?._id) {
-      const confirmDialogRef = this.dialog.open(ConfirmDialogComponent, {
-        width: '500px',
-        maxWidth: '90vw',
-        restoreFocus: false,
-        autoFocus: false,
-        data: {
-          title: 'Esemény törlése',
-          message: 'Biztosan törölni szeretnéd ezt az eseményt? Ezt a műveletet nem lehet visszavonni.',
-          confirmText: 'Törlés',
-          cancelText: 'Mégsem',
-          color: 'warn' 
-        }
-      });
-
-      confirmDialogRef.afterClosed().subscribe(result => {
-        if (result) {
-          this.eventService.deleteEvent(this.data!.event!._id!).subscribe({
-            next: () => {
-              this.dialogRef.close(true);
-            },
-            error: (err) => {
-             this.snackbarService.showError("Hiba az esemény törlésekor.") 
-            }
-          });
-        }
-      });      
-    }
-  }
-
   private combineDateAndTime(date: Date, time: string, isAllDay: boolean = false): Date {
     if (!date) return new Date();
     const timeStr = time || '00:00';

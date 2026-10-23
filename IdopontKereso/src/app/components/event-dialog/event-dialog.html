@@ -1,12 +1,5 @@
 <div mat-dialog-title class="m-0 font-bold w-full">
   <span>{{ isEditMode() ? (canEdit() ? 'Esemény Módosítása' : 'Esemény Részletei') : 'Új Esemény Létrehozása' }}</span>
-  
-  @if (isEditMode() && canEdit()) {
-    <button mat-button color="warn" type="button" (click)="onDelete()" class="ml-auto">
-      <mat-icon>delete</mat-icon>
-      Törlés
-    </button>
-  }
 </div>
 
 <mat-dialog-content class="mat-typography p-0 sm:px-6 sm:py-2">

@@ -464,3 +464,20 @@ exports.getExpandedEventsForUsers = async (searchStart, searchEnd, attendeeIds) 
 
   return allRelevantEvents;
 };
+
+exports.checkEventPermission = async (event, userId) => {
+    if (!event) throw new Error('Esemény nem található');
+
+    let hasPermission = event.organizerId.toString() === userId.toString();
+
+    if (!hasPermission && event.groupId) {
+        const group = await Group.findById(event.groupId);
+        if (group) {
+            const member = group.members.find(m => m.userId.toString() === userId.toString());
+            if (member && (member.role === 'ADMIN' || member.role === 'OWNER')) {
+                hasPermission = true;
+            }
+        }
+    }
+    return hasPermission;
+};

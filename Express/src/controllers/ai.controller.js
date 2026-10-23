@@ -2,7 +2,7 @@ const { generateAIContent } = require('../services/ai.service');
 const eventService = require('../services/event.service');
 const groupService = require('../services/group.service');
 const freeBusyService = require('../services/freebusy.service');
-const { fromZonedTime, formatInTimeZone } = require('date-fns-tz');
+const { fromZonedTime } = require('date-fns-tz');
 
 const formatChatHistory = (history) => {
     let parsedHistory = [];
@@ -22,18 +22,22 @@ const formatChatHistory = (history) => {
     return "Nincs előzmény.";
 };
 
-const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZone) => `
+const buildSystemInstruction = (pastEvents, upcomingEvents, historyText, currentTime, timeZone) => `
     Információk a felhasználóról:
     - Aktuális helyi idő: ${currentTime}
     - Felhasználó időzónája: ${timeZone}
 
     SZIGORÚ IDŐZÓNA ÉS DÁTUM SZABÁLYOK: 
     1. A fenti 'Aktuális helyi idő' és a naptáresemények 'start' / 'end' mezői mind azonos formátumban (YYYY-MM-DD, HH:mm:ss) vannak, a felhasználó helyi idejében!
-    2. KÖVETKEZŐ ESEMÉNY VIZSGÁLATA: Egy esemény CSAK AKKOR lehet "következő", ha a 'start' dátuma és ideje SZIGORÚAN KÉSŐBBI, mint az 'Aktuális helyi idő' (${currentTime})! Olyan eseményt, amelynek a kezdési időpontja már elmúlt a mai napon, TILOS következő eseményként megjelölni! Ha a mai napon már nincs több kezdődő program, keresd meg a legelső olyan eseményt a következő napokból, ami még nem kezdődött el!
-    3. BEVITEL (Eszközök használatakor): Az eszközök a dátumokat (fromDate, toDate, stb.) SZIGORÚAN A FELHASZNÁLÓ HELYI IDEJÉBEN várják (YYYY-MM-DDTHH:mm:ss formátumban)! NE számold át UTC-re, hagyd meg az eredeti időzóna szerinti értéket, a szerver majd elvégzi a konverziót!
+    2. BEVITEL (Eszközök használatakor): Az eszközök a dátumokat (fromDate, toDate, stb.) SZIGORÚAN A FELHASZNÁLÓ HELYI IDEJÉBEN várják (YYYY-MM-DDTHH:mm:ss formátumban)! NE számold át UTC-re, hagyd meg az eredeti időzóna szerinti értéket, a szerver majd elvégzi a konverziót!
 
-    ESEMÉNYEK AZ ELMÚLT ÉS A KÖVETKEZŐ 90 NAPBAN:
-    ${JSON.stringify(minimalEvents)}
+    KÖVETKEZŐ (JÖVŐBELI VAGY FOLYAMATBAN LÉVŐ) ESEMÉNYEK:
+    Ezek az események még nem kezdődtek el, vagy épp most zajlanak. Ha a felhasználó a "következő" programját kérdezi, KIZÁRÓLAG EBBŐL A LISTÁBÓL válaszd a legelsőt!
+    ${JSON.stringify(upcomingEvents)}
+
+    MÚLTBELI ESEMÉNYEK:
+    Ezek az események már VÉGET ÉRTEK. Szigorúan TILOS őket jövőbeli vagy következő eseményként kezelni! Csak akkor használd őket, ha a felhasználó kifejezetten a múltra kérdez (pl. "Mi volt tegnap?").
+    ${JSON.stringify(pastEvents)}
 
     EDDIGI BESZÉLGETÉS ELŐZMÉNYE:
     ${historyText}
@@ -44,7 +48,7 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
        - Ha a felhasználó egy beosztás szinkronizálását kéri, KÖTELEZŐ a 'syncSchedule' eszközt használnod! 
        - Ne ellenőrizgesd a meglévő eseményeket, csak olvasd le az új listát pontosan (a helyi idő szerint), és add át a 'syncSchedule' eszköznek. A szerver megoldja a frissítést és a törlést!
     3. Ha új eseményt kér (és még nincs a naptárban), használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN a HELYI IDŐT várják ('fromDate', 'toDate')!
-    4. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t. FIGYELEM: Csoportos eseményeket (ahol isGroupEvent: true) TILOS MÓDOSÍTANOD ÉS TÖRÖLNÖD! Ilyen kérés esetén ne használj eszközt, hanem udvariasan tájékoztasd a felhasználót, hogy a csoportos események adatait csak a naptár felületén lehet megváltoztatni. Csak személyes eseményeknél használd az 'updateEvents' vagy 'deleteEvents' eszközt!
+    4. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t. Csak használd az 'updateEvents' vagy 'deleteEvents' eszközt az adott azonosítóval!
     5. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
     6. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
     7. Válaszgeneráláskor formázz Markdown kiemelésekkel (**dátum**, **időpont**)!
@@ -137,12 +141,13 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                     
                     const existingEvent = await eventService.getEventById(eventId, userId);
                     
-                    if (existingEvent && existingEvent.groupId) {
-                        results.actionErrors.push(`A(z) '${existingEvent.eventName}' esemény csoportos, így az AI nem módosíthatja.`);
-                        continue;
-                    }
-                    
                     if (existingEvent) {
+                        const hasPermission = await eventService.checkEventPermission(existingEvent, userId);
+                        if (!hasPermission) {
+                            results.actionErrors.push(`Nincs jogosultságod a(z) '${existingEvent.eventName}' esemény módosításához.`);
+                            continue;
+                        }
+
                         if (updateData.fromDate) updateData.fromDate = fromZonedTime(updateData.fromDate, timeZone);
                         if (updateData.toDate) updateData.toDate = fromZonedTime(updateData.toDate, timeZone);
 
@@ -156,6 +161,12 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 for (const eventId of call.args.eventIds) {
                     const existingEvent = await eventService.getEventById(eventId, userId);
                     if (existingEvent) {
+                        const hasPermission = await eventService.checkEventPermission(existingEvent, userId);
+                        if (!hasPermission) {
+                            results.actionErrors.push(`Nincs jogosultságod a(z) '${existingEvent.eventName}' esemény törléséhez.`);
+                            continue;
+                        }
+
                         results.pendingDeletions.push({
                             eventId: eventId,
                             eventName: existingEvent.eventName,
@@ -437,7 +448,7 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
 
 const handleAIChat = async (req, res) => {
     try {
-        const { message, timeZone, currentTime, history } = req.body;
+        const { message, timeZone, history } = req.body;
         const file = req.file;
         const userId = req.user.id;
 
@@ -449,18 +460,30 @@ const handleAIChat = async (req, res) => {
             [userId]
         );
 
-        const minimalEvents = windowEvents.map(e => ({ 
-            id: e._id, 
-            title: e.eventName, 
-            isGroupEvent: !!e.groupId,
-            start: new Date(e.fromDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }), 
-            end: new Date(e.toDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }) 
-        }));
+        const pastEvents = [];
+        const upcomingEvents = [];
+
+        windowEvents.forEach(e => {
+            const mappedEvent = { 
+                id: e._id, 
+                title: e.eventName, 
+                isGroupEvent: !!e.groupId,
+                start: new Date(e.fromDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }), 
+                end: new Date(e.toDate).toLocaleString('en-CA', { timeZone: timeZone || 'UTC', hour12: false }) 
+            };
+            
+            if (new Date(e.toDate) < now) {
+                pastEvents.push(mappedEvent);
+            } else {
+                upcomingEvents.push(mappedEvent);
+            }
+        });
+
         const historyText = formatChatHistory(history);
         
         const userTz = timeZone || 'UTC';
-        const formattedNow = new Date().toLocaleString('en-CA', { timeZone: userTz, hour12: false });
-        const systemInstruction = buildSystemInstruction(minimalEvents, historyText, formattedNow, userTz);
+        const formattedNow = new Date().toLocaleString('en-CA', { timeZone: userTz, hour12: false });        
+        const systemInstruction = buildSystemInstruction(pastEvents, upcomingEvents, historyText, formattedNow, userTz);
 
         let contents = [systemInstruction + "\n\nFelhasználó kérése: " + (message || "Elemezd ezt a képet!")];
         if (file) {
@@ -474,31 +497,37 @@ const handleAIChat = async (req, res) => {
         if (functionCalls && functionCalls.length > 0) {
             const toolResults = await processToolCalls(functionCalls, userId, timeZone);
 
-            const summaryPrompt = `
-            A felhasználó kérése ez volt: "${message ? message : (file ? 'Feltöltött egy képet/beosztást szinkronizálásra.' : 'Nincs megadva szöveges kérés.')}"
+            if (toolResults.hasModification) {
+                return res.json({
+                    success: true,
+                    action: 'reviewRequired',
+                    message: 'Előkészítettem a kért módosításokat. Kérlek, nézd át és hagyd jóvá őket a felületen!',
+                    pendingCreations: toolResults.pendingCreations,
+                    pendingUpdates: toolResults.pendingUpdates,
+                    pendingDeletions: toolResults.pendingDeletions,
+                    actionErrors: toolResults.actionErrors
+                });
+            } 
             
-            Az alábbi műveleteket készítettem elő jóváhagyásra (még nincsenek elmentve!):
-            - Létrehozásra vár (Új): ${toolResults.pendingCreations.length} db
-            - Módosításra vár: ${toolResults.pendingUpdates.length} db
-            - Törlésre vár: ${toolResults.pendingDeletions.length} db
-            - Lekérdezett események (ha volt): ${JSON.stringify(toolResults.fetchedEventsSummary)}
-            - Lekérdezett csoportok (ha volt): ${JSON.stringify(toolResults.fetchedGroupsSummary)}
-            - Talált SZABAD IDŐPONTOK: ${JSON.stringify(toolResults.fetchedTimeSlots)}
-            - HIBÁK/MEGTAGADOTT MŰVELETEK: ${JSON.stringify(toolResults.actionErrors)}
-            
-            Kérlek, írj egy egybefüggő, barátságos, természetes nyelvű összefoglalót a felhasználónak arról, hogy miket JAVASOLSZ végrehajtani! Emeld ki egyértelműen, hogy ezek még csak tervezetek, és a felületen tudja őket átnézni/jóváhagyni a mentéshez! Csak azokat a műveleteket említsd, amikből 1 vagy több történt! Ha a 'HIBÁK' mezőben látsz valamit (pl. jogosultsági probléma), KÖTELEZŐ elmondanod a felhasználónak! Használj Markdown formázást a kiemelésekhez!
-            `;
-            
-            const secondResult = await generateAIContent(summaryPrompt);
+            else {
+                const summaryPrompt = `
+                A felhasználó kérése ez volt: "${message}"
+                A lekérdezett nyers adatok:
+                - Események: ${JSON.stringify(toolResults.fetchedEventsSummary)}
+                - Csoportok: ${JSON.stringify(toolResults.fetchedGroupsSummary)}
+                - Szabad időpontok: ${JSON.stringify(toolResults.fetchedTimeSlots)}
+                
+                Válaszold meg a felhasználó kérdését a fenti adatok alapján, barátságos stílusban!
+                `;
+                
+                const secondResult = await generateAIContent(summaryPrompt);
 
-            return res.json({
-                success: true,
-                action: toolResults.hasModification ? 'reviewRequired' : 'message',
-                message: secondResult.response.text(),
-                pendingCreations: toolResults.pendingCreations,
-                pendingUpdates: toolResults.pendingUpdates,
-                pendingDeletions: toolResults.pendingDeletions
-            });
+                return res.json({
+                    success: true,
+                    action: 'message',
+                    message: secondResult.response.text()
+                });
+            }
         }
 
         return res.json({

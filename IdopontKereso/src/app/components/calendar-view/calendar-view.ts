@@ -69,6 +69,7 @@ export class CalendarViewComponent implements OnInit {
   dragStart: Date | null = null;
   dragEnd: Date | null = null;
   private readonly dragTempEventId = 'drag-ghost-event';
+  private pendingSuccessMessage: string | null = null;
 
   constructor() {
     effect(() => {
@@ -117,6 +118,11 @@ export class CalendarViewComponent implements OnInit {
     ).subscribe((data: AppEvent[]) => {
       this.events = this.expandEvents(data);
       this.refresh.next();
+      
+      if (this.pendingSuccessMessage) {
+        this.snackbarService.showSuccess(this.pendingSuccessMessage);
+        this.pendingSuccessMessage = null;
+      }
     });
   }
 
@@ -393,16 +399,26 @@ export class CalendarViewComponent implements OnInit {
 
     confirmDialogRef.afterClosed().subscribe(result => {
       if (result) {
+        this.events = this.events.map(e => 
+          e.meta?.originalEvent?._id === originalEvent._id 
+            ? { ...e, cssClass: 'animate-pulse pointer-events-none opacity-80' } 
+            : e
+        );
+        this.refresh.next();
+
         this.eventService.deleteEvent(originalEvent._id).subscribe({
           next: () => {
-            this.snackbarService.showSuccess('Esemény sikeresen törölve.');
+            this.pendingSuccessMessage = 'Esemény sikeresen törölve.';
             this.loadEvents();
             this.calendarRefreshService.triggerRefresh();
           },
-          error: () => this.snackbarService.showError('Hiba az esemény törlésekor.')
+          error: () => {
+            this.snackbarService.showError('Hiba az esemény törlésekor.');
+            this.loadEvents();
+          }
         });
       }
-    });      
+    }); 
   }
 
   eventTimesChanged({
@@ -434,6 +450,7 @@ export class CalendarViewComponent implements OnInit {
           ...event,
           start: newStart,
           end: newEnd,
+          cssClass: 'animate-pulse pointer-events-none opacity-80'
         };
       }
       return iEvent;
@@ -475,6 +492,7 @@ export class CalendarViewComponent implements OnInit {
 
     this.eventService.updateEvent(originalEvent._id, payload).subscribe({
       next: () => {
+        this.pendingSuccessMessage = 'Időpont sikeresen módosítva.';
         this.loadEvents();
         this.calendarRefreshService.triggerRefresh();
       },

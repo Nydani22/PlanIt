@@ -371,6 +371,13 @@ export class CalendarViewComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        this.events = this.events.map(e => 
+          e.meta?.originalEvent?._id === originalAppEvent._id 
+            ? { ...e, cssClass: 'animate-pulse pointer-events-none opacity-80' } 
+            : e
+        );
+        this.refresh.next();
+        this.pendingSuccessMessage = 'Esemény sikeresen frissítve.';
         this.loadEvents();
         this.calendarRefreshService.triggerRefresh();
       }
@@ -539,6 +546,8 @@ export class CalendarViewComponent implements OnInit {
 
     this.eventService.createEvent(newEventPayload as AppEvent).subscribe({
       next: () => {
+        this.pendingSuccessMessage = 'Esemény sikeresen létrehozva.';
+        
         this.loadEvents();
         this.calendarRefreshService.triggerRefresh();
       },

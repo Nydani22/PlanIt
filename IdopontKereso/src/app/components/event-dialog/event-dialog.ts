@@ -14,7 +14,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { SlicePipe } from '@angular/common';
 import { AppEvent } from '../../models/event.model';
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { FIXED_CATEGORIES, CategoryDefinition } from '../../constants/category-icons.constants';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDividerModule } from '@angular/material/divider';
@@ -95,7 +94,6 @@ export class EventDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private eventService = inject(EventService);
   private dialogRef = inject(MatDialogRef<EventDialogComponent>);
-  private dialog = inject(MatDialog);
   public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
   private breakpointObserver = inject(BreakpointObserver);
   private authService = inject(AuthService);
@@ -394,7 +392,6 @@ export class EventDialogComponent implements OnInit {
         this.eventService.updateEvent(this.data.event._id, payload).subscribe({
           next: (res) => {
             this.dialogRef.close(true);
-            this.snackbarService.showSuccess("Az esemény mentése sikeres.");
           },
           error: (err) => {
             this.snackbarService.showError("Hiba az esemény frissítésekor.");
@@ -404,7 +401,6 @@ export class EventDialogComponent implements OnInit {
         this.eventService.createEvent(payload).subscribe({
           next: (res) => {
             this.dialogRef.close(true);
-            this.snackbarService.showSuccess("Az esemény létrehozása sikeres.");
           },
           error: (err) => {
             this.snackbarService.showError("Hiba az esemény létrehozásakor.");

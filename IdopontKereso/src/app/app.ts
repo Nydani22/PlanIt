@@ -300,9 +300,16 @@ export class App implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.snackbarService.showSuccess('Esemény sikeresen rögzítve!');
-        this.calendarRefreshService.triggerRefresh();
+      if (result && result.action === 'save') {
+        this.eventService.createEvent(result.payload).subscribe({
+          next: () => {
+            this.snackbarService.showSuccess('Esemény sikeresen rögzítve!');
+            this.calendarRefreshService.triggerRefresh();
+          },
+          error: () => {
+            this.snackbarService.showError('Hiba az esemény rögzítésekor!');
+          }
+        });
       }
     });
   }

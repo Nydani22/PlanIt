@@ -358,7 +358,6 @@ export class CalendarViewComponent implements OnInit {
 
   onEventClick(calendarEvent: CalendarEvent): void {
     const originalAppEvent = calendarEvent.meta?.originalEvent;
-    
     if (!originalAppEvent) return;
 
     const dialogRef = this.dialog.open(EventDialogComponent, {
@@ -370,20 +369,29 @@ export class CalendarViewComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+      if (result && result.action === 'save') {
         this.events = this.events.map(e => 
           e.meta?.originalEvent?._id === originalAppEvent._id 
             ? { ...e, cssClass: 'animate-pulse pointer-events-none opacity-80' } 
             : e
         );
         this.refresh.next();
-        this.pendingSuccessMessage = 'Esemény sikeresen frissítve.';
-        this.loadEvents();
-        this.calendarRefreshService.triggerRefresh();
+
+        this.eventService.updateEvent(originalAppEvent._id, result.payload).subscribe({
+          next: () => {
+            this.pendingSuccessMessage = 'Esemény sikeresen frissítve.';
+            this.loadEvents();
+            this.calendarRefreshService.triggerRefresh();
+          },
+          error: (err) => {
+            this.snackbarService.showError('Hiba az esemény frissítésekor.');
+            this.loadEvents(); 
+          }
+        });
       }
     });
   }
-
+     
   onDeleteEvent(mouseEvent: MouseEvent, calendarEvent: CalendarEvent): void {
     mouseEvent.stopPropagation();
     const originalEvent = calendarEvent.meta?.originalEvent;

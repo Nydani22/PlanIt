@@ -9,7 +9,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { EventService } from '../../services/event/event.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { SlicePipe } from '@angular/common';
@@ -92,13 +91,11 @@ export const dateRangeValidator: ValidatorFn = (control: AbstractControl): Valid
 })
 export class EventDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private eventService = inject(EventService);
   private dialogRef = inject(MatDialogRef<EventDialogComponent>);
   public data = inject<EventDialogData>(MAT_DIALOG_DATA, { optional: true }); 
   private breakpointObserver = inject(BreakpointObserver);
   private authService = inject(AuthService);
   private groupService = inject(GroupService);
-  private snackbarService = inject(SnackbarService)
   canEdit = signal<boolean>(true);
   eventForm: FormGroup;
   isEditMode = signal<boolean>(false);
@@ -388,25 +385,7 @@ export class EventDialogComponent implements OnInit {
         }
       }
 
-      if (this.isEditMode() && this.data?.event?._id) {
-        this.eventService.updateEvent(this.data.event._id, payload).subscribe({
-          next: (res) => {
-            this.dialogRef.close(true);
-          },
-          error: (err) => {
-            this.snackbarService.showError("Hiba az esemény frissítésekor.");
-          }
-        });
-      } else {
-        this.eventService.createEvent(payload).subscribe({
-          next: (res) => {
-            this.dialogRef.close(true);
-          },
-          error: (err) => {
-            this.snackbarService.showError("Hiba az esemény létrehozásakor.");
-          }
-        });
-      }
+      this.dialogRef.close({ action: 'save', payload: payload });
     }
   }
 

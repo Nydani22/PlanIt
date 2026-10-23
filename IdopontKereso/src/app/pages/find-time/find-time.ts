@@ -396,13 +396,26 @@ export class FindTime implements OnInit, OnDestroy {
       preFilledEvent.groupId = this.selectedGroupId();
     }
 
-    this.dialog.open(EventDialogComponent, {
+    const dialogRef = this.dialog.open(EventDialogComponent, {
       width: '800px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       restoreFocus: false,
       data: {
         event: preFilledEvent
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.action === 'save') {
+        this.eventService.createEvent(result.payload).subscribe({
+          next: () => {
+            this.snackbarService.showSuccess('Esemény sikeresen rögzítve!');
+          },
+          error: () => {
+            this.snackbarService.showError('Hiba az esemény rögzítésekor!');
+          }
+        });
       }
     });
   }

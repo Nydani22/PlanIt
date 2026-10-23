@@ -77,8 +77,19 @@ export class AiReviewDialogComponent implements OnInit {
     });
 
     const result = await firstValueFrom(dialogRef.afterClosed());
-    if (result) {
-      this.discardItem('create', index); 
+    if (result && result.action === 'save') {
+      this.isLoading.set(true);
+      this.eventService.createEvent(result.payload).subscribe({
+        next: () => {
+          this.snackbarService.showSuccess('Esemény sikeresen létrehozva.');
+          this.discardItem('create', index);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.snackbarService.showError('Hiba az esemény létrehozásakor.');
+          this.isLoading.set(false);
+        }
+      });
     }
   }
 
@@ -96,8 +107,19 @@ export class AiReviewDialogComponent implements OnInit {
     });
 
     const result = await firstValueFrom(dialogRef.afterClosed());
-    if (result) {
-      this.discardItem('update', index);
+    if (result && result.action === 'save') {
+      this.isLoading.set(true);
+      this.eventService.updateEvent(item.eventId, result.payload).subscribe({
+        next: () => {
+          this.snackbarService.showSuccess('Esemény sikeresen frissítve.');
+          this.discardItem('update', index);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.snackbarService.showError('Hiba az esemény frissítésekor.');
+          this.isLoading.set(false);
+        }
+      });
     }
   }
 

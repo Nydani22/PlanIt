@@ -227,7 +227,7 @@ exports.getEventsForTimeSearch = async (req, res) => {
   try {
     const userId = req.user.id;
     const searchParams = req.body; 
-    const { searchStart, searchEnd, requiredAttendees = [], optionalAttendees = [] } = searchParams;
+    const { searchStart, searchEnd, requiredAttendees = [], optionalAttendees = [], timeZone } = searchParams;
 
     const allAttendeeIds = [...new Set([...requiredAttendees, ...optionalAttendees])];
 
@@ -257,8 +257,15 @@ exports.getEventsForTimeSearch = async (req, res) => {
       allAttendeeIds
     );
 
+    const finalSearchParams = {
+        ...searchParams,
+        searchStart: new Date(searchStart),
+        searchEnd: new Date(searchEnd),
+        timeZone: timeZone || 'UTC' 
+    };
+
     const availableTimeSlots = freeBusyService.findAvailableTimeSlots(
-      searchParams, 
+      finalSearchParams, 
       expandedEvents
     );
 

@@ -2,6 +2,7 @@ const { generateAIContent } = require('../services/ai.service');
 const eventService = require('../services/event.service');
 const groupService = require('../services/group.service');
 const freeBusyService = require('../services/freebusy.service');
+const { fromZonedTime, formatInTimeZone } = require('date-fns-tz');
 
 const formatChatHistory = (history) => {
     let parsedHistory = [];
@@ -29,7 +30,7 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
     SZIGORÚ IDŐZÓNA ÉS DÁTUM SZABÁLYOK: 
     1. A fenti 'Aktuális helyi idő' és a naptáresemények 'start' / 'end' mezői mind azonos formátumban (YYYY-MM-DD, HH:mm:ss) vannak, a felhasználó helyi idejében!
     2. KÖVETKEZŐ ESEMÉNY VIZSGÁLATA: Egy esemény CSAK AKKOR lehet "következő", ha a 'start' dátuma és ideje SZIGORÚAN KÉSŐBBI, mint az 'Aktuális helyi idő' (${currentTime})! Olyan eseményt, amelynek a kezdési időpontja már elmúlt a mai napon, TILOS következő eseményként megjelölni! Ha a mai napon már nincs több kezdődő program, keresd meg a legelső olyan eseményt a következő napokból, ami még nem kezdődött el!
-    3. BEVITEL (Eszközök használatakor): Ha új eseményt hozol létre ('createEvents') vagy módosítasz ('updateEvents'), az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak! Számold át a helyi időt UTC-re az eszközhívás paramétereiben!
+    3. BEVITEL (Eszközök használatakor): Az eszközök a dátumokat (fromDate, toDate, stb.) SZIGORÚAN A FELHASZNÁLÓ HELYI IDEJÉBEN várják (YYYY-MM-DDTHH:mm:ss formátumban)! NE számold át UTC-re, hagyd meg az eredeti időzóna szerinti értéket, a szerver majd elvégzi a konverziót!
 
     ESEMÉNYEK AZ ELMÚLT ÉS A KÖVETKEZŐ 90 NAPBAN:
     ${JSON.stringify(minimalEvents)}
@@ -41,8 +42,8 @@ const buildSystemInstruction = (minimalEvents, historyText, currentTime, timeZon
     1. Te egy Naptár Asszisztens vagy. A feladatod az események kezelése és a naptár lekérdezése.
     2. SZINKRONIZÁLÁS (Képek, beosztások): 
        - Ha a felhasználó egy beosztás szinkronizálását kéri, KÖTELEZŐ a 'syncSchedule' eszközt használnod! 
-       - Ne ellenőrizgesd a meglévő eseményeket, csak olvasd le az új listát pontosan (számold át UTC-re), és add át a 'syncSchedule' eszköznek. A szerver megoldja a frissítést és a törlést!
-    3. Ha új eseményt kér (és még nincs a naptárban), használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN UTC ISO 8601 formátumot várnak ('fromDate', 'toDate')!
+       - Ne ellenőrizgesd a meglévő eseményeket, csak olvasd le az új listát pontosan (a helyi idő szerint), és add át a 'syncSchedule' eszköznek. A szerver megoldja a frissítést és a törlést!
+    3. Ha új eseményt kér (és még nincs a naptárban), használd a 'createEvents' eszközt! Az eszközök SZIGORÚAN a HELYI IDŐT várják ('fromDate', 'toDate')!
     4. Ha módosítani akar: Keresd meg a TELJES listában az 'id'-t. FIGYELEM: Csoportos eseményeket (ahol isGroupEvent: true) TILOS MÓDOSÍTANOD ÉS TÖRÖLNÖD! Ilyen kérés esetén ne használj eszközt, hanem udvariasan tájékoztasd a felhasználót, hogy a csoportos események adatait csak a naptár felületén lehet megváltoztatni. Csak személyes eseményeknél használd az 'updateEvents' vagy 'deleteEvents' eszközt!
     5. Ha TÖRÖLNI akar: Keresd meg az 'id'-t, és használd a 'deleteEvents' eszközt!
     6. Ha nem egyértelmű az azonosítás, kérdezz vissza eszközhívás nélkül!
@@ -110,6 +111,8 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
 
                     const newEventPayload = {
                         ...eventArgs,
+                        fromDate: fromZonedTime(eventArgs.fromDate, timeZone),
+                        toDate: fromZonedTime(eventArgs.toDate, timeZone),
                         isAllDay: eventArgs.isAllDay ?? false,
                         category: eventArgs.category || 'OTHER',
                         organizerId: userId,
@@ -140,6 +143,9 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                     }
                     
                     if (existingEvent) {
+                        if (updateData.fromDate) updateData.fromDate = fromZonedTime(updateData.fromDate, timeZone);
+                        if (updateData.toDate) updateData.toDate = fromZonedTime(updateData.toDate, timeZone);
+
                         results.pendingUpdates.push({ eventId, ...updateData });
                         results.hasModification = true;
                     }
@@ -147,7 +153,6 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 break;
 
             case 'deleteEvents':
-                case 'deleteEvents':
                 for (const eventId of call.args.eventIds) {
                     const existingEvent = await eventService.getEventById(eventId, userId);
                     if (existingEvent) {
@@ -162,14 +167,20 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 break;
 
             case 'syncSchedule':
-                const { targetEventName, shifts } = call.args;
+                const { targetEventName } = call.args;
                 
-                if (!shifts || shifts.length === 0) {
+                if (!call.args.shifts || call.args.shifts.length === 0) {
                     break;
                 }
 
-                const shiftStartTimes = shifts.map(s => new Date(s.fromDate).getTime());
-                const shiftEndTimes = shifts.map(s => new Date(s.toDate).getTime());
+                const shifts = call.args.shifts.map(s => ({
+                    ...s,
+                    fromDate: fromZonedTime(s.fromDate, timeZone),
+                    toDate: fromZonedTime(s.toDate, timeZone)
+                }));
+
+                const shiftStartTimes = shifts.map(s => s.fromDate.getTime());
+                const shiftEndTimes = shifts.map(s => s.toDate.getTime());
                 
                 const minDate = new Date(Math.min(...shiftStartTimes));
                 const maxDate = new Date(Math.max(...shiftEndTimes));
@@ -334,7 +345,8 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 break;
                 
             case 'getEvents':
-                const { startDate: startD, endDate: endD } = call.args;
+                const startD = fromZonedTime(call.args.startDate, timeZone);
+                const endD = fromZonedTime(call.args.endDate, timeZone);
                 const events = await eventService.getUserEvents(userId, startD, endD);
                 results.fetchedEventsSummary.push(...events.map(e => ({
                     title: e.eventName,
@@ -359,8 +371,11 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                 break;
 
             case 'findAvailableTime':
-                const { searchStart, searchEnd, durationMinutes, groupName, allowedDays, startHour, endHour } = call.args;
+                const { durationMinutes, groupName, allowedDays, startHour, endHour } = call.args;
                 
+                const searchStart = fromZonedTime(call.args.searchStart, timeZone);
+                const searchEnd = fromZonedTime(call.args.searchEnd, timeZone);
+
                 let requiredAttendees = [userId.toString()];
                 let targetGroupName = 'Saját naptár';
                 
@@ -377,7 +392,7 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
                             requiredAttendees = targetGroup.members.map(m => m.userId._id ? m.userId._id.toString() : m.userId.toString());
                             targetGroupName = targetGroup.groupName;
                         } else {
-                            results.actionErrors.push(`Nincs jogosultságod a(z) '${targetGroup.groupName}' csoport tagjainak szabad időpontjait lekérdezni. Ezt csak a csoport tulajdonosa vagy adminisztrátora teheti meg.`);
+                            results.actionErrors.push(`Nincs jogosultságod a(z) '${targetGroup.groupName}' csoport tagjainak szabad időpontjait lekérdezni.`);
                             break;
                         }
                     } else {
@@ -388,18 +403,19 @@ const processToolCalls = async (functionCalls, userId, timeZone) => {
 
                 const allAttendeeIds = [...new Set(requiredAttendees)];
                 const expandedEvents = await eventService.getExpandedEventsForUsers(
-                    new Date(searchStart), 
-                    new Date(searchEnd), 
+                    searchStart, 
+                    searchEnd, 
                     allAttendeeIds
                 );
 
                 const searchParams = {
-                    searchStart: new Date(searchStart),
-                    searchEnd: new Date(searchEnd),
+                    searchStart: searchStart,
+                    searchEnd: searchEnd,
                     durationMinutes: durationMinutes,
-                    allowedDays: allowedDays || [1, 2, 3, 4, 5],
-                    startHour: startHour || 9,
-                    endHour: endHour || 17,
+                    allowedDays: allowedDays || [1, 2, 3, 4, 5, 6, 0],
+                    startHour: startHour,
+                    endHour: endHour,
+                    timeZone: timeZone,
                     requiredAttendees: allAttendeeIds,
                     optionalAttendees: []
                 };

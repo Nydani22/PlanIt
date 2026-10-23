@@ -1,3 +1,5 @@
+const { toZonedTime, fromZonedTime } = require('date-fns-tz');
+
 exports.findAvailableTimeSlots = (params, events) => {
   const {
     searchStart, searchEnd,
@@ -8,7 +10,8 @@ exports.findAvailableTimeSlots = (params, events) => {
     requiredAttendees = [],     
     optionalAttendees = [],     
     bufferBeforeMinutes = 0,
-    bufferAfterMinutes = 0
+    bufferAfterMinutes = 0,
+    timeZone = 'UTC'
   } = params;
 
   const totalDurationMinutes = (durationDays * 24 * 60) + durationMinutes;
@@ -18,10 +21,11 @@ exports.findAvailableTimeSlots = (params, events) => {
   const bufferAfterMs = bufferAfterMinutes * 60000;
   const availableSlots = [];
 
-  let currentDay = new Date(searchStart);
-  currentDay.setHours(0, 0, 0, 0); 
-  const endDay = new Date(searchEnd);
-  endDay.setHours(23, 59, 59, 999);
+  const localStartZoned = toZonedTime(searchStart, timeZone);
+  localStartZoned.setUTCHours(0, 0, 0, 0);
+
+  const localEndZoned = toZonedTime(searchEnd, timeZone);
+  localEndZoned.setUTCHours(23, 59, 59, 999);
 
   const checkCollisions = (checkStart, checkEnd) => {
     let isRequiredBusy = false;
@@ -53,62 +57,77 @@ exports.findAvailableTimeSlots = (params, events) => {
     return { isRequiredBusy, busyOptionalCount: busyOptionalUsers.size };
   };
 
-  while (currentDay <= endDay) {
-    const dayOfWeek = currentDay.getDay();
+  let currentDayZoned = new Date(localStartZoned);
+
+  while (currentDayZoned <= localEndZoned) {
+    const dayOfWeek = currentDayZoned.getUTCDay();
 
     if (allowedDays.includes(dayOfWeek)) {
-      let slotStart = new Date(currentDay);
-      slotStart.setHours(startHour, 0, 0, 0);
+      const y = currentDayZoned.getUTCFullYear();
+      const m = String(currentDayZoned.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(currentDayZoned.getUTCDate()).padStart(2, '0');
+      const prefix = `${y}-${m}-${d}`;
 
-      const activeEnd = new Date(currentDay);
-      activeEnd.setHours(endHour, 0, 0, 0);
-      
-      if (endHour <= startHour) {
-        activeEnd.setDate(activeEnd.getDate() + 1);
+      let activeStartAbsolute = fromZonedTime(`${prefix}T${String(startHour).padStart(2, '0')}:00:00`, timeZone);
+      let activeEndAbsolute;
+
+      if (endHour === 24) {
+         const nextDay = new Date(currentDayZoned);
+         nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+         const ny = nextDay.getUTCFullYear();
+         const nm = String(nextDay.getUTCMonth() + 1).padStart(2, '0');
+         const nd = String(nextDay.getUTCDate()).padStart(2, '0');
+         activeEndAbsolute = fromZonedTime(`${ny}-${nm}-${nd}T00:00:00`, timeZone);
+      } else {
+         activeEndAbsolute = fromZonedTime(`${prefix}T${String(endHour).padStart(2, '0')}:00:00`, timeZone);
       }
 
       const stepMs = 30 * 60000; 
+      let slotStartAbsolute = new Date(activeStartAbsolute);
       
-      while ((slotStart.getTime() + intraDayDurationMs) <= activeEnd.getTime() && (slotStart.getTime() + durationMs) <= endDay.getTime()) {
-        const slotEnd = new Date(slotStart.getTime() + durationMs);
+      while ((slotStartAbsolute.getTime() + intraDayDurationMs) <= activeEndAbsolute.getTime() && 
+             (slotStartAbsolute.getTime() + durationMs) <= searchEnd.getTime()) {
         
+        const slotEndAbsolute = new Date(slotStartAbsolute.getTime() + durationMs);
         let isAllDaysAllowed = true;
-        let checkDay = new Date(slotStart);
-        checkDay.setHours(0, 0, 0, 0);
         
-        let endCheckDay = new Date(slotEnd);
-        endCheckDay.setHours(0, 0, 0, 0);
+        let checkDayZoned = toZonedTime(slotStartAbsolute, timeZone);
+        checkDayZoned.setUTCHours(0, 0, 0, 0);
         
-        if (slotEnd.getHours() === 0 && slotEnd.getMinutes() === 0 && slotEnd.getTime() > slotStart.getTime()) {
-           endCheckDay.setDate(endCheckDay.getDate() - 1);
+        let endCheckDayZoned = toZonedTime(slotEndAbsolute, timeZone);
+        endCheckDayZoned.setUTCHours(0, 0, 0, 0);
+        
+        const exactSlotEndZoned = toZonedTime(slotEndAbsolute, timeZone);
+        if (exactSlotEndZoned.getUTCHours() === 0 && exactSlotEndZoned.getUTCMinutes() === 0 && slotEndAbsolute.getTime() > slotStartAbsolute.getTime()) {
+           endCheckDayZoned.setUTCDate(endCheckDayZoned.getUTCDate() - 1);
         }
 
-        let tempDay = new Date(checkDay);
-        while (tempDay <= endCheckDay) {
-          if (!allowedDays.includes(tempDay.getDay())) {
+        let tempDayZoned = new Date(checkDayZoned);
+        while (tempDayZoned <= endCheckDayZoned) {
+          if (!allowedDays.includes(tempDayZoned.getUTCDay())) {
             isAllDaysAllowed = false;
             break;
           }
-          tempDay.setDate(tempDay.getDate() + 1);
+          tempDayZoned.setUTCDate(tempDayZoned.getUTCDate() + 1);
         }
 
         if (isAllDaysAllowed) {
-          const checkStart = new Date(slotStart.getTime() - bufferBeforeMs);
-          const checkEnd = new Date(slotEnd.getTime() + bufferAfterMs);
+          const checkStart = new Date(slotStartAbsolute.getTime() - bufferBeforeMs);
+          const checkEnd = new Date(slotEndAbsolute.getTime() + bufferAfterMs);
           const { isRequiredBusy, busyOptionalCount } = checkCollisions(checkStart, checkEnd);
 
           if (!isRequiredBusy) {
             availableSlots.push({
-              start: new Date(slotStart),
-              end: new Date(slotEnd),
+              start: new Date(slotStartAbsolute),
+              end: new Date(slotEndAbsolute),
               availableOptionalCount: optionalAttendees.length - busyOptionalCount
             });
           }
         }
-        slotStart = new Date(slotStart.getTime() + stepMs);
+        slotStartAbsolute = new Date(slotStartAbsolute.getTime() + stepMs);
       }
     }
-    currentDay.setDate(currentDay.getDate() + 1);
+    currentDayZoned.setUTCDate(currentDayZoned.getUTCDate() + 1);
   }
 
   const exactStartLimitMs = new Date(searchStart).getTime();

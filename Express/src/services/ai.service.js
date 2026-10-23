@@ -19,11 +19,11 @@ const createEventsTool = {
             isAllDay: { type: "BOOLEAN", description: "Egész napos-e." },
             fromDate: { 
               type: "STRING", 
-              description: "Kezdő dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+              description: "Kezdő dátum a felhasználó HELYI IDEJÉBEN (YYYY-MM-DDTHH:mm:ss formátumban, pl. 2026-10-25T14:30:00)." 
             },
             toDate: { 
               type: "STRING", 
-              description: "Befejező dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+              description: "Befejező dátum a felhasználó HELYI IDEJÉBEN (YYYY-MM-DDTHH:mm:ss formátumban)." 
             },
             category: { 
               type: "STRING", 
@@ -59,7 +59,7 @@ const createEventsTool = {
                 },
                 untilDate: { 
                   type: "STRING", 
-                  description: "Az ismétlődés befejező dátuma ISO 8601 formátumban (UTC). Ha nincs végdátum, hagyd üresen." 
+                  description: "Az ismétlődés befejező dátuma a felhasználó HELYI IDEJÉBEN (YYYY-MM-DDTHH:mm:ss formátumban). Ha nincs végdátum, hagyd üresen." 
                 }
               }
             }
@@ -88,11 +88,11 @@ const updateEventsTool = {
             eventName: { type: "STRING", description: "Új cím (csak ha változik)." },
             fromDate: { 
               type: "STRING", 
-              description: "Kezdő dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+              description: "Kezdő dátum a felhasználó HELYI IDEJÉBEN (YYYY-MM-DDTHH:mm:ss formátumban)." 
             },
             toDate: { 
               type: "STRING", 
-              description: "Befejező dátum ISO 8601 formátumban (SZIGORÚAN UTC-ben, átszámolva a helyi időből!)." 
+              description: "Befejező dátum a felhasználó HELYI IDEJÉBEN (YYYY-MM-DDTHH:mm:ss formátumban)." 
             },
             description: { type: "STRING", description: "Új leírás (csak ha változik)." },
             location: { type: "STRING", description: "Új helyszín (csak ha változik)." },
@@ -138,8 +138,8 @@ const getEventsTool = {
   parameters: {
     type: "OBJECT",
     properties: {
-      startDate: { type: "STRING", description: "A lekérdezés kezdete ISO 8601 formátumban (UTC)." },
-      endDate: { type: "STRING", description: "A lekérdezés vége ISO 8601 formátumban (UTC)." }
+      startDate: { type: "STRING", description: "A lekérdezés kezdete HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss formátumban)." },
+      endDate: { type: "STRING", description: "A lekérdezés vége HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss formátumban)." }
     },
     required: ["startDate", "endDate"]
   }
@@ -178,17 +178,17 @@ const findAvailableTimeTool = {
   parameters: {
     type: "OBJECT",
     properties: {
-      searchStart: { type: "STRING", description: "Keresés kezdete ISO 8601 formátumban (SZIGORÚAN UTC-ben!). A legkisebb megadható időpont a JELENLEGI pillanat." },
-      searchEnd: { type: "STRING", description: "Keresés vége ISO 8601 formátumban (SZIGORÚAN UTC-ben!)." },
+      searchStart: { type: "STRING", description: "Keresés kezdete HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss formátumban). A legkisebb megadható időpont a JELENLEGI pillanat." },
+      searchEnd: { type: "STRING", description: "Keresés vége HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss formátumban)." },
       durationMinutes: { type: "INTEGER", description: "Keresett időtartam percben (pl. 30, 60, 90)." },
       groupName: { type: "STRING", description: "A csoport neve, amellyel a találkozót tervezik. Ha csak a saját naptárában keres, hagyd üresen!" },
       allowedDays: { 
         type: "ARRAY", 
-        description: "Engedélyezett napok UTC SZERINT (0=Vasárnap, 1=Hétfő, ..., 6=Szombat). Figyelj arra, hogy ha az időzóna eltolódás miatt a helyi reggel UTC-ben még az előző napra esik (pl. hétfő 01:00 CEST = vasárnap 23:00 UTC), akkor az előző napot is bele kell tenned a listába!",
+        description: "Engedélyezett napok HELYI IDŐ SZERINT (0=Vasárnap, 1=Hétfő, ..., 6=Szombat).",
         items: { type: "INTEGER" }
       },
-      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája SZIGORÚAN UTC-BEN! Ha a felhasználó magyar idő (CEST/CET) szerint reggel 9-et kér, ki kell vonnod az időzóna eltolódást, és 7-et (nyáron) vagy 8-at (télen) kell megadnod!" },
-      endHour: { type: "INTEGER", description: "Napi keresés befejező órája SZIGORÚAN UTC-BEN! Ha magyar idő szerint 17:00-t kér, 15-öt vagy 16-ot adj meg!" }
+      startHour: { type: "INTEGER", description: "Napi keresés kezdő órája HELYI IDŐBEN! (pl. 8 vagy 9)." },
+      endHour: { type: "INTEGER", description: "Napi keresés befejező órája HELYI IDŐBEN! (pl. 16 vagy 17)." }
     },
     required: ["searchStart", "searchEnd", "durationMinutes"]
   }
@@ -200,8 +200,8 @@ const syncScheduleTool = {
   parameters: {
     type: "OBJECT",
     properties: {
-      periodStart: { type: "STRING", description: "A beküldött beosztás legelső napjának kezdete ISO 8601 (UTC)." },
-      periodEnd: { type: "STRING", description: "A beküldött beosztás legutolsó napjának vége ISO 8601 (UTC)." },
+      periodStart: { type: "STRING", description: "A beküldött beosztás legelső napjának kezdete HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss)." },
+      periodEnd: { type: "STRING", description: "A beküldött beosztás legutolsó napjának vége HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss)." },
       targetEventName: { type: "STRING", description: "Az események egységes neve (pl. 'Munka', 'Órarend')." },
       shifts: {
         type: "ARRAY",
@@ -210,11 +210,11 @@ const syncScheduleTool = {
           type: "OBJECT",
           properties: {
             eventName: { type: "STRING" },
-            fromDate: { type: "STRING", description: "Kezdés ISO 8601 (UTC)." },
-            toDate: { type: "STRING", description: "Befejezés ISO 8601 (UTC)." },
+            fromDate: { type: "STRING", description: "Kezdés HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss)." },
+            toDate: { type: "STRING", description: "Befejezés HELYI IDŐBEN (YYYY-MM-DDTHH:mm:ss)." },
             category: { 
               type: "STRING", 
-              description: "Az esemény kategóriája. KÖTELEZŐEN csak a megadott listából választhatsz egyet, ami a legjobban illik! Ha bizonytalan vagy, használd az 'OTHER' értéket.",
+              description: "Az esemény kategóriája. KÖTELEZŐEN csak a megadott listából választhatsz egyet.",
               enum: [
                 "WORK", "MEETING", "PERSONAL", "FAMILY", "IMPORTANT", 
                 "HOLIDAY", "HEALTH", "STUDY", "SPORTS", "FINANCE", 

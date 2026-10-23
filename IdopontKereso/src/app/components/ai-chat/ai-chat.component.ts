@@ -220,7 +220,7 @@ export class AiChatComponent {
 
     if (result) {
       this.calendarRefreshService.triggerRefresh();
-      this.messages.update(msgs => [...msgs, { sender: 'ai', text: '✅ A naptárad frissült a módosításokkal!' }]);
+      this.snackbarService.showSuccess('Módosítások sikeresen mentve!');
       this.scrollToBottom();
     }
   }

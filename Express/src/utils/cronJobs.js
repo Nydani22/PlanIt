@@ -21,16 +21,26 @@ function initCronJobs() {
                 fromDate: { $gte: now, $lte: tomorrow },
                 sendNotification: true,
                 notificationSent: false
-            }).populate('organizerId');
+            })
+            .populate('organizerId')
+            .populate('attendees.userId');
 
             for (const event of upcomingEvents) {
-                const user = event.organizerId;
-                if (user && user.email) {
-                    await sendEventReminderEmail(user.email, user.fullName, event);
-                    
-                    event.notificationSent = true;
-                    await event.save();
+                for (const attendee of event.attendees) {
+                    if (attendee.status === 'ACCEPTED' || attendee.status === 'PENDING') {
+                        const user = attendee.userId;
+                        
+                        if (user && user.email) {
+                            try {
+                                await sendEventReminderEmail(user.email, user.fullName, event);
+                            } catch (err) {
+                                console.error(`Nem sikerült elküldeni az emlékeztetőt (Email: ${user.email}):`, err);
+                            }
+                        }
+                    }
                 }
+                event.notificationSent = true;
+                await event.save();
             }
         } catch (error) {
             console.error('Hiba az értesítések küldésekor:', error);

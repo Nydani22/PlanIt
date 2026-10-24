@@ -191,6 +191,19 @@ exports.removeMember = async (groupId, requesterId, targetMemberId, isSelfLeave)
     group.members = group.members.filter(m => m.userId.toString() !== targetMemberId.toString());
     await group.save();
 
+    const now = new Date();
+    await Event.updateMany(
+        { 
+            groupId: groupId,
+            toDate: { $gte: now } 
+        },
+        { 
+            $pull: { 
+                attendees: { userId: targetMemberId } 
+            } 
+        }
+    );
+
     if (isSelfLeave) {
         const adminsAndOwner = group.members.filter(m => m.role === 'ADMIN' || m.role === 'OWNER');
         
